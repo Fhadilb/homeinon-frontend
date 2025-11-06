@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>HomeInOn</title>
   <style>
     :root {
@@ -11,22 +11,21 @@
       --ink: #2C2C2C;
       --muted: #6B6B6B;
       --card: #FFFFFF;
-      --ring: rgba(244,162,123,.55);
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+
     body {
       font-family: "Arial", sans-serif;
       background: var(--brand-bg);
       color: var(--ink);
+      margin: 0;
     }
 
-    /* Sticky header (desktop) */
     header {
       position: sticky;
       top: 0;
-      z-index: 999;
+      z-index: 100;
       background: var(--card);
-      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
       padding-bottom: 10px;
     }
 
@@ -35,39 +34,37 @@
       justify-content: space-between;
       align-items: center;
       padding: 10px 20px;
-      background: var(--card);
     }
 
     .logo img {
       height: 60px;
-      width: auto;
-      object-fit: contain;
     }
 
     button {
       background: var(--brand-accent);
-      color: white;
+      color: #fff;
       border: none;
       border-radius: 8px;
       padding: 8px 16px;
-      cursor: pointer;
       font-weight: bold;
-      transition: background .2s;
+      cursor: pointer;
     }
-    button:hover { background: #e18f6a; }
+
+    button:hover {
+      background: #e18f6a;
+    }
 
     #filterToggle {
       display: none;
       width: 100%;
       background: var(--brand-accent);
-      color: white;
+      color: #fff;
       border: none;
       padding: 10px;
       cursor: pointer;
       font-weight: bold;
     }
 
-    /* Filters */
     .filters {
       display: grid;
       grid-template-columns: repeat(5, minmax(160px, 1fr));
@@ -76,18 +73,26 @@
       padding: 10px 20px;
       border-top: 1px solid #eee;
     }
-    .filter-group { display: flex; flex-direction: column; gap: 6px; }
-    .filter-group label { font-size: 0.9rem; color: var(--muted); }
+
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .filter-group label {
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
     .filter-group input,
-    .filter-group select,
-    .filter-group input[type="range"] {
+    .filter-group select {
       padding: 8px;
       border-radius: 8px;
       border: 1px solid #ddd;
       font-size: 1rem;
     }
 
-    /* Style cards */
     .styles {
       display: flex;
       gap: 12px;
@@ -95,6 +100,7 @@
       padding: 10px 20px;
       background: var(--card);
     }
+
     .style-card {
       min-width: 130px;
       height: 110px;
@@ -104,39 +110,55 @@
       cursor: pointer;
       border: 2px solid transparent;
       flex: 0 0 auto;
-      transition: transform .2s, border .2s;
     }
-    .style-card img { width: 100%; height: 100%; object-fit: cover; }
-    .style-card span {
-      position: absolute; bottom: 5px; left: 0; right: 0;
-      text-align: center; color: white; font-weight: bold;
-      text-shadow: 0 0 4px rgba(0,0,0,0.8);
-      background: rgba(0,0,0,0.25);
-    }
-    .style-card.active { border: 2px solid var(--brand-accent); transform: scale(1.05); }
 
-    /* Products */
-    #product-count { margin: 15px 20px 10px; font-weight: bold; }
+    .style-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .style-card span {
+      position: absolute;
+      bottom: 5px;
+      left: 0;
+      right: 0;
+      text-align: center;
+      color: #fff;
+      font-weight: bold;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    .style-card.active {
+      border: 2px solid var(--brand-accent);
+    }
+
     #product-list {
       display: grid;
       gap: 24px;
       padding: 0 20px 30px;
       grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
     }
+
     .product {
       background: white;
       border-radius: 12px;
-      box-shadow: 0 1px 8px rgba(0,0,0,0.08);
+      box-shadow: 0 1px 8px rgba(0, 0, 0, 0.08);
       overflow: hidden;
       position: relative;
-      transition: transform .2s;
+      transition: transform 0.2s;
     }
-    .product:hover { transform: translateY(-4px); }
+
     .product img {
       width: 100%;
       height: 320px;
       object-fit: cover;
     }
+
+    .product-info {
+      padding: 14px;
+    }
+
     .style-label {
       position: absolute;
       top: 10px;
@@ -148,16 +170,52 @@
       font-size: 0.8rem;
       font-weight: bold;
     }
-    .product-info { padding: 14px; }
-    .price { font-weight: 700; color: var(--brand-accent); }
 
-    /* Colour dropdown items */
-    .colour-option {
+    /* Custom Colour Dropdown */
+    .colour-dropdown {
+      position: relative;
+    }
+
+    .colour-select {
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      cursor: pointer;
+      background: white;
+    }
+
+    .colour-list {
+      display: none;
+      position: absolute;
+      top: 110%;
+      left: 0;
+      right: 0;
+      background: white;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      max-height: 200px;
+      overflow-y: auto;
+      z-index: 10;
+    }
+
+    .colour-list.active {
+      display: block;
+    }
+
+    .colour-item {
       display: flex;
       align-items: center;
       gap: 8px;
-      padding: 4px 0;
+      padding: 8px 10px;
+      cursor: pointer;
+      transition: background 0.2s;
     }
+
+    .colour-item:hover {
+      background: #f8f8f8;
+    }
+
     .swatch {
       width: 16px;
       height: 16px;
@@ -165,13 +223,23 @@
       border: 1px solid #ccc;
     }
 
-    /* Mobile */
     @media (max-width: 768px) {
-      header { position: static; }
-      .filters { display: none; grid-template-columns: 1fr; }
-      .filters.active { display: grid; }
-      #filterToggle { display: block; }
-      .styles { padding: 10px; }
+      header {
+        position: static;
+      }
+
+      .filters {
+        display: none;
+        grid-template-columns: 1fr;
+      }
+
+      .filters.active {
+        display: grid;
+      }
+
+      #filterToggle {
+        display: block;
+      }
     }
   </style>
 </head>
@@ -188,23 +256,28 @@
     <section class="filters" id="filters">
       <div class="filter-group">
         <label for="searchBox">Search</label>
-        <input type="text" id="searchBox" placeholder="e.g. oak table, mirror, sofa…"/>
+        <input type="text" id="searchBox" placeholder="e.g. oak table, mirror, sofa…" />
       </div>
+
       <div class="filter-group">
         <label for="category">Category</label>
         <select id="category"><option value="">All</option></select>
       </div>
+
       <div class="filter-group">
         <label for="material">Material</label>
         <select id="material"><option value="">All</option></select>
       </div>
-      <div class="filter-group">
+
+      <div class="filter-group colour-dropdown">
         <label for="colourSelect">Colour</label>
-        <select id="colourSelect"><option value="">All</option></select>
+        <div id="colourSelect" class="colour-select">All</div>
+        <div id="colourList" class="colour-list"></div>
       </div>
+
       <div class="filter-group">
         <label for="priceRange">Max Price (£)</label>
-        <input type="range" id="priceRange" min="0" max="2000" step="10" value="2000"/>
+        <input type="range" id="priceRange" min="0" max="2000" step="10" value="2000" />
         <span id="priceValue">£2000</span>
       </div>
     </section>
@@ -215,41 +288,16 @@
 
   <script>
     const API_URL = "https://homeinon-backend.onrender.com/products";
-
-    const STYLE_IMAGES = {
-      "modern": "style-modern.jpg",
-      "boho": "style-boho.jpg",
-      "scandi": "style-scandi.jpg",
-      "industrial": "style-industrial.jpg",
-      "farmhouse": "https://placehold.co/200x150?text=Farmhouse",
-      "mid-century": "https://placehold.co/200x150?text=Mid-century",
-      "art deco": "https://placehold.co/200x150?text=Art+Deco",
-      "coastal": "https://placehold.co/200x150?text=Coastal"
-    };
-
     const colourMap = {
-      white:"#ffffff", black:"#000000", grey:"#9e9e9e", oak:"#c49a6c",
-      walnut:"#7a5734", pine:"#d5b887", beige:"#d9c7a2", gold:"#c8a951",
-      silver:"#bdbdbd", blue:"#5a7abf", green:"#6aa67a", red:"#c74c4c",
-      brown:"#8b5a2b", cream:"#f3e9d2"
+      white: "#ffffff", black: "#000000", grey: "#9e9e9e", oak: "#c49a6c",
+      walnut: "#7a5734", pine: "#d5b887", beige: "#d9c7a2", gold: "#c8a951",
+      silver: "#bdbdbd", blue: "#5a7abf", green: "#6aa67a", red: "#c74c4c",
+      brown: "#8b5a2b", cream: "#f3e9d2"
     };
-
     function colourHex(name){ return colourMap[name?.toLowerCase()] || "#ccc"; }
 
-    function deriveStyle(name="") {
-      const text = name.toLowerCase();
-      if (text.includes("boho")) return "Boho";
-      if (text.includes("industrial") || text.includes("metal")) return "Industrial";
-      if (text.includes("scandi") || text.includes("nordic")) return "Scandi";
-      if (text.includes("farmhouse") || text.includes("rustic")) return "Farmhouse";
-      if (text.includes("mid") || text.includes("retro")) return "Mid-century";
-      if (text.includes("art deco") || text.includes("glam")) return "Art Deco";
-      if (text.includes("coastal") || text.includes("beach")) return "Coastal";
-      return "Modern";
-    }
-
     let allProducts = [];
-    let selectedStyle = "";
+    let selectedColour = "";
 
     function uniqueValues(items, field) {
       const s = new Set();
@@ -264,44 +312,38 @@
       return [...s];
     }
 
-    function populateColourSelect(id, colours) {
-      const el = document.getElementById(id);
-      el.innerHTML = '<option value="">All</option>';
-      colours.sort().forEach(c => {
-        const hex = colourHex(c);
-        const opt = document.createElement("option");
-        opt.value = c;
-        opt.innerHTML = `<span class='colour-option'><span class='swatch' style='background:${hex}'></span>${c}</span>`;
-        el.appendChild(opt);
-      });
-    }
+    function buildColourDropdown(colours) {
+      const select = document.getElementById("colourSelect");
+      const list = document.getElementById("colourList");
+      list.innerHTML = "";
 
-    function populateSelect(id, values) {
-      const el = document.getElementById(id);
-      el.innerHTML = '<option value="">All</option>';
-      values.sort().forEach(v => {
-        const opt = document.createElement("option");
-        opt.value = v;
-        opt.textContent = v;
-        el.appendChild(opt);
+      const allItem = document.createElement("div");
+      allItem.className = "colour-item";
+      allItem.textContent = "All";
+      allItem.addEventListener("click", () => {
+        selectedColour = "";
+        select.textContent = "All";
+        list.classList.remove("active");
+        applyFilters();
       });
-    }
+      list.appendChild(allItem);
 
-    function buildStyleCards(styles) {
-      const cont = document.getElementById("styleSelector");
-      cont.innerHTML = "";
-      styles.forEach(s => {
-        const card = document.createElement("div");
-        card.className = "style-card";
-        const img = STYLE_IMAGES[s.toLowerCase()] || `https://placehold.co/200x150?text=${encodeURIComponent(s)}`;
-        card.innerHTML = `<img src="${img}" alt="${s}"><span>${s}</span>`;
-        card.addEventListener("click", () => {
-          document.querySelectorAll(".style-card").forEach(c => c.classList.remove("active"));
-          if (selectedStyle === s) selectedStyle = "";
-          else { selectedStyle = s; card.classList.add("active"); }
+      colours.forEach(c => {
+        const item = document.createElement("div");
+        item.className = "colour-item";
+        item.innerHTML = `<div class="swatch" style="background:${colourHex(c)}"></div>${c}`;
+        item.addEventListener("click", () => {
+          selectedColour = c;
+          select.innerHTML = `<div class="swatch" style="background:${colourHex(c)}"></div>${c}`;
+          list.classList.remove("active");
           applyFilters();
         });
-        cont.appendChild(card);
+        list.appendChild(item);
+      });
+
+      select.addEventListener("click", () => list.classList.toggle("active"));
+      document.addEventListener("click", e => {
+        if (!e.target.closest(".colour-dropdown")) list.classList.remove("active");
       });
     }
 
@@ -309,14 +351,14 @@
       const list = document.getElementById("product-list");
       const count = document.getElementById("product-count");
       list.innerHTML = "";
-      count.textContent = `${products.length} product${products.length!==1?"s":""} found`;
+      count.textContent = `${products.length} product${products.length !== 1 ? "s" : ""} found`;
       products.forEach(p => {
         const price = parseFloat(p.price) || 0;
         const div = document.createElement("div");
         div.className = "product";
         div.innerHTML = `
           <div class="style-label">${p.style || ""}</div>
-          <img src="${p.image_url}" alt="${p.title}" onerror="this.src='https://placehold.co/340x240?text=No+Image'"/>
+          <img src="${p.image_url}" alt="${p.title}" />
           <div class="product-info">
             <h3>${p.title}</h3>
             <p class="price">£${price.toFixed(2)}</p>
@@ -329,20 +371,18 @@
       const q = document.getElementById("searchBox").value.toLowerCase();
       const cat = document.getElementById("category").value;
       const mat = document.getElementById("material").value;
-      const col = document.getElementById("colourSelect").value;
       const max = parseFloat(document.getElementById("priceRange").value) || Infinity;
 
       const filtered = allProducts.filter(p => {
-        const t = (p.title||"").toLowerCase();
-        const d = (p.description||"").toLowerCase();
+        const t = (p.title || "").toLowerCase();
+        const d = (p.description || "").toLowerCase();
         const search = !q || t.includes(q) || d.includes(q);
         const catOK = !cat || p.category === cat;
         const matOK = !mat || p.material === mat;
-        const styleOK = !selectedStyle || p.style === selectedStyle;
-        const colOK = !col || (p.colour && p.colour.toLowerCase().includes(col.toLowerCase()));
+        const colOK = !selectedColour || (p.colour && p.colour.toLowerCase().includes(selectedColour.toLowerCase()));
         const pr = parseFloat(p.price) || 0;
         const priceOK = pr <= max;
-        return search && catOK && matOK && styleOK && colOK && priceOK;
+        return search && catOK && matOK && colOK && priceOK;
       });
       renderProducts(filtered);
     }
@@ -350,36 +390,16 @@
     async function loadProducts() {
       const res = await fetch(API_URL);
       const data = await res.json();
-      allProducts = data.products.map(p => ({
-        ...p,
-        style: p.style || deriveStyle(p.title || p.description)
-      }));
-      populateSelect("category", uniqueValues(allProducts, "category"));
-      populateSelect("material", uniqueValues(allProducts, "material"));
-      populateColourSelect("colourSelect", uniqueValues(allProducts, "colour"));
-      buildStyleCards(uniqueValues(allProducts, "style"));
+      allProducts = data.products;
+      buildColourDropdown(uniqueValues(allProducts, "colour"));
       renderProducts(allProducts);
     }
-
-    document.getElementById("filterToggle").addEventListener("click", () => {
-      const f = document.getElementById("filters");
-      f.classList.toggle("active");
-      document.getElementById("filterToggle").textContent = f.classList.contains("active") ? "Hide Filters ▲" : "Show Filters ⬇️";
-    });
-
-    document.getElementById("searchBox").addEventListener("input", applyFilters);
-    ["category","material","colourSelect"].forEach(id =>
-      document.getElementById(id).addEventListener("change", applyFilters)
-    );
-    document.getElementById("priceRange").addEventListener("input", e => {
-      document.getElementById("priceValue").textContent = `£${e.target.value}`;
-      applyFilters();
-    });
 
     loadProducts();
   </script>
 </body>
 </html>
+
 
 
 
