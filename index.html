@@ -151,6 +151,20 @@
     .product-info { padding: 14px; }
     .price { font-weight: 700; color: var(--brand-accent); }
 
+    /* Colour dropdown items */
+    .colour-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 0;
+    }
+    .swatch {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      border: 1px solid #ccc;
+    }
+
     /* Mobile */
     @media (max-width: 768px) {
       header { position: static; }
@@ -158,12 +172,6 @@
       .filters.active { display: grid; }
       #filterToggle { display: block; }
       .styles { padding: 10px; }
-    }
-
-    /* Colour dropdown swatches */
-    option[data-color]::before {
-      content: "● ";
-      color: attr(data-color color);
     }
   </style>
 </head>
@@ -226,9 +234,6 @@
       brown:"#8b5a2b", cream:"#f3e9d2"
     };
 
-    let allProducts = [];
-    let selectedStyle = "";
-
     function colourHex(name){ return colourMap[name?.toLowerCase()] || "#ccc"; }
 
     function deriveStyle(name="") {
@@ -243,6 +248,9 @@
       return "Modern";
     }
 
+    let allProducts = [];
+    let selectedStyle = "";
+
     function uniqueValues(items, field) {
       const s = new Set();
       items.forEach(p => {
@@ -256,17 +264,25 @@
       return [...s];
     }
 
-    function populateSelect(id, values, colorized=false) {
+    function populateColourSelect(id, colours) {
+      const el = document.getElementById(id);
+      el.innerHTML = '<option value="">All</option>';
+      colours.sort().forEach(c => {
+        const hex = colourHex(c);
+        const opt = document.createElement("option");
+        opt.value = c;
+        opt.innerHTML = `<span class='colour-option'><span class='swatch' style='background:${hex}'></span>${c}</span>`;
+        el.appendChild(opt);
+      });
+    }
+
+    function populateSelect(id, values) {
       const el = document.getElementById(id);
       el.innerHTML = '<option value="">All</option>';
       values.sort().forEach(v => {
         const opt = document.createElement("option");
         opt.value = v;
         opt.textContent = v;
-        if(colorized) {
-          opt.style.background = colourHex(v);
-          opt.style.color = "#000";
-        }
         el.appendChild(opt);
       });
     }
@@ -340,7 +356,7 @@
       }));
       populateSelect("category", uniqueValues(allProducts, "category"));
       populateSelect("material", uniqueValues(allProducts, "material"));
-      populateSelect("colourSelect", uniqueValues(allProducts, "colour"), true);
+      populateColourSelect("colourSelect", uniqueValues(allProducts, "colour"));
       buildStyleCards(uniqueValues(allProducts, "style"));
       renderProducts(allProducts);
     }
@@ -364,6 +380,7 @@
   </script>
 </body>
 </html>
+
 
 
 
