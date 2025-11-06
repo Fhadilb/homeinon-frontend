@@ -22,7 +22,7 @@
       color: var(--brand-dark);
     }
 
-    /* 🧠 Sticky Header */
+    /* 🧠 Sticky Header (Desktop + Tablet only) */
     .header {
       position: sticky;
       top: 0;
@@ -131,7 +131,7 @@
       background: #e68a61;
     }
 
-    /* 🧠 Style Selector (Now left-aligned under logo) */
+    /* 🧠 Style Selector (Left-aligned) */
     .styles {
       display: flex;
       gap: 15px;
@@ -195,15 +195,6 @@
       padding: 0 40px 40px;
     }
 
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-      }
-      to {
-        opacity: 1;
-      }
-    }
-
     .product {
       background: var(--brand-light);
       border-radius: 10px;
@@ -260,27 +251,21 @@
     }
 
     @keyframes pulse {
-      0% {
-        transform: scale(1);
-      }
-      25% {
-        transform: scale(1.4);
-      }
-      50% {
-        transform: scale(1.2);
-      }
-      100% {
-        transform: scale(1);
-      }
+      0% { transform: scale(1); }
+      25% { transform: scale(1.4); }
+      50% { transform: scale(1.2); }
+      100% { transform: scale(1); }
     }
 
-    .pulse {
-      animation: pulse 0.3s ease;
-    }
+    .pulse { animation: pulse 0.3s ease; }
 
-    /* 📱 Mobile tidy-up */
+    /* 📱 Mobile: Remove Sticky Header */
     @media (max-width: 800px) {
       .header {
+        position: relative;
+        backdrop-filter: none;
+        background: var(--brand-light);
+        box-shadow: none;
         padding: 10px 15px;
       }
 
@@ -521,5 +506,6 @@
   </script>
 </body>
 </html>
+
 
 
