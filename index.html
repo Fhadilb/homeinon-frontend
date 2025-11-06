@@ -27,7 +27,8 @@
       position: sticky;
       top: 0;
       z-index: 1000;
-      background: var(--brand-light);
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(10px);
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
       padding: 10px 40px 20px;
       display: flex;
@@ -61,6 +62,7 @@
     .logo {
       display: flex;
       align-items: center;
+      gap: 20px;
     }
 
     .logo img {
@@ -129,18 +131,18 @@
       background: #e68a61;
     }
 
-    /* 🧠 Style Selector (Now in Header) */
+    /* 🧠 Style Selector (Now left-aligned under logo) */
     .styles {
       display: flex;
       gap: 15px;
       flex-wrap: wrap;
-      justify-content: center;
+      justify-content: flex-start;
       margin-top: 5px;
     }
 
     .style-card {
-      width: 100px;
-      height: 100px;
+      width: 90px;
+      height: 90px;
       border-radius: 12px;
       overflow: hidden;
       cursor: pointer;
@@ -157,7 +159,6 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
-      display: block;
     }
 
     .style-card span {
@@ -277,20 +278,36 @@
       animation: pulse 0.3s ease;
     }
 
-    /* 📱 Responsive adjustments */
+    /* 📱 Mobile tidy-up */
     @media (max-width: 800px) {
       .header {
-        padding: 10px 20px;
+        padding: 10px 15px;
       }
+
+      .top-bar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+      }
+
       .styles {
         justify-content: flex-start;
+        margin: 10px 0;
+        gap: 10px;
       }
-      #product-list {
-        grid-template-columns: 1fr;
-        padding: 0 20px 40px;
-      }
+
       .filters {
         flex-direction: column;
+        align-items: stretch;
+      }
+
+      .filter-group {
+        width: 100%;
+      }
+
+      #product-list {
+        grid-template-columns: 1fr;
+        padding: 0 15px 40px;
       }
     }
   </style>
@@ -302,6 +319,21 @@
         <img src="home-in-on-logo.webp" alt="HomeInOn logo" />
       </div>
       <button id="toggleFavourites">⭐ View Favourites</button>
+    </div>
+
+    <div class="styles" id="styleSelector">
+      <div class="style-card" data-style="modern">
+        <img src="https://placehold.co/240x240?text=Modern" alt="Modern" /><span>Modern</span>
+      </div>
+      <div class="style-card" data-style="boho">
+        <img src="https://placehold.co/240x240?text=Boho" alt="Boho" /><span>Boho</span>
+      </div>
+      <div class="style-card" data-style="scandi">
+        <img src="https://placehold.co/240x240?text=Scandi" alt="Scandi" /><span>Scandi</span>
+      </div>
+      <div class="style-card" data-style="industrial">
+        <img src="https://placehold.co/240x240?text=Industrial" alt="Industrial" /><span>Industrial</span>
+      </div>
     </div>
 
     <div class="filters">
@@ -352,21 +384,6 @@
       </div>
 
       <button id="applyFilters">Apply Filters</button>
-    </div>
-
-    <div class="styles" id="styleSelector">
-      <div class="style-card" data-style="modern">
-        <img src="https://placehold.co/240x240?text=Modern" alt="Modern" /><span>Modern</span>
-      </div>
-      <div class="style-card" data-style="boho">
-        <img src="https://placehold.co/240x240?text=Boho" alt="Boho" /><span>Boho</span>
-      </div>
-      <div class="style-card" data-style="scandi">
-        <img src="https://placehold.co/240x240?text=Scandi" alt="Scandi" /><span>Scandi</span>
-      </div>
-      <div class="style-card" data-style="industrial">
-        <img src="https://placehold.co/240x240?text=Industrial" alt="Industrial" /><span>Industrial</span>
-      </div>
     </div>
   </div>
 
@@ -504,4 +521,5 @@
   </script>
 </body>
 </html>
+
 
