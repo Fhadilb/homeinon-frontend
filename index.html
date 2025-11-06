@@ -1,111 +1,195 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>HomeInOn</title>
   <style>
     :root{
       --brand-accent:#f4a27b;
-      --ink:#333;
-      --muted:#777;
-      --card:#fff;
-      --bg:#fafafa;
-      --ring: rgba(244,162,123,.55);
+      --brand-light:#fff8f5;
+      --ink:#2c2c2c;
+      --muted:#6b6b6b;
+      --card:#ffffff;
+      --bg:#faf8f6;
+      --ring:rgba(244,162,123,.55);
     }
-    *{box-sizing:border-box;}
-    body{font-family: Arial, sans-serif; background:var(--bg); color:var(--ink); margin:0;}
+    *{box-sizing:border-box}
+    body{
+      font-family: 'Arial', sans-serif;
+      background:var(--bg);
+      color:var(--ink);
+      margin:0;
+    }
 
-    /* Top bar */
+    /* Header */
     .top-bar{
-      position: sticky; top:0; z-index:1000;
-      background:#fff; box-shadow:0 2px 5px rgba(0,0,0,.08);
-      padding:10px 20px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap;
+      position:sticky;
+      top:0;
+      z-index:1000;
+      background:var(--card);
+      box-shadow:0 2px 8px rgba(0,0,0,0.08);
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding:10px 20px;
+      flex-wrap:wrap;
     }
-    .logo{display:flex; align-items:center; font-family: Georgia, serif; font-size:2rem; font-weight:bold;}
-    .logo span{position:relative; z-index:1;}
-    .logo .in{position:relative; padding:0 8px;}
-    .logo .in::before{
-      content:""; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
-      width:70px; height:70px; background:var(--brand-accent); border-radius:50%; z-index:-1; filter:blur(.3px);
+    .logo img{
+      height:60px;
+      width:auto;
+      object-fit:contain;
     }
-    button{background:#333;color:#fff;border:none;border-radius:8px;padding:8px 14px;cursor:pointer;transition:.2s;}
-    button:hover{background:#555;}
+    button{
+      background:var(--ink);
+      color:white;
+      border:none;
+      border-radius:8px;
+      padding:8px 16px;
+      cursor:pointer;
+      transition:background .2s;
+    }
+    button:hover{background:#555}
 
     /* Style cards */
-    .styles{display:flex; gap:15px; margin:15px 20px; flex-wrap:wrap;}
+    .styles{
+      display:flex;
+      gap:15px;
+      margin:15px 20px;
+      overflow-x:auto;
+      padding-bottom:8px;
+    }
     .style-card{
-      width:120px; height:120px; border-radius:12px; overflow:hidden; cursor:pointer; position:relative;
-      border:2px solid transparent; transition:transform .2s, border .2s;
-      background:#eee; display:flex; align-items:center; justify-content:center;
+      min-width:140px;
+      height:120px;
+      border-radius:12px;
+      overflow:hidden;
+      cursor:pointer;
+      position:relative;
+      border:2px solid transparent;
+      transition:transform .2s, border .2s;
+      background:#eee;
+      flex:0 0 auto;
+    }
+    .style-card img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
     }
     .style-card span{
-      position:absolute; bottom:5px; left:0; right:0; text-align:center; color:#fff;
-      font-weight:bold; text-shadow:0 0 5px rgba(0,0,0,.7); background:rgba(0,0,0,.25);
+      position:absolute;
+      bottom:5px;
+      left:0; right:0;
+      text-align:center;
+      color:#fff;
+      font-weight:bold;
+      text-shadow:0 0 5px rgba(0,0,0,0.7);
+      background:rgba(0,0,0,0.25);
     }
-    .style-card.active{border:2px solid var(--brand-accent); transform:scale(1.05);}
-    .style-card:hover{transform:scale(1.05);}
+    .style-card.active{border:2px solid var(--brand-accent); transform:scale(1.05)}
+    .style-card:hover{transform:scale(1.05)}
 
     /* Filters */
-    #filterToggle{display:none; width:100%; background:var(--brand-accent); border-radius:0; margin:0; font-weight:bold;}
-    .filters{
-      background:var(--card); margin:12px 20px; padding:14px; border-radius:12px;
-      box-shadow:0 2px 8px rgba(0,0,0,.06);
-      display:grid; grid-template-columns: repeat(5, minmax(160px,1fr)); gap:16px;
+    #filterToggle{
+      display:none;
+      width:100%;
+      background:var(--brand-accent);
+      border-radius:0;
+      color:#fff;
+      font-weight:bold;
+      border:none;
+      padding:10px;
+      cursor:pointer;
     }
-    .filter-group{display:flex; flex-direction:column; gap:6px;}
-    .filter-group label{font-size:.9rem; color:var(--muted);}
+    .filters{
+      background:var(--card);
+      margin:12px 20px;
+      padding:14px;
+      border-radius:12px;
+      box-shadow:0 2px 8px rgba(0,0,0,.06);
+      display:grid;
+      grid-template-columns:repeat(5,minmax(160px,1fr));
+      gap:16px;
+    }
+    .filter-group{display:flex; flex-direction:column; gap:6px}
+    .filter-group label{font-size:.9rem;color:var(--muted)}
     .filter-group input[type="text"],
     .filter-group select,
     .filter-group input[type="range"]{
-      padding:8px;border-radius:8px;border:1px solid #ddd;font-size:1rem;background:#fff;
+      padding:8px;
+      border-radius:8px;
+      border:1px solid #ddd;
+      background:#fff;
+      font-size:1rem;
     }
-    .range-row{display:flex; align-items:center; gap:10px;}
-    .muted{color:var(--muted); font-size:.9rem;}
+    .range-row{display:flex; align-items:center; gap:10px}
+    .muted{color:var(--muted);font-size:.9rem}
 
     /* Colour swatches */
-    .swatches{display:flex; flex-wrap:wrap; gap:8px;}
+    .swatches{display:flex;flex-wrap:wrap;gap:8px}
     .swatch{
-      --sz:28px; width:var(--sz); height:var(--sz); border-radius:999px; border:1px solid rgba(0,0,0,.15);
-      cursor:pointer; outline:2px solid transparent; outline-offset:2px;
+      --sz:28px;width:var(--sz);height:var(--sz);
+      border-radius:50%;
+      border:1px solid rgba(0,0,0,0.15);
+      cursor:pointer;
+      outline:2px solid transparent;
+      outline-offset:2px;
     }
-    .swatch[data-selected="true"]{outline:3px solid var(--ring);}
-    .swatch input{display:none;}
+    .swatch[data-selected="true"]{outline:3px solid var(--ring)}
+    .swatch input{display:none}
 
-    /* Product grid */
-    #product-count{margin:0 20px 6px; font-weight:bold;}
+    /* Products */
+    #product-count{margin:0 20px 6px;font-weight:bold}
     #product-list{
-      display:grid; gap:20px; padding:0 20px 30px;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      display:grid;
+      gap:20px;
+      padding:0 20px 30px;
+      grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
     }
-    @keyframes fadeIn{from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:none;}}
     .product{
-      background:#fff; border-radius:12px; box-shadow:0 1px 8px rgba(0,0,0,.08);
-      padding:14px; position:relative; display:flex; flex-direction:column; animation:fadeIn .25s ease;
+      background:#fff;
+      border-radius:12px;
+      box-shadow:0 1px 8px rgba(0,0,0,.08);
+      padding:14px;
+      position:relative;
+      display:flex;
+      flex-direction:column;
+      transition:transform .2s;
     }
-    .product img{width:100%; height:240px; object-fit:cover; border-radius:10px; margin-bottom:10px; background:#eee;}
-    .price{font-weight:700;}
-    .heart-btn{position:absolute; right:12px; bottom:12px; font-size:22px; color:#bbb; background:none; border:none; cursor:pointer; transition:.18s;}
-    .heart-btn.liked{color:#e63946; transform:scale(1.12);}
+    .product:hover{transform:translateY(-4px)}
+    .product img{
+      width:100%;
+      height:240px;
+      object-fit:cover;
+      border-radius:10px;
+      margin-bottom:10px;
+    }
+    .price{font-weight:700;color:var(--brand-accent)}
+    .heart-btn{
+      position:absolute;right:12px;bottom:12px;
+      font-size:22px;color:#bbb;background:none;border:none;
+      cursor:pointer;transition:.18s;
+    }
+    .heart-btn.liked{color:#e63946;transform:scale(1.12)}
 
-    /* Mobile adjustments */
+    /* Mobile */
     @media(max-width:768px){
-      .top-bar{position:static; padding:10px 14px;}
-      #filterToggle{display:block;}
-      .filters{display:none; grid-template-columns:1fr; margin:10px 12px;}
-      .filters.active{display:grid;}
-      .styles{justify-content:center;}
+      .top-bar{position:static;padding:10px 14px}
+      #filterToggle{display:block}
+      .filters{display:none;grid-template-columns:1fr;margin:10px 12px}
+      .filters.active{display:grid}
+      .styles{margin:10px 12px}
     }
   </style>
 </head>
 <body>
   <div class="top-bar">
-    <div class="logo"><span>home</span><span class="in">in</span><span>on</span></div>
+    <div class="logo"><img src="Home-in-on-logo.webp" alt="HomeInOn Logo"></div>
     <button id="toggleFavourites">⭐ View Favourites</button>
   </div>
 
   <div class="styles" id="styleSelector"></div>
-
   <button id="filterToggle">Show Filters ⬇️</button>
 
   <section class="filters" id="filters">
@@ -113,17 +197,14 @@
       <label for="searchBox">Search (name + description)</label>
       <input type="text" id="searchBox" placeholder="e.g. oak table, mirror, sofa…"/>
     </div>
-
     <div class="filter-group">
       <label for="category">Category</label>
       <select id="category"><option value="">All</option></select>
     </div>
-
     <div class="filter-group">
       <label for="material">Material</label>
       <select id="material"><option value="">All</option></select>
     </div>
-
     <div class="filter-group">
       <label for="priceRange">Max Price (£)</label>
       <div class="range-row">
@@ -131,8 +212,7 @@
         <span class="muted" id="priceValue">£2000</span>
       </div>
     </div>
-
-    <div class="filter-group" style="grid-column: 1 / -1;">
+    <div class="filter-group" style="grid-column:1 / -1;">
       <label>Colour</label>
       <div id="colourSwatches" class="swatches"></div>
     </div>
@@ -143,6 +223,15 @@
 
   <script>
     const API_URL = "https://homeinon-backend.onrender.com/products";
+
+    // Style card images (your uploaded ones)
+    const STYLE_IMAGES = {
+      "modern": "style-modern.jpg",
+      "boho": "style-boho.jpg",
+      "scandi": "style-scandi.jpg",
+      "industrial": "style-industrial.jpg"
+    };
+
     let allProducts = [];
     let favourites = JSON.parse(localStorage.getItem("favourites") || "[]");
     let selectedColours = new Set();
@@ -156,36 +245,33 @@
       blue:"#5a7abf", green:"#6aa67a", red:"#c74c4c", yellow:"#ebcb56",
       pink:"#e6a3b0", purple:"#9b6bb3", orange:"#e79a42"
     };
+    const colourHex = n => (n && colourMap[String(n).toLowerCase()]) || "#c9c9c9";
 
-    function colourToHex(name){
-      if(!name) return "#c9c9c9";
-      return colourMap[name.toLowerCase()] || "#c9c9c9";
-    }
-
-    function uniqueValues(items, field){
-      const set = new Set();
+    const uniqueValues = (items, field)=>{
+      const s=new Set();
       items.forEach(p=>{
-        const val = p[field];
-        if(!val) return;
-        String(val).split(/[,/|;]/).forEach(v=>set.add(v.trim()));
+        const v=p[field];
+        if(!v)return;
+        String(v).split(/[,/|;]/).forEach(x=>{
+          const val=x.trim();
+          if(val)s.add(val);
+        });
       });
-      return Array.from(set).filter(Boolean);
-    }
+      return [...s];
+    };
 
-    function buildColourSwatches(colours){
+    function buildColourSwatches(cols){
       const box=document.getElementById("colourSwatches");
       box.innerHTML="";
-      colours.forEach(col=>{
+      cols.forEach(c=>{
         const label=document.createElement("label");
         label.className="swatch";
-        label.style.background=colourToHex(col);
-        label.dataset.selected="false";
+        label.style.background=colourHex(c);
         const input=document.createElement("input");
-        input.type="checkbox";
-        input.value=col;
+        input.type="checkbox";input.value=c;
         input.addEventListener("change",()=>{
-          if(input.checked){selectedColours.add(col); label.dataset.selected="true";}
-          else{selectedColours.delete(col); label.dataset.selected="false";}
+          if(input.checked)selectedColours.add(c);
+          else selectedColours.delete(c);
           applyFilters();
         });
         label.appendChild(input);
@@ -193,62 +279,48 @@
       });
     }
 
-    function populateSelect(id, values){
+    function populateSelect(id, vals){
       const el=document.getElementById(id);
       el.innerHTML='<option value="">All</option>';
-      values.sort().forEach(v=>{
+      vals.sort().forEach(v=>{
         const opt=document.createElement("option");
-        opt.value=v; opt.textContent=v;
-        el.appendChild(opt);
+        opt.value=v;opt.textContent=v;el.appendChild(opt);
       });
     }
 
     function buildStyleCards(styles){
-      const container=document.getElementById("styleSelector");
-      container.innerHTML="";
-      styles.sort().forEach(style=>{
-        const div=document.createElement("div");
-        div.className="style-card";
-        div.innerHTML=`<span>${style}</span>`;
-        div.addEventListener("click",()=>{
+      const cont=document.getElementById("styleSelector");
+      cont.innerHTML="";
+      styles.forEach(s=>{
+        const card=document.createElement("div");
+        card.className="style-card";
+        const img=STYLE_IMAGES[s.toLowerCase()]||`https://placehold.co/280x200?text=${encodeURIComponent(s)}`;
+        card.innerHTML=`<img src="${img}" alt="${s}"><span>${s}</span>`;
+        card.addEventListener("click",()=>{
           document.querySelectorAll(".style-card").forEach(c=>c.classList.remove("active"));
-          if(selectedStyle===style){selectedStyle="";}
-          else{selectedStyle=style; div.classList.add("active");}
+          if(selectedStyle===s)selectedStyle="";
+          else{selectedStyle=s;card.classList.add("active");}
           applyFilters();
         });
-        container.appendChild(div);
+        cont.appendChild(card);
       });
     }
 
     function renderProducts(products){
       const list=document.getElementById("product-list");
-      const counter=document.getElementById("product-count");
+      const count=document.getElementById("product-count");
       list.innerHTML="";
-      counter.textContent=`${products.length} product${products.length!==1?"s":""} found`;
-
+      count.textContent=`${products.length} product${products.length!==1?"s":""} found`;
       products.forEach(p=>{
-        const isLiked=favourites.includes(p.title);
         const card=document.createElement("div");
         card.className="product";
-        const priceVal=parseFloat(p.price);
-        const displayPrice=isFinite(priceVal)?`£${priceVal.toFixed(2)}`:"£0.00";
+        const price=parseFloat(p.price)||0;
         card.innerHTML=`
-          <img src="${p.image_url}" alt="${p.title}" onerror="this.src='https://placehold.co/640x480?text=No+Image'">
+          <img src="${p.image_url}" alt="${p.title}" onerror="this.src='https://placehold.co/320x240?text=No+Image'"/>
           <h3>${p.title}</h3>
-          <p class="price">${displayPrice}</p>
-          <button class="heart-btn ${isLiked?"liked":""}" data-title="${p.title}">❤</button>
+          <p class="price">£${price.toFixed(2)}</p>
         `;
         list.appendChild(card);
-      });
-
-      document.querySelectorAll(".heart-btn").forEach(btn=>{
-        btn.addEventListener("click",()=>{
-          const title=btn.dataset.title;
-          const idx=favourites.indexOf(title);
-          if(idx>=0){favourites.splice(idx,1); btn.classList.remove("liked");}
-          else{favourites.push(title); btn.classList.add("liked");}
-          localStorage.setItem("favourites",JSON.stringify(favourites));
-        });
       });
     }
 
@@ -256,19 +328,19 @@
       const q=document.getElementById("searchBox").value.toLowerCase();
       const cat=document.getElementById("category").value;
       const mat=document.getElementById("material").value;
-      const maxPrice=parseFloat(document.getElementById("priceRange").value);
+      const max=parseFloat(document.getElementById("priceRange").value)||Infinity;
       const filtered=allProducts.filter(p=>{
         const t=(p.title||"").toLowerCase();
         const d=(p.description||"").toLowerCase();
-        const search=!q || t.includes(q) || d.includes(q);
-        const categoryOk=!cat || p.category===cat;
-        const materialOk=!mat || p.material===mat;
-        const styleOk=!selectedStyle || p.style===selectedStyle;
-        const colours=(p.colour||"").split(/[,/|;]/).map(s=>s.trim());
-        const colourOk=selectedColours.size===0 || colours.some(c=>selectedColours.has(c));
-        const priceVal=parseFloat(p.price);
-        const priceOk=!isFinite(priceVal)?true:priceVal<=maxPrice;
-        return search && categoryOk && materialOk && styleOk && colourOk && priceOk;
+        const search=!q||t.includes(q)||d.includes(q);
+        const catOk=!cat||p.category===cat;
+        const matOk=!mat||p.material===mat;
+        const styleOk=!selectedStyle||p.style===selectedStyle;
+        const colours=(p.colour||"").split(/[,/|;]/).map(x=>x.trim());
+        const colourOk=selectedColours.size===0||colours.some(c=>selectedColours.has(c));
+        const pr=parseFloat(p.price)||0;
+        const priceOk=pr<=max;
+        return search&&catOk&&matOk&&styleOk&&colourOk&&priceOk;
       });
       renderProducts(filtered);
     }
@@ -282,8 +354,8 @@
       buildColourSwatches(uniqueValues(allProducts,"colour"));
       buildStyleCards(uniqueValues(allProducts,"style"));
       const max=Math.ceil(Math.max(...allProducts.map(p=>parseFloat(p.price)||0))/50)*50||2000;
-      const pr=document.getElementById("priceRange");
-      pr.max=max; pr.value=max;
+      const range=document.getElementById("priceRange");
+      range.max=max;range.value=max;
       document.getElementById("priceValue").textContent=`£${max}`;
       renderProducts(allProducts);
     }
@@ -300,22 +372,11 @@
       f.classList.toggle("active");
       document.getElementById("filterToggle").textContent=f.classList.contains("active")?"Hide Filters ▲":"Show Filters ⬇️";
     });
-    let showFav=false;
-    document.getElementById("toggleFavourites").addEventListener("click",()=>{
-      showFav=!showFav;
-      const btn=document.getElementById("toggleFavourites");
-      btn.textContent=showFav?"🔙 View All Products":"⭐ View Favourites";
-      if(showFav){
-        const favSet=new Set(favourites);
-        renderProducts(allProducts.filter(p=>favSet.has(p.title)));
-      } else applyFilters();
-    });
+
     loadProducts();
   </script>
 </body>
 </html>
-
-
 
 
 
