@@ -22,10 +22,6 @@
       color: var(--brand-dark);
     }
 
-    h1 {
-      margin-bottom: 20px;
-    }
-
     /* 🧠 Sticky Header */
     .header {
       position: sticky;
@@ -33,7 +29,7 @@
       z-index: 1000;
       background: var(--brand-light);
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-      padding: 10px 40px;
+      padding: 10px 40px 20px;
       display: flex;
       flex-direction: column;
       gap: 15px;
@@ -133,17 +129,18 @@
       background: #e68a61;
     }
 
-    /* 🧠 Style Selector */
+    /* 🧠 Style Selector (Now in Header) */
     .styles {
       display: flex;
       gap: 15px;
-      margin: 20px 40px;
       flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 5px;
     }
 
     .style-card {
-      width: 120px;
-      height: 120px;
+      width: 100px;
+      height: 100px;
       border-radius: 12px;
       overflow: hidden;
       cursor: pointer;
@@ -281,16 +278,16 @@
     }
 
     /* 📱 Responsive adjustments */
-    @media (max-width: 700px) {
+    @media (max-width: 800px) {
       .header {
         padding: 10px 20px;
+      }
+      .styles {
+        justify-content: flex-start;
       }
       #product-list {
         grid-template-columns: 1fr;
         padding: 0 20px 40px;
-      }
-      .styles {
-        margin: 20px;
       }
       .filters {
         flex-direction: column;
@@ -327,12 +324,24 @@
         <label for="colour">Colour</label>
         <select id="colour">
           <option value="">Any Colour</option>
-          <option value="white">White</option>
-          <option value="oak">Oak</option>
-          <option value="black">Black</option>
-          <option value="gold">Gold</option>
-          <option value="grey">Grey</option>
-          <option value="beige">Beige</option>
+          <option value="white">⚪ White</option>
+          <option value="oak">🟤 Oak</option>
+          <option value="black">⚫ Black</option>
+          <option value="gold">🟡 Gold</option>
+          <option value="grey">⚪ Grey</option>
+          <option value="beige">🟤 Beige</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label for="material">Material</label>
+        <select id="material">
+          <option value="">Any Material</option>
+          <option value="wood">Wood</option>
+          <option value="metal">Metal</option>
+          <option value="glass">Glass</option>
+          <option value="fabric">Fabric</option>
+          <option value="stone">Stone</option>
         </select>
       </div>
 
@@ -344,20 +353,20 @@
 
       <button id="applyFilters">Apply Filters</button>
     </div>
-  </div>
 
-  <div class="styles" id="styleSelector">
-    <div class="style-card" data-style="modern">
-      <img src="https://placehold.co/240x240?text=Modern" alt="Modern" /><span>Modern</span>
-    </div>
-    <div class="style-card" data-style="boho">
-      <img src="https://placehold.co/240x240?text=Boho" alt="Boho" /><span>Boho</span>
-    </div>
-    <div class="style-card" data-style="scandi">
-      <img src="https://placehold.co/240x240?text=Scandi" alt="Scandi" /><span>Scandi</span>
-    </div>
-    <div class="style-card" data-style="industrial">
-      <img src="https://placehold.co/240x240?text=Industrial" alt="Industrial" /><span>Industrial</span>
+    <div class="styles" id="styleSelector">
+      <div class="style-card" data-style="modern">
+        <img src="https://placehold.co/240x240?text=Modern" alt="Modern" /><span>Modern</span>
+      </div>
+      <div class="style-card" data-style="boho">
+        <img src="https://placehold.co/240x240?text=Boho" alt="Boho" /><span>Boho</span>
+      </div>
+      <div class="style-card" data-style="scandi">
+        <img src="https://placehold.co/240x240?text=Scandi" alt="Scandi" /><span>Scandi</span>
+      </div>
+      <div class="style-card" data-style="industrial">
+        <img src="https://placehold.co/240x240?text=Industrial" alt="Industrial" /><span>Industrial</span>
+      </div>
     </div>
   </div>
 
@@ -381,7 +390,8 @@
       const data = await res.json();
       allProducts = data.products.map(p => ({
         ...p,
-        colour: p.colour || ["white", "oak", "black", "grey"][Math.floor(Math.random() * 4)]
+        colour: p.colour || ["white", "oak", "black", "grey"][Math.floor(Math.random() * 4)],
+        material: p.material || ["wood", "metal", "glass", "fabric", "stone"][Math.floor(Math.random() * 5)]
       }));
       renderProducts(allProducts);
     }
@@ -410,6 +420,7 @@
             <h3>${p.title}</h3>
             <p>Category: ${p.category}</p>
             <p>Colour: ${p.colour}</p>
+            <p>Material: ${p.material}</p>
             <p>Price: £${(p.price_cents / 100).toFixed(2)}</p>
           </div>
           <button class="heart-btn ${isLiked ? "liked" : ""}" data-title="${p.title}">❤</button>
@@ -439,18 +450,17 @@
       const searchText = document.getElementById("searchBox").value.toLowerCase();
       const selectedCategories = Array.from(document.getElementById("category").selectedOptions).map(opt => opt.value);
       const selectedColour = document.getElementById("colour").value;
+      const selectedMaterial = document.getElementById("material").value;
       const maxPrice = parseInt(document.getElementById("priceRange").value);
 
       let filtered = allProducts.filter((p) => {
-        const matchesSearch =
-          p.title.toLowerCase().includes(searchText) ||
-          p.category.toLowerCase().includes(searchText);
+        const matchesSearch = p.title.toLowerCase().includes(searchText);
         const priceOk = p.price_cents / 100 <= maxPrice;
-        const categoryOk =
-          selectedCategories.length === 0 || selectedCategories.includes(p.category.toLowerCase());
+        const categoryOk = selectedCategories.length === 0 || selectedCategories.includes(p.category.toLowerCase());
         const colourOk = !selectedColour || p.colour.toLowerCase() === selectedColour.toLowerCase();
+        const materialOk = !selectedMaterial || p.material.toLowerCase() === selectedMaterial.toLowerCase();
         const styleOk = !selectedStyle || (p.style && p.style.toLowerCase() === selectedStyle);
-        return matchesSearch && priceOk && categoryOk && styleOk && colourOk;
+        return matchesSearch && priceOk && categoryOk && styleOk && colourOk && materialOk;
       });
 
       if (showFavourites) filtered = filtered.filter(p => favourites.includes(p.title));
@@ -465,7 +475,22 @@
     });
     document.getElementById("category").addEventListener("change", applyFilters);
     document.getElementById("colour").addEventListener("change", applyFilters);
+    document.getElementById("material").addEventListener("change", applyFilters);
     document.getElementById("applyFilters").addEventListener("click", applyFilters);
+
+    const styleCards = document.querySelectorAll(".style-card");
+    styleCards.forEach((card) => {
+      card.addEventListener("click", () => {
+        styleCards.forEach((c) => c.classList.remove("active"));
+        if (selectedStyle === card.dataset.style) {
+          selectedStyle = "";
+        } else {
+          selectedStyle = card.dataset.style;
+          card.classList.add("active");
+        }
+        applyFilters();
+      });
+    });
 
     document.getElementById("toggleFavourites").addEventListener("click", () => {
       showFavourites = !showFavourites;
