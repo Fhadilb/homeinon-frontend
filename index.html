@@ -181,6 +181,22 @@
       border: 2px solid var(--brand-accent);
       transform: scale(1.05);
     }
+/* ✨ HomeInOn brand hover effect for style cards */
+.style-card {
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border 0.25s ease;
+}
+
+.style-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 12px rgba(244, 162, 123, 0.3);
+  border: 2px solid rgba(244, 162, 123, 0.6);
+}
+
+.style-card.active {
+  border: 2px solid var(--brand-accent);
+  box-shadow: 0 0 12px rgba(244, 162, 123, 0.4);
+  transform: scale(1.05);
+}
 
     /* 🧠 Product Grid */
     #product-count {
