@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>HomeInOn</title>
   <style>
-    /* 🎨 Brand Colours */
     :root {
       --brand-bg: #f9f7f5;
       --brand-dark: #2f2f2f;
@@ -22,7 +21,6 @@
       color: var(--brand-dark);
     }
 
-    /* 🧠 Sticky Header (Desktop + Tablet only) */
     .header {
       position: sticky;
       top: 0;
@@ -36,7 +34,6 @@
       gap: 15px;
     }
 
-    /* 🧠 Top Bar */
     .top-bar {
       display: flex;
       justify-content: space-between;
@@ -58,7 +55,6 @@
       background: #e68a61;
     }
 
-    /* 🧠 Logo */
     .logo {
       display: flex;
       align-items: center;
@@ -71,7 +67,6 @@
       object-fit: contain;
     }
 
-    /* 🧠 Filters */
     .filters {
       background: var(--brand-muted);
       padding: 15px 20px;
@@ -81,6 +76,7 @@
       align-items: flex-end;
       gap: 20px;
       border: 1px solid var(--brand-border);
+      transition: max-height 0.3s ease, opacity 0.3s ease;
     }
 
     .filter-group {
@@ -131,7 +127,6 @@
       background: #e68a61;
     }
 
-    /* 🧠 Style Selector (Left-aligned) */
     .styles {
       display: flex;
       gap: 15px;
@@ -182,7 +177,6 @@
       transform: scale(1.05);
     }
 
-    /* 🧠 Product Grid */
     #product-count {
       font-weight: bold;
       margin: 20px 40px 10px;
@@ -228,7 +222,6 @@
       font-weight: bold;
     }
 
-    /* ❤️ Heart button */
     .heart-btn {
       font-size: 22px;
       color: #bbb;
@@ -259,7 +252,7 @@
 
     .pulse { animation: pulse 0.3s ease; }
 
-    /* 📱 Mobile: Remove Sticky Header */
+    /* 📱 Mobile: collapsible filters */
     @media (max-width: 800px) {
       .header {
         position: relative;
@@ -269,25 +262,33 @@
         padding: 10px 15px;
       }
 
-      .top-bar {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 10px;
+      .filters {
+        overflow: hidden;
+        max-height: 0;
+        opacity: 0;
+      }
+
+      .filters.open {
+        max-height: 1000px;
+        opacity: 1;
+        margin-top: 10px;
+      }
+
+      .toggle-filters {
+        background: var(--brand-accent);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: bold;
+        width: 100%;
       }
 
       .styles {
         justify-content: flex-start;
         margin: 10px 0;
         gap: 10px;
-      }
-
-      .filters {
-        flex-direction: column;
-        align-items: stretch;
-      }
-
-      .filter-group {
-        width: 100%;
       }
 
       #product-list {
@@ -307,21 +308,16 @@
     </div>
 
     <div class="styles" id="styleSelector">
-      <div class="style-card" data-style="modern">
-        <img src="https://placehold.co/240x240?text=Modern" alt="Modern" /><span>Modern</span>
-      </div>
-      <div class="style-card" data-style="boho">
-        <img src="https://placehold.co/240x240?text=Boho" alt="Boho" /><span>Boho</span>
-      </div>
-      <div class="style-card" data-style="scandi">
-        <img src="https://placehold.co/240x240?text=Scandi" alt="Scandi" /><span>Scandi</span>
-      </div>
-      <div class="style-card" data-style="industrial">
-        <img src="https://placehold.co/240x240?text=Industrial" alt="Industrial" /><span>Industrial</span>
-      </div>
+      <div class="style-card" data-style="modern"><img src="https://placehold.co/240x240?text=Modern" /><span>Modern</span></div>
+      <div class="style-card" data-style="boho"><img src="https://placehold.co/240x240?text=Boho" /><span>Boho</span></div>
+      <div class="style-card" data-style="scandi"><img src="https://placehold.co/240x240?text=Scandi" /><span>Scandi</span></div>
+      <div class="style-card" data-style="industrial"><img src="https://placehold.co/240x240?text=Industrial" /><span>Industrial</span></div>
     </div>
 
-    <div class="filters">
+    <!-- Mobile filter toggle button -->
+    <button class="toggle-filters" id="filterToggle">Show Filters ▼</button>
+
+    <div class="filters" id="filtersPanel">
       <div class="filter-group">
         <label for="searchBox">Search Products</label>
         <input type="text" id="searchBox" placeholder="Type to search..." />
@@ -470,6 +466,13 @@
       renderProducts(filtered);
     }
 
+    document.getElementById("filterToggle").addEventListener("click", () => {
+      const panel = document.getElementById("filtersPanel");
+      panel.classList.toggle("open");
+      document.getElementById("filterToggle").textContent =
+        panel.classList.contains("open") ? "Hide Filters ▲" : "Show Filters ▼";
+    });
+
     document.getElementById("searchBox").addEventListener("input", applyFilters);
     document.getElementById("priceRange").addEventListener("input", (e) => {
       document.getElementById("priceValue").textContent = e.target.value;
@@ -506,6 +509,7 @@
   </script>
 </body>
 </html>
+
 
 
 
