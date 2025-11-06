@@ -12,6 +12,7 @@
       --brand-accent: #f4a27b;
       --brand-light: #ffffff;
       --brand-border: #e5e2df;
+      --brand-muted: #f0ece8;
     }
 
     body {
@@ -74,34 +75,62 @@
 
     /* 🧠 Filters */
     .filters {
-      background: var(--brand-light);
-      padding: 15px;
-      border-radius: 10px;
-      border: 1px solid var(--brand-border);
+      background: var(--brand-muted);
+      padding: 15px 20px;
+      border-radius: 12px;
       display: flex;
       flex-wrap: wrap;
-      align-items: center;
+      align-items: flex-end;
       gap: 20px;
+      border: 1px solid var(--brand-border);
     }
 
     .filter-group {
       display: flex;
       flex-direction: column;
+      flex: 1;
+      min-width: 150px;
     }
 
     label {
       font-size: 0.9em;
       color: #555;
       margin-bottom: 4px;
+      font-weight: bold;
     }
 
     select,
     input[type="range"],
     input[type="text"] {
-      padding: 5px;
-      border-radius: 5px;
+      padding: 8px;
+      border-radius: 8px;
       border: 1px solid #ccc;
       font-size: 1em;
+      background: var(--brand-light);
+      transition: border 0.2s;
+    }
+
+    select:focus,
+    input[type="text"]:focus,
+    input[type="range"]:focus {
+      border-color: var(--brand-accent);
+      outline: none;
+    }
+
+    #applyFilters {
+      background: var(--brand-accent);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 25px;
+      cursor: pointer;
+      font-weight: bold;
+      align-self: flex-end;
+      transition: background 0.2s;
+    }
+
+    #applyFilters:hover {
+      background: #e68a61;
     }
 
     /* 🧠 Style Selector */
@@ -263,6 +292,9 @@
       .styles {
         margin: 20px;
       }
+      .filters {
+        flex-direction: column;
+      }
     }
   </style>
 </head>
@@ -282,12 +314,25 @@
       </div>
 
       <div class="filter-group">
-        <label for="category">Categories</label>
+        <label for="category">Category</label>
         <select id="category" multiple size="4">
           <option value="furniture">Furniture</option>
           <option value="decor">Decor</option>
           <option value="lighting">Lighting</option>
           <option value="mirrors">Mirrors</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label for="colour">Colour</label>
+        <select id="colour">
+          <option value="">Any Colour</option>
+          <option value="white">White</option>
+          <option value="oak">Oak</option>
+          <option value="black">Black</option>
+          <option value="gold">Gold</option>
+          <option value="grey">Grey</option>
+          <option value="beige">Beige</option>
         </select>
       </div>
 
@@ -334,7 +379,10 @@
     async function loadProducts() {
       const res = await fetch(API_URL);
       const data = await res.json();
-      allProducts = data.products;
+      allProducts = data.products.map(p => ({
+        ...p,
+        colour: p.colour || ["white", "oak", "black", "grey"][Math.floor(Math.random() * 4)]
+      }));
       renderProducts(allProducts);
     }
 
@@ -361,6 +409,7 @@
           <div>
             <h3>${p.title}</h3>
             <p>Category: ${p.category}</p>
+            <p>Colour: ${p.colour}</p>
             <p>Price: £${(p.price_cents / 100).toFixed(2)}</p>
           </div>
           <button class="heart-btn ${isLiked ? "liked" : ""}" data-title="${p.title}">❤</button>
@@ -388,9 +437,8 @@
 
     function applyFilters() {
       const searchText = document.getElementById("searchBox").value.toLowerCase();
-      const selectedCategories = Array.from(document.getElementById("category").selectedOptions).map(
-        (opt) => opt.value
-      );
+      const selectedCategories = Array.from(document.getElementById("category").selectedOptions).map(opt => opt.value);
+      const selectedColour = document.getElementById("colour").value;
       const maxPrice = parseInt(document.getElementById("priceRange").value);
 
       let filtered = allProducts.filter((p) => {
@@ -400,13 +448,12 @@
         const priceOk = p.price_cents / 100 <= maxPrice;
         const categoryOk =
           selectedCategories.length === 0 || selectedCategories.includes(p.category.toLowerCase());
+        const colourOk = !selectedColour || p.colour.toLowerCase() === selectedColour.toLowerCase();
         const styleOk = !selectedStyle || (p.style && p.style.toLowerCase() === selectedStyle);
-        return matchesSearch && priceOk && categoryOk && styleOk;
+        return matchesSearch && priceOk && categoryOk && styleOk && colourOk;
       });
 
-      if (showFavourites) {
-        filtered = filtered.filter((p) => favourites.includes(p.title));
-      }
+      if (showFavourites) filtered = filtered.filter(p => favourites.includes(p.title));
 
       renderProducts(filtered);
     }
@@ -417,6 +464,7 @@
       applyFilters();
     });
     document.getElementById("category").addEventListener("change", applyFilters);
+    document.getElementById("colour").addEventListener("change", applyFilters);
     document.getElementById("applyFilters").addEventListener("click", applyFilters);
 
     document.getElementById("toggleFavourites").addEventListener("click", () => {
@@ -431,3 +479,4 @@
   </script>
 </body>
 </html>
+
