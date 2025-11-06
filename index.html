@@ -144,8 +144,15 @@
     /* 🧠 Product Grid Layout */
     #product-list {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      grid-template-columns: repeat(2, 1fr);
       gap: 20px;
+    }
+
+    /* 📱 Mobile: 1 column layout */
+    @media (max-width: 700px) {
+      #product-list {
+        grid-template-columns: 1fr;
+      }
     }
 
     @keyframes fadeIn {
