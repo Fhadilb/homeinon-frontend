@@ -85,14 +85,6 @@
       color: var(--muted);
     }
 
-    .filter-group input,
-    .filter-group select {
-      padding: 8px;
-      border-radius: 8px;
-      border: 1px solid #ddd;
-      font-size: 1rem;
-    }
-
     .styles {
       display: flex;
       gap: 12px;
@@ -288,12 +280,18 @@
 
   <script>
     const API_URL = "https://homeinon-backend.onrender.com/products";
+
     const colourMap = {
-      white: "#ffffff", black: "#000000", grey: "#9e9e9e", oak: "#c49a6c",
-      walnut: "#7a5734", pine: "#d5b887", beige: "#d9c7a2", gold: "#c8a951",
-      silver: "#bdbdbd", blue: "#5a7abf", green: "#6aa67a", red: "#c74c4c",
-      brown: "#8b5a2b", cream: "#f3e9d2"
+      white:"#ffffff", black:"#000000", grey:"#9e9e9e", oak:"#c49a6c",
+      walnut:"#7a5734", pine:"#d5b887", beige:"#d9c7a2", gold:"#c8a951",
+      silver:"#bdbdbd", blue:"#5a7abf", green:"#6aa67a", red:"#c74c4c",
+      brown:"#8b5a2b", cream:"#f3e9d2", yellow:"#f8e473", ivory:"#fffff0",
+      natural:"#d6b98c", charcoal:"#36454f", teal:"#367588", taupe:"#b38b6d",
+      stone:"#c2b59b", pink:"#f7c6d9", orange:"#f6a04d", navy:"#001f3f",
+      mink:"#b7a295", copper:"#b87333", bronze:"#cd7f32", lilac:"#c8a2c8",
+      sage:"#a9bfa5", mustard:"#e1ad01", terracotta:"#e2725b", pewter:"#8e9292"
     };
+
     function colourHex(name){ return colourMap[name?.toLowerCase()] || "#ccc"; }
 
     let allProducts = [];
@@ -399,7 +397,6 @@
   </script>
 </body>
 </html>
-
 
 
 
