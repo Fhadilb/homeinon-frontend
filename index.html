@@ -370,12 +370,13 @@
       -webkit-box-orient: vertical;
       overflow: hidden;
     }
-    .price{
-      font-weight:800; 
-      color:var(--brand-accent);
-      font-size: 1.15rem;
-      margin-top: auto;
-    }
+ /* ===== PRICE STYLES ===== */
+.price {
+  font-weight: 800;
+  color: var(--ink); /* now black */
+  font-size: 1.15rem;
+  margin-top: auto;
+}
 
     /* ===== HEART BUTTONS ===== */
     .heart-btn{
@@ -474,12 +475,12 @@
       line-height: 1.3;
       color: var(--ink);
     }
-    .modal .price-lg{
-      font-size:1.5rem; 
-      font-weight:800; 
-      color:var(--brand-accent); 
-      margin-bottom:16px;
-    }
+    .modal .price-lg {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--ink); /* now black inside modal too */
+  margin-bottom: 16px;
+}
 
     .meta{
       display:grid; 
@@ -487,22 +488,32 @@
       gap:12px; 
       margin:16px 0 20px;
     }
-    .meta div{
-      background:#fafafa; 
-      border:1px solid #eee; 
-      border-radius:10px; 
-      padding:14px; 
-      font-size:0.9rem;
-      line-height: 1.4;
-    }
-    .meta div strong{
-      display: block;
-      color: var(--muted);
-      font-size: 0.8rem;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 4px;
-    }
+.meta div {
+  background: var(--brand-accent);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 14px;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  transition: var(--transition);
+}
+
+.meta div strong {
+  display: block;
+  color: rgba(255,255,255,0.85);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.meta div:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
 
     .desc{
       color:#555; 
@@ -595,16 +606,7 @@
         -webkit-backdrop-filter:none; 
         background:var(--card);
       }
-        /* ✅ Add this block at the end of the same @media */
-  .product img {
-    width: 100%;
-    height: auto;
-    aspect-ratio: 4 / 3;   /* keeps consistent tile proportion */
-    object-fit: cover;     /* same visual crop as desktop */
-    background: #fff;
-    display: block;
-  }
-}
+      
       .top-bar{
         padding: 12px 16px;
       }
@@ -667,6 +669,36 @@
         grid-template-columns: 1fr;
       }
     }
+    /* Add breathing space above "Show Filters" on mobile */
+@media (max-width: 768px) {
+  #filterToggle {
+    margin-top: 8px; /* small gap between style cards and button */
+  }
+}
+
+    /* === FIX MOBILE IMAGE SIZING === */
+@media (max-width:768px){
+  .product img{
+    width: 100%;
+    height: auto;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+  }
+}
+
+/* === FIX FILTER TOGGLE ARROW === */
+#filterToggle {
+  background-image: var(--caret-svg);
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  background-size: 12px 8px;
+  text-align: left;
+}
+
+#filterToggle.active {
+  transform: rotate(0); /* same base arrow, but we’ll flip text only */
+}
+
   </style>
 </head>
 <body>
@@ -678,7 +710,8 @@
 
     <div class="styles" id="styleSelector"></div>
 
-    <button id="filterToggle">Show Filters ⬇️</button>
+   <button id="filterToggle">Show Filters ▼</button>
+
 
     <section class="filters" id="filters">
       <div class="filter-group">
@@ -744,15 +777,22 @@
     const API_URL = "https://homeinon-backend.onrender.com/products";
 
     const STYLE_IMAGES = {
-      "modern":"style-modern.jpg",
-      "boho":"style-boho.jpg",
-      "scandi":"style-scandi.jpg",
-      "industrial":"style-industrial.jpg",
-      "farmhouse":"https://placehold.co/200x150?text=Farmhouse",
-      "mid-century":"https://placehold.co/200x150?text=Mid-century",
-      "art deco":"https://placehold.co/200x150?text=Art+Deco",
-      "coastal":"https://placehold.co/200x150?text=Coastal"
-    };
+  const STYLE_IMAGES = {
+  "contemporary": "assets/style-contemporary.jpg",
+  "scandinavian": "assets/style-scandinavian.jpg",
+  "transitional": "assets/style-transitional.jpg",
+  "mid century modern": "assets/style-mid-century-modern.jpg",
+  "traditional": "assets/style-traditional.jpg",
+  "minimalism": "assets/style-minimalism.jpg",
+  "art deco": "assets/style-art-deco.jpg",
+  "bohemian": "assets/style-bohemian.jpg",
+  "coastal": "assets/style-coastal.jpg",
+  "japandi": "assets/style-japandi.jpg",
+  "country": "assets/style-country.jpg",
+  "maximalism": "assets/style-maximalism.jpg",
+  "regency": "assets/style-regency.jpg"
+};
+
 
     const colourMap = {
       white:"#ffffff", black:"#000000", grey:"#9e9e9e", gray:"#9e9e9e",
@@ -1078,12 +1118,12 @@
       applyFilters();
     });
 
-    document.getElementById("filterToggle").addEventListener("click", ()=>{
-      const f = document.getElementById("filters");
-      f.classList.toggle("active");
-      document.getElementById("filterToggle").textContent = f.classList.contains("active") ? "Hide Filters ▲" : "Show Filters ⬇️";
-    });
-
+document.getElementById("filterToggle").addEventListener("click", ()=>{
+  const btn = document.getElementById("filterToggle");
+  const f = document.getElementById("filters");
+  const isActive = f.classList.toggle("active");
+  btn.textContent = isActive ? "Hide Filters ▲" : "Show Filters ▼";
+});
     document.getElementById("searchBox").addEventListener("input", ()=>{ updateFilterOptions(); applyFilters(); });
     document.getElementById("category").addEventListener("change", ()=>{ updateFilterOptions(); applyFilters(); });
     document.getElementById("material").addEventListener("change", ()=>{ updateFilterOptions(); applyFilters(); });
