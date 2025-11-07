@@ -13,6 +13,7 @@
       --card:#FFFFFF;
       --input-border:#dddddd;
       --caret:#666666;
+      --caret-svg:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'><path fill='%23666' d='M1 0l4 4 4-4 1 1-5 5-5-5z'/></svg>");
     }
     *{box-sizing:border-box;margin:0;padding:0}
     body{font-family:Arial, sans-serif;background:var(--brand-bg);color:var(--ink)}
@@ -44,24 +45,36 @@
     .filters{ display:grid; grid-template-columns:repeat(5,minmax(160px,1fr)); gap:16px; padding:10px 20px; }
     .filter-group{display:flex; flex-direction:column; gap:6px}
     .filter-group label{font-size:.9rem; color:var(--muted)}
-    .filter-group input,
+
+    /* Make ALL selects share the same caret so they match perfectly */
     .filter-group select,
+    .filter-group input[type="text"],
     .filter-group input[type="range"]{
-      height:38px; padding:8px 12px; border-radius:8px; border:1px solid var(--input-border); font-size:1rem; background:#fff;
+      height:38px; font-size:1rem;
     }
 
-    /* Colour dropdown: match <select> look (same height, chevron, border) */
+    .filter-group select{
+      padding:0 36px 0 12px;
+      border-radius:8px; border:1px solid var(--input-border); background:#fff;
+      appearance:none; -webkit-appearance:none; -moz-appearance:none;
+      background-image:var(--caret-svg);
+      background-repeat:no-repeat;
+      background-position:right 12px center;
+      background-size:12px 8px;
+      color:var(--ink);
+    }
+
+    /* Colour dropdown: identical look to the selects (same caret, height, padding, border) */
     .colour-dropdown{position:relative}
     .colour-select{
       height:38px; display:flex; align-items:center;
       padding:0 36px 0 12px; border-radius:8px; border:1px solid var(--input-border);
       background:#fff; cursor:pointer; font-size:1rem; color:var(--ink);
       position:relative;
-    }
-    .colour-select::after{
-      content:""; position:absolute; right:12px; top:50%; transform:translateY(-50%);
-      width:0; height:0; border-left:6px solid transparent; border-right:6px solid transparent; border-top:6px solid var(--caret);
-      pointer-events:none;
+      background-image:var(--caret-svg);
+      background-repeat:no-repeat;
+      background-position:right 12px center;
+      background-size:12px 8px;
     }
     .colour-list{
       display:none; position:absolute; top:110%; left:0; right:0; background:#fff;
@@ -83,10 +96,10 @@
     .product-info{padding:14px}
     .price{font-weight:700; color:var(--brand-accent)}
 
-    /* Modal (wider + space so X never overlaps title) */
+    /* Modal */
     .modal-overlay{ position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:center; justify-content:center; z-index:2000; }
     .modal{
-      width:min(1100px, 96vw);               /* wider */
+      width:min(1100px, 96vw);
       max-height:90vh; overflow:auto;
       background:#fff; border-radius:14px; box-shadow:0 20px 60px rgba(0,0,0,.25);
       display:grid; grid-template-columns: 1.35fr 1fr; gap:0; position:relative;
@@ -126,7 +139,6 @@
       <button id="toggleFavourites">⭐ View Favourites</button>
     </div>
 
-    <!-- STYLE CARDS -->
     <div class="styles" id="styleSelector"></div>
 
     <button id="filterToggle">Show Filters ⬇️</button>
@@ -164,7 +176,6 @@
   <p id="product-count"></p>
   <div id="product-list"></div>
 
-  <!-- Product Modal -->
   <div id="productModal" class="modal-overlay" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
       <button class="close-x" id="modalClose" aria-label="Close">✕</button>
@@ -396,7 +407,6 @@
     modalOverlay.addEventListener("click", (e)=>{ if(e.target === modalOverlay) closeProductModal(); });
     document.addEventListener("keydown", (e)=>{ if(e.key === "Escape") closeProductModal(); });
 
-    /* Load & build */
     async function loadProducts(){
       const res = await fetch(API_URL);
       const data = await res.json();
@@ -443,8 +453,6 @@
   </script>
 </body>
 </html>
-
-
 
 
 
