@@ -595,7 +595,16 @@
         -webkit-backdrop-filter:none; 
         background:var(--card);
       }
-      
+        /* ✅ Add this block at the end of the same @media */
+  .product img {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 4 / 3;   /* keeps consistent tile proportion */
+    object-fit: cover;     /* same visual crop as desktop */
+    background: #fff;
+    display: block;
+  }
+}
       .top-bar{
         padding: 12px 16px;
       }
