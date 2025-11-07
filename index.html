@@ -18,7 +18,6 @@
     *{box-sizing:border-box;margin:0;padding:0}
     body{font-family:Arial, sans-serif;background:var(--brand-bg);color:var(--ink)}
 
-    /* Sticky header (desktop) */
     header{
       position:sticky; top:0; z-index:1000;
       background:rgba(255,255,255,0.85);
@@ -31,22 +30,18 @@
     button{background:var(--brand-accent); color:#fff; border:none; border-radius:8px; padding:8px 16px; font-weight:700; cursor:pointer; transition:.2s;}
     button:hover{background:#e18f6a}
 
-    /* Style cards */
     .styles{ display:flex; gap:12px; overflow-x:auto; padding:10px 20px; }
     .style-card{ min-width:130px; height:110px; border-radius:10px; overflow:hidden; position:relative; cursor:pointer; border:2px solid transparent; flex:0 0 auto; transition:transform .2s, border .2s; }
     .style-card img{width:100%; height:100%; object-fit:cover}
     .style-card span{ position:absolute; bottom:5px; left:0; right:0; text-align:center; color:#fff; font-weight:700; text-shadow:0 0 4px rgba(0,0,0,0.8); background:rgba(0,0,0,0.25); }
     .style-card.active{border:2px solid var(--brand-accent); transform:scale(1.05)}
 
-    /* Mobile filter toggle */
     #filterToggle{ display:none; width:100%; background:var(--brand-accent); color:#fff; border:none; padding:10px; cursor:pointer; font-weight:700; }
 
-    /* Filters */
     .filters{ display:grid; grid-template-columns:repeat(5,minmax(160px,1fr)); gap:16px; padding:10px 20px; }
     .filter-group{display:flex; flex-direction:column; gap:6px}
     .filter-group label{font-size:.9rem; color:var(--muted)}
 
-    /* Make ALL selects share the same caret so they match perfectly */
     .filter-group select,
     .filter-group input[type="text"],
     .filter-group input[type="range"]{
@@ -64,7 +59,6 @@
       color:var(--ink);
     }
 
-    /* Colour dropdown: identical look to the selects (same caret, height, padding, border) */
     .colour-dropdown{position:relative}
     .colour-select{
       height:38px; display:flex; align-items:center;
@@ -86,7 +80,6 @@
     .colour-item:hover{background:#f8f8f8}
     .swatch{width:16px; height:16px; border-radius:50%; border:1px solid #ccc}
 
-    /* Products */
     #product-count{margin:15px 20px 10px; font-weight:700}
     #product-list{ display:grid; gap:24px; padding:0 20px 30px; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); }
     .product{ background:#fff; border-radius:12px; box-shadow:0 1px 8px rgba(0,0,0,.08); overflow:hidden; position:relative; transition:transform .2s; cursor:pointer; }
@@ -96,7 +89,6 @@
     .product-info{padding:14px}
     .price{font-weight:700; color:var(--brand-accent)}
 
-    /* Modal */
     .modal-overlay{ position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:center; justify-content:center; z-index:2000; }
     .modal{
       width:min(1100px, 96vw);
@@ -107,7 +99,7 @@
     .modal .modal-img{ background:#f3f3f3; min-height:360px; }
     .modal .modal-img img{ width:100%; height:100%; object-fit:cover; border-top-left-radius:14px; border-bottom-left-radius:14px; }
     .modal .modal-body{ padding:24px 24px 22px; }
-    .modal h2{ margin-bottom:8px; padding-right:48px; } /* space for the X */
+    .modal h2{ margin-bottom:8px; padding-right:48px; }
     .modal .price-lg{font-size:1.3rem; font-weight:800; color:var(--brand-accent); margin-bottom:10px}
     .meta{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:10px 0 14px}
     .meta div{background:#fafafa; border:1px solid #eee; border-radius:8px; padding:10px; font-size:.95rem}
@@ -240,6 +232,40 @@
     let selectedStyle = "";
     let selectedColour = "";
 
+    /* ---------- helper: get current state ---------- */
+    function getState(){
+      return {
+        q: document.getElementById("searchBox").value.toLowerCase(),
+        category: document.getElementById("category").value,
+        material: document.getElementById("material").value,
+        colour: selectedColour,
+        style: selectedStyle,
+        max: parseFloat(document.getElementById("priceRange").value) || Infinity
+      };
+    }
+
+    /* ---------- filter with optional field to ignore (for repopulating options) ---------- */
+    function filterProducts(state, ignoreField){
+      return allProducts.filter(p=>{
+        const t = (p.title||"").toLowerCase();
+        const d = (p.description||"").toLowerCase();
+        const price = parseFloat(p.price)||0;
+
+        const checks = {
+          q: (!state.q) || t.includes(state.q) || d.includes(state.q),
+          category: (!state.category) || p.category === state.category,
+          material: (!state.material) || p.material === state.material,
+          colour: (!state.colour) || (p.colour && p.colour.toLowerCase().includes(state.colour.toLowerCase())),
+          style: (!state.style) || p.style === state.style,
+          max: price <= state.max
+        };
+
+        if(ignoreField){ checks[ignoreField] = true; }
+        return checks.q && checks.category && checks.material && checks.colour && checks.style && checks.max;
+      });
+    }
+
+    /* ---------- uniques ---------- */
     const uniqueValues = (arr, field)=>{
       const s = new Set();
       arr.forEach(p=>{
@@ -251,6 +277,7 @@
       return [...s];
     };
 
+    /* ---------- build UI data lists ---------- */
     function buildStyleCards(styles){
       const row = document.getElementById("styleSelector");
       row.innerHTML = "";
@@ -263,15 +290,18 @@
           document.querySelectorAll(".style-card").forEach(c=>c.classList.remove("active"));
           if(selectedStyle === style){ selectedStyle = ""; }
           else { selectedStyle = style; card.classList.add("active"); }
+          updateFilterOptions();   // <-- dependent update
           applyFilters();
         });
         row.appendChild(card);
       });
     }
 
-    function buildColourDropdown(colours){
+    function buildColourDropdown(colours, keepSelection=true){
       const select = document.getElementById("colourSelect");
       const list = document.getElementById("colourList");
+      const prev = keepSelection ? selectedColour : "";
+
       list.innerHTML = "";
 
       const allItem = document.createElement("div");
@@ -290,12 +320,25 @@
           selectedColour = c;
           select.innerHTML = `<span class="swatch" style="background:${colourHex(c)}"></span>${c}`;
           list.classList.remove("active");
+          updateFilterOptions();   // <-- dependent update
           applyFilters();
         });
         list.appendChild(item);
       });
 
-      select.addEventListener("click", ()=> list.classList.toggle("active"));
+      // Restore label
+      if(prev){
+        selectedColour = colours.includes(prev) ? prev : "";
+        if(selectedColour){
+          select.innerHTML = `<span class="swatch" style="background:${colourHex(selectedColour)}"></span>${selectedColour}`;
+        }else{
+          select.textContent = "All";
+        }
+      }else{
+        select.textContent = "All";
+      }
+
+      select.onclick = ()=> list.classList.toggle("active");
       document.addEventListener("click", e=>{
         if(!e.target.closest(".colour-dropdown")) list.classList.remove("active");
       });
@@ -325,28 +368,35 @@
     }
 
     function applyFilters(){
-      const q = document.getElementById("searchBox").value.toLowerCase();
-      const cat = document.getElementById("category").value;
-      const mat = document.getElementById("material").value;
-      const max = parseFloat(document.getElementById("priceRange").value) || Infinity;
-
-      const filtered = allProducts.filter(p=>{
-        const t = (p.title||"").toLowerCase();
-        const d = (p.description||"").toLowerCase();
-        const search = !q || t.includes(q) || d.includes(q);
-        const catOK = !cat || p.category === cat;
-        const matOK = !mat || p.material === mat;
-        const styleOK = !selectedStyle || p.style === selectedStyle;
-        const colourOK = !selectedColour || (p.colour && p.colour.toLowerCase().includes(selectedColour.toLowerCase()));
-        const pr = parseFloat(p.price) || 0;
-        const priceOK = pr <= max;
-        return search && catOK && matOK && styleOK && colourOK && priceOK;
-      });
-
+      const filtered = filterProducts(getState());
       renderProducts(filtered);
     }
 
-    /* Modal */
+    /* ---------- DEPENDENT FILTERS ---------- */
+    function updateFilterOptions(){
+      const state = getState();
+
+      // Recompute options for each control based on other filters
+      // Category options (ignore 'category' while filtering)
+      const catList = uniqueValues(filterProducts(state, 'category'), 'category').sort();
+      const catSel = document.getElementById("category");
+      const currentCat = state.category;
+      catSel.innerHTML = '<option value="">All</option>' + catList.map(c=>`<option value="${c}">${c}</option>`).join("");
+      if(currentCat && catList.includes(currentCat)) catSel.value = currentCat; else catSel.value = "";
+
+      // Material options
+      const matList = uniqueValues(filterProducts(state, 'material'), 'material').sort();
+      const matSel = document.getElementById("material");
+      const currentMat = state.material;
+      matSel.innerHTML = '<option value="">All</option>' + matList.map(m=>`<option value="${m}">${m}</option>`).join("");
+      if(currentMat && matList.includes(currentMat)) matSel.value = currentMat; else matSel.value = "";
+
+      // Colour options (rebuild custom dropdown)
+      const colourList = uniqueValues(filterProducts(state, 'colour'), 'colour').sort();
+      buildColourDropdown(colourList, /*keepSelection*/ true);
+    }
+
+    /* ---------- Modal ---------- */
     const modalOverlay = document.getElementById("productModal");
     const modalImage   = document.getElementById("modalImage");
     const modalTitle   = document.getElementById("modalTitle");
@@ -360,24 +410,7 @@
     const modalClose   = document.getElementById("modalClose");
 
     function openProductModal(index){
-      const q = document.getElementById("searchBox").value.toLowerCase();
-      const cat = document.getElementById("category").value;
-      const mat = document.getElementById("material").value;
-      const max = parseFloat(document.getElementById("priceRange").value) || Infinity;
-
-      const filtered = allProducts.filter(p=>{
-        const t = (p.title||"").toLowerCase();
-        const d = (p.description||"").toLowerCase();
-        const search = !q || t.includes(q) || d.includes(q);
-        const catOK = !cat || p.category === cat;
-        const matOK = !mat || p.material === mat;
-        const styleOK = !selectedStyle || p.style === selectedStyle;
-        const colourOK = !selectedColour || (p.colour && p.colour.toLowerCase().includes(selectedColour.toLowerCase()));
-        const pr = parseFloat(p.price) || 0;
-        const priceOK = pr <= max;
-        return search && catOK && matOK && styleOK && colourOK && priceOK;
-      });
-
+      const filtered = filterProducts(getState());
       const p = filtered[index];
       if(!p) return;
 
@@ -407,6 +440,7 @@
     modalOverlay.addEventListener("click", (e)=>{ if(e.target === modalOverlay) closeProductModal(); });
     document.addEventListener("keydown", (e)=>{ if(e.key === "Escape") closeProductModal(); });
 
+    /* ---------- Load & boot ---------- */
     async function loadProducts(){
       const res = await fetch(API_URL);
       const data = await res.json();
@@ -415,19 +449,25 @@
         style: p.style || deriveStyle(p.title || p.description)
       }));
 
-      const styles = uniqueValues(allProducts, "style");
-      const cats   = uniqueValues(allProducts, "category");
-      const mats   = uniqueValues(allProducts, "material");
-      const cols   = uniqueValues(allProducts, "colour");
+      // Initial population (all options)
+      const styles = uniqueValues(allProducts, "style").sort();
+      const cats   = uniqueValues(allProducts, "category").sort();
+      const mats   = uniqueValues(allProducts, "material").sort();
+      const cols   = uniqueValues(allProducts, "colour").sort();
 
+      // Style cards
+      buildStyleCards(styles);
+
+      // Category & material
       const catSel = document.getElementById("category");
       const matSel = document.getElementById("material");
-      catSel.innerHTML = '<option value="">All</option>' + cats.sort().map(c=>`<option value="${c}">${c}</option>`).join("");
-      matSel.innerHTML = '<option value="">All</option>' + mats.sort().map(m=>`<option value="${m}">${m}</option>`).join("");
+      catSel.innerHTML = '<option value="">All</option>' + cats.map(c=>`<option value="${c}">${c}</option>`).join("");
+      matSel.innerHTML = '<option value="">All</option>' + mats.map(m=>`<option value="${m}">${m}</option>`).join("");
 
-      buildColourDropdown(cols.sort());
-      buildStyleCards(styles.sort());
+      // Colour dropdown
+      buildColourDropdown(cols, true);
 
+      // Price range
       const maxP = Math.ceil(Math.max(0, ...allProducts.map(p=>parseFloat(p.price)||0))/50)*50 || 2000;
       const pr = document.getElementById("priceRange");
       pr.max = maxP; pr.value = maxP;
@@ -436,24 +476,26 @@
       renderProducts(allProducts);
     }
 
+    // Mobile toggle
     document.getElementById("filterToggle").addEventListener("click", ()=>{
       const f = document.getElementById("filters");
       f.classList.toggle("active");
       document.getElementById("filterToggle").textContent = f.classList.contains("active") ? "Hide Filters ▲" : "Show Filters ⬇️";
     });
-    document.getElementById("searchBox").addEventListener("input", applyFilters);
-    document.getElementById("category").addEventListener("change", applyFilters);
-    document.getElementById("material").addEventListener("change", applyFilters);
+
+    // Events: also call updateFilterOptions so lists stay in sync
+    document.getElementById("searchBox").addEventListener("input", ()=>{ updateFilterOptions(); applyFilters(); });
+    document.getElementById("category").addEventListener("change", ()=>{ updateFilterOptions(); applyFilters(); });
+    document.getElementById("material").addEventListener("change", ()=>{ updateFilterOptions(); applyFilters(); });
     document.getElementById("priceRange").addEventListener("input", e=>{
       document.getElementById("priceValue").textContent = `£${e.target.value}`;
-      applyFilters();
+      updateFilterOptions(); applyFilters();
     });
 
     loadProducts();
   </script>
 </body>
 </html>
-
 
 
 
