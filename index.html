@@ -34,7 +34,7 @@
     }
     button:hover{background:#e18f6a}
 
-    /* Style cards (ALWAYS visible in header on desktop) */
+    /* Style cards */
     .styles{
       display:flex; gap:12px; overflow-x:auto; padding:10px 20px;
     }
@@ -93,7 +93,7 @@
     }
     .product{
       background:#fff; border-radius:12px; box-shadow:0 1px 8px rgba(0,0,0,.08);
-      overflow:hidden; position:relative; transition:transform .2s;
+      overflow:hidden; position:relative; transition:transform .2s; cursor:pointer;
     }
     .product:hover{transform:translateY(-4px)}
     .product img{width:100%; height:320px; object-fit:cover}
@@ -104,13 +104,49 @@
     .product-info{padding:14px}
     .price{font-weight:700; color:var(--brand-accent)}
 
-    /* Mobile: header not sticky, filters collapsible */
+    /* Modal */
+    .modal-overlay{
+      position:fixed; inset:0; background:rgba(0,0,0,.45);
+      display:none; align-items:center; justify-content:center; z-index:2000;
+    }
+    .modal{
+      width:min(920px, 94vw); max-height:90vh; overflow:auto;
+      background:#fff; border-radius:14px; box-shadow:0 20px 60px rgba(0,0,0,.25);
+      display:grid; grid-template-columns: 1.2fr 1fr; gap:0; position:relative;
+    }
+    .modal .modal-img{
+      background:#f3f3f3; min-height:320px;
+    }
+    .modal .modal-img img{
+      width:100%; height:100%; object-fit:cover; border-top-left-radius:14px; border-bottom-left-radius:14px;
+    }
+    .modal .modal-body{padding:20px}
+    .modal h2{margin-bottom:8px}
+    .modal .price-lg{font-size:1.25rem; font-weight:800; color:var(--brand-accent); margin-bottom:10px}
+    .meta{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:10px 0 14px}
+    .meta div{background:#fafafa; border:1px solid #eee; border-radius:8px; padding:10px; font-size:.95rem}
+    .desc{color:#444; line-height:1.5; margin:6px 0 14px}
+    .modal-actions{display:flex; gap:10px; margin-top:8px; flex-wrap:wrap}
+    .btn-outline{
+      background:#fff; color:#333; border:1px solid #ddd; border-radius:8px; padding:8px 14px; cursor:pointer;
+    }
+    .btn-primary{
+      background:var(--brand-accent); color:#fff; border:none; border-radius:8px; padding:10px 16px; font-weight:700; cursor:pointer;
+    }
+    .close-x{
+      position:absolute; top:10px; right:10px; background:#fff; border:1px solid #ddd; border-radius:8px;
+      padding:6px 10px; cursor:pointer; font-weight:700;
+    }
+
+    /* Mobile: header not sticky, filters collapsible; modal stacked */
     @media (max-width:768px){
       header{position:static; backdrop-filter:none; -webkit-backdrop-filter:none; background:var(--card)}
       .filters{display:none; grid-template-columns:1fr}
       .filters.active{display:grid}
       #filterToggle{display:block}
       .styles{padding:10px 20px}
+      .modal{grid-template-columns:1fr}
+      .modal .modal-img img{border-radius:14px 14px 0 0}
     }
   </style>
 </head>
@@ -121,7 +157,7 @@
       <button id="toggleFavourites">⭐ View Favourites</button>
     </div>
 
-    <!-- STYLE CARDS (restored) -->
+    <!-- STYLE CARDS -->
     <div class="styles" id="styleSelector"></div>
 
     <button id="filterToggle">Show Filters ⬇️</button>
@@ -158,6 +194,29 @@
 
   <p id="product-count"></p>
   <div id="product-list"></div>
+
+  <!-- Product Modal -->
+  <div id="productModal" class="modal-overlay" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <button class="close-x" id="modalClose" aria-label="Close">✕</button>
+      <div class="modal-img"><img id="modalImage" alt="Product image"/></div>
+      <div class="modal-body">
+        <h2 id="modalTitle">Title</h2>
+        <div class="price-lg" id="modalPrice">£0.00</div>
+        <div class="meta">
+          <div><strong>Category:</strong> <span id="modalCategory">—</span></div>
+          <div><strong>Material:</strong> <span id="modalMaterial">—</span></div>
+          <div><strong>Colour:</strong> <span id="modalColour">—</span></div>
+          <div><strong>Style:</strong> <span id="modalStyle">—</span></div>
+        </div>
+        <div class="desc" id="modalDescription">Description here…</div>
+        <div class="modal-actions">
+          <button class="btn-outline" id="modalClose2">Close</button>
+          <a id="modalLink" class="btn-primary" href="#" target="_blank" rel="noopener" style="display:none">View product</a>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <script>
     const API_URL = "https://homeinon-backend.onrender.com/products";
@@ -272,10 +331,11 @@
       const count = document.getElementById("product-count");
       list.innerHTML = "";
       count.textContent = `${products.length} product${products.length!==1?"s":""} found`;
-      products.forEach(p=>{
+      products.forEach((p, idx)=>{
         const price = parseFloat(p.price) || 0;
         const div = document.createElement("div");
         div.className = "product";
+        div.setAttribute("data-index", idx);
         div.innerHTML = `
           <div class="style-label">${p.style || ""}</div>
           <img src="${p.image_url}" alt="${p.title}" onerror="this.src='https://placehold.co/340x240?text=No+Image'"/>
@@ -284,6 +344,7 @@
             <p class="price">£${price.toFixed(2)}</p>
           </div>
         `;
+        div.addEventListener("click", ()=> openProductModal(idx));
         list.appendChild(div);
       });
     }
@@ -310,6 +371,84 @@
       renderProducts(filtered);
     }
 
+    // ===== Modal logic =====
+    const modalOverlay = document.getElementById("productModal");
+    const modalImage   = document.getElementById("modalImage");
+    const modalTitle   = document.getElementById("modalTitle");
+    const modalPrice   = document.getElementById("modalPrice");
+    const modalCat     = document.getElementById("modalCategory");
+    const modalMat     = document.getElementById("modalMaterial");
+    const modalCol     = document.getElementById("modalColour");
+    const modalStyle   = document.getElementById("modalStyle");
+    const modalDesc    = document.getElementById("modalDescription");
+    const modalLink    = document.getElementById("modalLink");
+    const modalClose   = document.getElementById("modalClose");
+    const modalClose2  = document.getElementById("modalClose2");
+
+    function openProductModal(index){
+      // Pick from the currently rendered list by index within allProducts filtered set
+      // Easiest: rebuild same filter here and map original index
+      const q = document.getElementById("searchBox").value.toLowerCase();
+      const cat = document.getElementById("category").value;
+      const mat = document.getElementById("material").value;
+      const max = parseFloat(document.getElementById("priceRange").value) || Infinity;
+
+      const filtered = allProducts.filter(p=>{
+        const t = (p.title||"").toLowerCase();
+        const d = (p.description||"").toLowerCase();
+        const search = !q || t.includes(q) || d.includes(q);
+        const catOK = !cat || p.category === cat;
+        const matOK = !mat || p.material === mat;
+        const styleOK = !selectedStyle || p.style === selectedStyle;
+        const colourOK = !selectedColour || (p.colour && p.colour.toLowerCase().includes(selectedColour.toLowerCase()));
+        const pr = parseFloat(p.price) || 0;
+        const priceOK = pr <= max;
+        return search && catOK && matOK && styleOK && colourOK && priceOK;
+      });
+
+      const p = filtered[index];
+      if(!p) return;
+
+      modalImage.src = p.image_url || "https://placehold.co/640x480?text=No+Image";
+      modalImage.onerror = () => modalImage.src = "https://placehold.co/640x480?text=No+Image";
+      modalTitle.textContent = p.title || "Untitled";
+      modalPrice.textContent = `£${(parseFloat(p.price)||0).toFixed(2)}`;
+      modalCat.textContent = p.category || "—";
+      modalMat.textContent = p.material || "—";
+      modalCol.textContent = p.colour || "—";
+      modalStyle.textContent = p.style || deriveStyle(p.title || p.description);
+      modalDesc.textContent = p.description || "—";
+
+      // Optional: external product URL
+      if(p.url){
+        modalLink.style.display = "inline-block";
+        modalLink.href = p.url;
+      } else {
+        modalLink.style.display = "none";
+        modalLink.removeAttribute("href");
+      }
+
+      modalOverlay.style.display = "flex";
+      modalOverlay.setAttribute("aria-hidden","false");
+      document.body.style.overflow = "hidden";
+    }
+
+    function closeProductModal(){
+      modalOverlay.style.display = "none";
+      modalOverlay.setAttribute("aria-hidden","true");
+      document.body.style.overflow = "";
+    }
+
+    modalClose.addEventListener("click", closeProductModal);
+    modalClose2.addEventListener("click", closeProductModal);
+    modalOverlay.addEventListener("click", (e)=>{
+      if(e.target === modalOverlay) closeProductModal();
+    });
+    document.addEventListener("keydown", (e)=>{
+      if(e.key === "Escape") closeProductModal();
+    });
+
+    // ===== Load & build controls =====
     async function loadProducts(){
       const res = await fetch(API_URL);
       const data = await res.json();
@@ -318,7 +457,6 @@
         style: p.style || deriveStyle(p.title || p.description)
       }));
 
-      // Build controls from live data
       const styles = uniqueValues(allProducts, "style");
       const cats   = uniqueValues(allProducts, "category");
       const mats   = uniqueValues(allProducts, "material");
@@ -333,7 +471,6 @@
       buildColourDropdown(cols.sort());
       buildStyleCards(styles.sort());
 
-      // Price slider max from data
       const maxP = Math.ceil(Math.max(0, ...allProducts.map(p=>parseFloat(p.price)||0))/50)*50 || 2000;
       const pr = document.getElementById("priceRange");
       pr.max = maxP; pr.value = maxP;
@@ -360,6 +497,7 @@
   </script>
 </body>
 </html>
+
 
 
 
