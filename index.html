@@ -29,6 +29,7 @@
     .logo img{height:60px; width:auto; object-fit:contain}
     button{background:var(--brand-accent); color:#fff; border:none; border-radius:8px; padding:8px 16px; font-weight:700; cursor:pointer; transition:.2s;}
     button:hover{background:#e18f6a}
+    .btn-outline{background:#fff; color:var(--ink); border:1px solid var(--input-border)}
 
     .styles{ display:flex; gap:12px; overflow-x:auto; padding:10px 20px; }
     .style-card{ min-width:130px; height:110px; border-radius:10px; overflow:hidden; position:relative; cursor:pointer; border:2px solid transparent; flex:0 0 auto; transition:transform .2s, border .2s; }
@@ -38,7 +39,7 @@
 
     #filterToggle{ display:none; width:100%; background:var(--brand-accent); color:#fff; border:none; padding:10px; cursor:pointer; font-weight:700; }
 
-    .filters{ display:grid; grid-template-columns:repeat(5,minmax(160px,1fr)); gap:16px; padding:10px 20px; }
+    .filters{ display:grid; grid-template-columns:repeat(6,minmax(160px,1fr)); gap:16px; padding:10px 20px; align-items:end; }
     .filter-group{display:flex; flex-direction:column; gap:6px}
     .filter-group label{font-size:.9rem; color:var(--muted)}
 
@@ -89,6 +90,16 @@
     .product-info{padding:14px}
     .price{font-weight:700; color:var(--brand-accent)}
 
+    /* ❤️ heart buttons */
+    .heart-btn{
+      font-size:22px; color:#bbb; cursor:pointer; transition:color .2s, transform .2s;
+      background:none; border:none; position:absolute; bottom:10px; right:12px;
+    }
+    .heart-btn:hover{transform:scale(1.15)}
+    .heart-btn.liked{color:#e63946}
+    @keyframes pulse{0%{transform:scale(1)}25%{transform:scale(1.4)}50%{transform:scale(1.2)}100%{transform:scale(1)}}
+    .pulse{animation:pulse .3s ease}
+
     .modal-overlay{ position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:center; justify-content:center; z-index:2000; }
     .modal{
       width:min(1100px, 96vw);
@@ -98,13 +109,12 @@
     }
     .modal .modal-img{ background:#f3f3f3; min-height:360px; }
     .modal .modal-img img{ width:100%; height:100%; object-fit:cover; border-top-left-radius:14px; border-bottom-left-radius:14px; }
-    .modal .modal-body{ padding:24px 24px 22px; }
+    .modal .modal-body{ padding:24px 24px 22px; position:relative; }
     .modal h2{ margin-bottom:8px; padding-right:48px; }
     .modal .price-lg{font-size:1.3rem; font-weight:800; color:var(--brand-accent); margin-bottom:10px}
     .meta{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:10px 0 14px}
     .meta div{background:#fafafa; border:1px solid #eee; border-radius:8px; padding:10px; font-size:.95rem}
     .desc{color:#444; line-height:1.5; margin:6px 0 14px}
-    .modal-actions{display:flex; gap:10px; margin-top:8px; flex-wrap:wrap}
     .btn-primary{ background:var(--brand-accent); color:#fff; border:none; border-radius:8px; padding:10px 16px; font-weight:700; cursor:pointer; }
     .close-x{
       position:absolute; top:10px; right:10px;
@@ -112,6 +122,10 @@
       border:1px solid #ccc; border-radius:8px; padding:6px 10px;
       cursor:pointer; font-weight:800; z-index:1;
     }
+    .modal-heart{
+      position:absolute; bottom:16px; right:20px; font-size:26px; background:none; border:none; color:#bbb; cursor:pointer;
+    }
+    .modal-heart.liked{color:#e63946}
 
     @media (max-width:768px){
       header{position:static; backdrop-filter:none; -webkit-backdrop-filter:none; background:var(--card)}
@@ -162,6 +176,12 @@
         <input type="range" id="priceRange" min="0" max="2000" step="10" value="2000"/>
         <span id="priceValue">£2000</span>
       </div>
+
+      <!-- Clear filters -->
+      <div class="filter-group">
+        <label>&nbsp;</label>
+        <button id="clearFilters" class="btn-outline">Clear filters</button>
+      </div>
     </section>
   </header>
 
@@ -182,9 +202,9 @@
           <div><strong>Style:</strong> <span id="modalStyle">—</span></div>
         </div>
         <div class="desc" id="modalDescription">Description here…</div>
-        <div class="modal-actions">
-          <a id="modalLink" class="btn-primary" href="#" target="_blank" rel="noopener" style="display:none">View product</a>
-        </div>
+        <a id="modalLink" class="btn-primary" href="#" target="_blank" rel="noopener" style="display:none">View product</a>
+        <!-- modal heart -->
+        <button id="modalHeart" class="modal-heart" title="Favourite">❤</button>
       </div>
     </div>
   </div>
@@ -231,8 +251,10 @@
     let allProducts = [];
     let selectedStyle = "";
     let selectedColour = "";
+    let showFavourites = false;
+    let favourites = JSON.parse(localStorage.getItem("favourites")||"[]"); // store by title (or sku if available)
 
-    /* ---------- helper: get current state ---------- */
+    // --- state helpers
     function getState(){
       return {
         q: document.getElementById("searchBox").value.toLowerCase(),
@@ -243,8 +265,6 @@
         max: parseFloat(document.getElementById("priceRange").value) || Infinity
       };
     }
-
-    /* ---------- filter with optional field to ignore (for repopulating options) ---------- */
     function filterProducts(state, ignoreField){
       return allProducts.filter(p=>{
         const t = (p.title||"").toLowerCase();
@@ -259,13 +279,13 @@
           style: (!state.style) || p.style === state.style,
           max: price <= state.max
         };
-
         if(ignoreField){ checks[ignoreField] = true; }
-        return checks.q && checks.category && checks.material && checks.colour && checks.style && checks.max;
+        if(showFavourites){ // favourites mode
+          checks.fav = favourites.includes(p.title || p.sku || "");
+        }
+        return Object.values(checks).every(Boolean);
       });
     }
-
-    /* ---------- uniques ---------- */
     const uniqueValues = (arr, field)=>{
       const s = new Set();
       arr.forEach(p=>{
@@ -277,7 +297,7 @@
       return [...s];
     };
 
-    /* ---------- build UI data lists ---------- */
+    // --- UI builders
     function buildStyleCards(styles){
       const row = document.getElementById("styleSelector");
       row.innerHTML = "";
@@ -290,20 +310,18 @@
           document.querySelectorAll(".style-card").forEach(c=>c.classList.remove("active"));
           if(selectedStyle === style){ selectedStyle = ""; }
           else { selectedStyle = style; card.classList.add("active"); }
-          updateFilterOptions();   // <-- dependent update
+          updateFilterOptions();
           applyFilters();
         });
         row.appendChild(card);
       });
     }
-
     function buildColourDropdown(colours, keepSelection=true){
       const select = document.getElementById("colourSelect");
       const list = document.getElementById("colourList");
       const prev = keepSelection ? selectedColour : "";
 
       list.innerHTML = "";
-
       const allItem = document.createElement("div");
       allItem.className = "colour-item";
       allItem.textContent = "All";
@@ -320,13 +338,12 @@
           selectedColour = c;
           select.innerHTML = `<span class="swatch" style="background:${colourHex(c)}"></span>${c}`;
           list.classList.remove("active");
-          updateFilterOptions();   // <-- dependent update
+          updateFilterOptions();
           applyFilters();
         });
         list.appendChild(item);
       });
 
-      // Restore label
       if(prev){
         selectedColour = colours.includes(prev) ? prev : "";
         if(selectedColour){
@@ -349,8 +366,10 @@
       const count = document.getElementById("product-count");
       list.innerHTML = "";
       count.textContent = `${products.length} product${products.length!==1?"s":""} found`;
+
       products.forEach((p, idx)=>{
         const price = parseFloat(p.price) || 0;
+        const liked = favourites.includes(p.title || p.sku || "");
         const div = document.createElement("div");
         div.className = "product";
         div.setAttribute("data-index", idx);
@@ -361,8 +380,16 @@
             <h3>${p.title}</h3>
             <p class="price">£${price.toFixed(2)}</p>
           </div>
+          <button class="heart-btn ${liked ? "liked":""}" title="Favourite" data-key="${p.title || p.sku || ""}">❤</button>
         `;
-        div.addEventListener("click", ()=> openProductModal(idx));
+        // open modal when clicking anywhere except heart
+        div.addEventListener("click", (e)=>{ if(!e.target.classList.contains("heart-btn")) openProductModal(idx); });
+        // heart click
+        div.querySelector(".heart-btn").addEventListener("click", (e)=>{
+          e.stopPropagation();
+          toggleFavourite(e.currentTarget.dataset.key, e.currentTarget);
+        });
+
         list.appendChild(div);
       });
     }
@@ -372,31 +399,36 @@
       renderProducts(filtered);
     }
 
-    /* ---------- DEPENDENT FILTERS ---------- */
+    // dependent options
     function updateFilterOptions(){
       const state = getState();
 
-      // Recompute options for each control based on other filters
-      // Category options (ignore 'category' while filtering)
       const catList = uniqueValues(filterProducts(state, 'category'), 'category').sort();
       const catSel = document.getElementById("category");
       const currentCat = state.category;
       catSel.innerHTML = '<option value="">All</option>' + catList.map(c=>`<option value="${c}">${c}</option>`).join("");
       if(currentCat && catList.includes(currentCat)) catSel.value = currentCat; else catSel.value = "";
 
-      // Material options
       const matList = uniqueValues(filterProducts(state, 'material'), 'material').sort();
       const matSel = document.getElementById("material");
       const currentMat = state.material;
       matSel.innerHTML = '<option value="">All</option>' + matList.map(m=>`<option value="${m}">${m}</option>`).join("");
       if(currentMat && matList.includes(currentMat)) matSel.value = currentMat; else matSel.value = "";
 
-      // Colour options (rebuild custom dropdown)
       const colourList = uniqueValues(filterProducts(state, 'colour'), 'colour').sort();
-      buildColourDropdown(colourList, /*keepSelection*/ true);
+      buildColourDropdown(colourList, true);
     }
 
-    /* ---------- Modal ---------- */
+    // favourites
+    function toggleFavourite(key, btnEl){
+      if(!key) return;
+      const i = favourites.indexOf(key);
+      if(i>=0){ favourites.splice(i,1); btnEl.classList.remove("liked"); }
+      else{ favourites.push(key); btnEl.classList.add("liked","pulse"); setTimeout(()=>btnEl.classList.remove("pulse"),300); }
+      localStorage.setItem("favourites", JSON.stringify(favourites));
+    }
+
+    // modal
     const modalOverlay = document.getElementById("productModal");
     const modalImage   = document.getElementById("modalImage");
     const modalTitle   = document.getElementById("modalTitle");
@@ -408,6 +440,8 @@
     const modalDesc    = document.getElementById("modalDescription");
     const modalLink    = document.getElementById("modalLink");
     const modalClose   = document.getElementById("modalClose");
+    const modalHeart   = document.getElementById("modalHeart");
+    let modalKey = "";
 
     function openProductModal(index){
       const filtered = filterProducts(getState());
@@ -423,9 +457,13 @@
       modalCol.textContent = p.colour || "—";
       modalStyle.textContent = p.style || deriveStyle(p.title || p.description);
       modalDesc.textContent = p.description || "—";
+      modalKey = p.title || p.sku || "";
 
       if(p.url){ modalLink.style.display="inline-block"; modalLink.href=p.url; }
       else { modalLink.style.display="none"; modalLink.removeAttribute("href"); }
+
+      // modal heart state
+      if(favourites.includes(modalKey)) modalHeart.classList.add("liked"); else modalHeart.classList.remove("liked");
 
       modalOverlay.style.display = "flex";
       modalOverlay.setAttribute("aria-hidden","false");
@@ -439,8 +477,13 @@
     modalClose.addEventListener("click", closeProductModal);
     modalOverlay.addEventListener("click", (e)=>{ if(e.target === modalOverlay) closeProductModal(); });
     document.addEventListener("keydown", (e)=>{ if(e.key === "Escape") closeProductModal(); });
+    modalHeart.addEventListener("click", ()=>{
+      toggleFavourite(modalKey, modalHeart);
+      // refresh card hearts
+      applyFilters();
+    });
 
-    /* ---------- Load & boot ---------- */
+    // load & boot
     async function loadProducts(){
       const res = await fetch(API_URL);
       const data = await res.json();
@@ -449,25 +492,20 @@
         style: p.style || deriveStyle(p.title || p.description)
       }));
 
-      // Initial population (all options)
       const styles = uniqueValues(allProducts, "style").sort();
       const cats   = uniqueValues(allProducts, "category").sort();
       const mats   = uniqueValues(allProducts, "material").sort();
       const cols   = uniqueValues(allProducts, "colour").sort();
 
-      // Style cards
       buildStyleCards(styles);
 
-      // Category & material
       const catSel = document.getElementById("category");
       const matSel = document.getElementById("material");
       catSel.innerHTML = '<option value="">All</option>' + cats.map(c=>`<option value="${c}">${c}</option>`).join("");
       matSel.innerHTML = '<option value="">All</option>' + mats.map(m=>`<option value="${m}">${m}</option>`).join("");
 
-      // Colour dropdown
       buildColourDropdown(cols, true);
 
-      // Price range
       const maxP = Math.ceil(Math.max(0, ...allProducts.map(p=>parseFloat(p.price)||0))/50)*50 || 2000;
       const pr = document.getElementById("priceRange");
       pr.max = maxP; pr.value = maxP;
@@ -476,14 +514,39 @@
       renderProducts(allProducts);
     }
 
-    // Mobile toggle
+    // favourites toggle in header
+    document.getElementById("toggleFavourites").addEventListener("click", ()=>{
+      showFavourites = !showFavourites;
+      document.getElementById("toggleFavourites").textContent = showFavourites ? "🔙 View All Products" : "⭐ View Favourites";
+      applyFilters();
+    });
+
+    // Clear filters
+    document.getElementById("clearFilters").addEventListener("click", ()=>{
+      document.getElementById("searchBox").value = "";
+      document.getElementById("category").value = "";
+      document.getElementById("material").value = "";
+      selectedColour = "";
+      document.getElementById("colourSelect").textContent = "All";
+      selectedStyle = "";
+      document.querySelectorAll(".style-card").forEach(c=>c.classList.remove("active"));
+
+      const max = document.getElementById("priceRange").max || 2000;
+      document.getElementById("priceRange").value = max;
+      document.getElementById("priceValue").textContent = `£${max}`;
+
+      updateFilterOptions();
+      applyFilters();
+    });
+
+    // mobile toggle
     document.getElementById("filterToggle").addEventListener("click", ()=>{
       const f = document.getElementById("filters");
       f.classList.toggle("active");
       document.getElementById("filterToggle").textContent = f.classList.contains("active") ? "Hide Filters ▲" : "Show Filters ⬇️";
     });
 
-    // Events: also call updateFilterOptions so lists stay in sync
+    // events (keep dependent lists synced)
     document.getElementById("searchBox").addEventListener("input", ()=>{ updateFilterOptions(); applyFilters(); });
     document.getElementById("category").addEventListener("change", ()=>{ updateFilterOptions(); applyFilters(); });
     document.getElementById("material").addEventListener("change", ()=>{ updateFilterOptions(); applyFilters(); });
@@ -492,10 +555,31 @@
       updateFilterOptions(); applyFilters();
     });
 
+    function updateFilterOptions(){
+      const state = getState();
+      const catList = uniqueValues(filterProducts(state, 'category'), 'category').sort();
+      const matList = uniqueValues(filterProducts(state, 'material'), 'material').sort();
+      const colourList = uniqueValues(filterProducts(state, 'colour'), 'colour').sort();
+
+      const catSel = document.getElementById("category");
+      const matSel = document.getElementById("material");
+      const keepCat = state.category;
+      const keepMat = state.material;
+
+      catSel.innerHTML = '<option value="">All</option>' + catList.map(c=>`<option value="${c}">${c}</option>`).join("");
+      matSel.innerHTML = '<option value="">All</option>' + matList.map(m=>`<option value="${m}">${m}</option>`).join("");
+
+      if(keepCat && catList.includes(keepCat)) catSel.value = keepCat;
+      if(keepMat && matList.includes(keepMat)) matSel.value = keepMat;
+
+      buildColourDropdown(colourList, true);
+    }
+
     loadProducts();
   </script>
 </body>
 </html>
+
 
 
 
