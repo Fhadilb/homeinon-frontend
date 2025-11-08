@@ -698,17 +698,52 @@
 #filterToggle.active {
   transform: rotate(0); /* same base arrow, but we’ll flip text only */
 }
+/* 🆕 ROOM SELECTOR */
+.rooms {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  padding: 10px 24px 0;
+  scrollbar-width: thin;
+  scrollbar-color: var(--brand-accent) transparent;
+  mask-image: linear-gradient(to right, black 90%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, black 90%, transparent 100%);
+}
+.room-card {
+  flex: 0 0 auto;
+  padding: 10px 20px;
+  border-radius: 10px;
+  background: #fff;
+  border: 2px solid var(--input-border);
+  color: var(--ink);
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  box-shadow: var(--shadow-sm);
+  white-space: nowrap;
+}
+.room-card:hover { border-color: var(--brand-accent); }
+.room-card.active {
+  background: var(--brand-accent);
+  color: #fff;
+  border-color: var(--brand-accent);
+  box-shadow: 0 4px 12px rgba(244, 162, 123, 0.4);
+}
 
   </style>
 </head>
 <body>
   <header>
-    <div class="top-bar">
-      <div class="logo"><img src="Home-in-on-logo.webp" alt="HomeInOn Logo"></div>
-      <button id="toggleFavourites">⭐ View Favourites</button>
-    </div>
+<div class="top-bar">
+  <div class="logo"><img src="Home-in-on-logo.webp" alt="HomeInOn Logo"></div>
+  <button id="toggleFavourites">⭐ View Favourites</button>
+</div>
 
-    <div class="styles" id="styleSelector"></div>
+<!-- 🆕 ROOM SELECTOR -->
+<div class="rooms" id="roomSelector"></div>
+
+<div class="styles" id="styleSelector"></div>
+
 
    <button id="filterToggle">Show Filters ▼</button>
 
@@ -765,6 +800,16 @@
           <div><strong>Colour:</strong> <span id="modalColour">—</span></div>
           <div><strong>Style:</strong> <span id="modalStyle">—</span></div>
         </div>
+        <!-- 🆕 DIMENSIONS BOX -->
+<div class="meta">
+  <div id="modalDimensions">
+    <strong>Dimensions (W×D×H):</strong>
+    <span id="modalWidth">—</span> ×
+    <span id="modalDepth">—</span> ×
+    <span id="modalHeight">—</span> cm
+  </div>
+</div>
+
         <div class="desc" id="modalDescription">Description here…</div>
         <a id="modalLink" class="btn-primary" href="#" target="_blank" rel="noopener" style="display:none">View product</a>
         <!-- modal heart -->
@@ -818,11 +863,13 @@
       return "Modern";
     }
 
-    let allProducts = [];
-    let selectedStyle = "";
-    let selectedColour = "";
-    let showFavourites = false;
-    let favourites = JSON.parse(localStorage.getItem("favourites")||"[]");
+let allProducts = [];
+let selectedStyle = "";
+let selectedRoom = ""; // 🆕 Added for room filtering
+let selectedColour = "";
+let showFavourites = false;
+let favourites = JSON.parse(localStorage.getItem("favourites")||"[]");
+
 
     // --- state helpers
     function getState(){
@@ -866,6 +913,52 @@
       });
       return [...s];
     };
+// 🆕 Build Room Cards
+function buildRoomCards() {
+  const rooms = [...new Set(allProducts.map(p => p.room).filter(Boolean))].sort();
+  const container = document.getElementById("roomSelector");
+  container.innerHTML = "";
+  rooms.forEach(room => {
+    const btn = document.createElement("div");
+    btn.className = "room-card";
+    btn.textContent = room;
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".room-card").forEach(b => b.classList.remove("active"));
+      if (selectedRoom === room) {
+        selectedRoom = "";
+      } else {
+        selectedRoom = room;
+        btn.classList.add("active");
+      }
+      updateStyleCards();
+      applyFilters();
+    });
+    container.appendChild(btn);
+  });
+}
+
+// 🆕 Update style cards based on selected room
+function updateStyleCards() {
+  const filtered = selectedRoom
+    ? allProducts.filter(p => p.room === selectedRoom)
+    : allProducts;
+  const styles = [...new Set(filtered.map(p => p.style).filter(Boolean))].sort();
+  const row = document.getElementById("styleSelector");
+  row.innerHTML = "";
+  styles.forEach(style => {
+    const card = document.createElement("div");
+    card.className = "style-card";
+    const imgSrc = STYLE_IMAGES[style.toLowerCase()] || `https://placehold.co/200x150?text=${encodeURIComponent(style)}`;
+    card.innerHTML = `<img src="${imgSrc}" alt="${style}"><span>${style}</span>`;
+    card.addEventListener("click", () => {
+      document.querySelectorAll(".style-card").forEach(c => c.classList.remove("active"));
+      if (selectedStyle === style) selectedStyle = "";
+      else { selectedStyle = style; card.classList.add("active"); }
+      applyFilters();
+    });
+    row.appendChild(card);
+  });
+}
 
     // --- UI builders
     function buildStyleCards(styles){
@@ -1050,6 +1143,10 @@
       modalOverlay.setAttribute("aria-hidden","false");
       document.body.style.overflow = "hidden";
     }
+    document.getElementById("modalWidth").textContent = p.width || "—";
+document.getElementById("modalDepth").textContent = p.depth || "—";
+document.getElementById("modalHeight").textContent = p.height || "—";
+
     function closeProductModal(){
       modalOverlay.style.display = "none";
       modalOverlay.setAttribute("aria-hidden","true");
@@ -1078,6 +1175,7 @@
       const cols   = uniqueValues(allProducts, "colour").sort();
 
       buildStyleCards(styles);
+buildRoomCards();
 
       const catSel = document.getElementById("category");
       const matSel = document.getElementById("material");
