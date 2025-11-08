@@ -845,7 +845,7 @@
       if(t.includes("coastal")||t.includes("beach")) return "Coastal";
       return "Modern";
     }
-// --- dimensions formatter (returns "W90cm x D160cm x H77cm" or "")
+// returns "W90cm x D160cm x H77cm" or "" if missing
 function formatDims(p){
   const w = (p.width_cm || p.width || "").toString().trim();
   const d = (p.depth_cm || p.depth || "").toString().trim();
@@ -857,6 +857,7 @@ function formatDims(p){
   if (h) parts.push(`H${h}cm`);
   return parts.join(" x ");
 }
+
 
 
     let allProducts = [];
@@ -1094,6 +1095,7 @@ div.innerHTML = `
     const modalLink    = document.getElementById("modalLink");
     const modalClose   = document.getElementById("modalClose");
     const modalHeart   = document.getElementById("modalHeart");
+    const modalDims   = document.getElementById("modalDims");
     let modalKey = "";
 
     function openProductModal(index){
