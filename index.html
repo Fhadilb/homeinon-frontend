@@ -370,6 +370,19 @@
       -webkit-box-orient: vertical;
       overflow: hidden;
     }
+    /* === Product card dimensions badge === */
+.dims-badge{
+  background: var(--brand-accent);
+  color: #fff;
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: .2px;
+  box-shadow: 0 2px 6px rgba(244,162,123,0.25);
+}
+
  /* ===== PRICE STYLES ===== */
 .price {
   font-weight: 800;
@@ -481,6 +494,19 @@
   color: var(--ink); /* now black inside modal too */
   margin-bottom: 16px;
 }
+/* Styled dimensions badge inside modal */
+.dims-line {
+  display: inline-block;
+  background: var(--brand-accent);
+  color: #fff;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin: 6px 0 16px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
 
     .meta{
       display:grid; 
@@ -698,52 +724,17 @@
 #filterToggle.active {
   transform: rotate(0); /* same base arrow, but we’ll flip text only */
 }
-/* 🆕 ROOM SELECTOR */
-.rooms {
-  display: flex;
-  gap: 16px;
-  overflow-x: auto;
-  padding: 10px 24px 0;
-  scrollbar-width: thin;
-  scrollbar-color: var(--brand-accent) transparent;
-  mask-image: linear-gradient(to right, black 90%, transparent 100%);
-  -webkit-mask-image: linear-gradient(to right, black 90%, transparent 100%);
-}
-.room-card {
-  flex: 0 0 auto;
-  padding: 10px 20px;
-  border-radius: 10px;
-  background: #fff;
-  border: 2px solid var(--input-border);
-  color: var(--ink);
-  font-weight: 600;
-  cursor: pointer;
-  transition: var(--transition);
-  box-shadow: var(--shadow-sm);
-  white-space: nowrap;
-}
-.room-card:hover { border-color: var(--brand-accent); }
-.room-card.active {
-  background: var(--brand-accent);
-  color: #fff;
-  border-color: var(--brand-accent);
-  box-shadow: 0 4px 12px rgba(244, 162, 123, 0.4);
-}
 
   </style>
 </head>
 <body>
   <header>
-<div class="top-bar">
-  <div class="logo"><img src="Home-in-on-logo.webp" alt="HomeInOn Logo"></div>
-  <button id="toggleFavourites">⭐ View Favourites</button>
-</div>
+    <div class="top-bar">
+      <div class="logo"><img src="Home-in-on-logo.webp" alt="HomeInOn Logo"></div>
+      <button id="toggleFavourites">⭐ View Favourites</button>
+    </div>
 
-<!-- 🆕 ROOM SELECTOR -->
-<div class="rooms" id="roomSelector"></div>
-
-<div class="styles" id="styleSelector"></div>
-
+    <div class="styles" id="styleSelector"></div>
 
    <button id="filterToggle">Show Filters ▼</button>
 
@@ -794,22 +785,14 @@
       <div class="modal-body">
         <h2 id="modalTitle">Title</h2>
         <div class="price-lg" id="modalPrice">£0.00</div>
+        <div id="modalDims" class="dims-line" style="display:none"></div>
+
         <div class="meta">
           <div><strong>Category:</strong> <span id="modalCategory">—</span></div>
           <div><strong>Material:</strong> <span id="modalMaterial">—</span></div>
           <div><strong>Colour:</strong> <span id="modalColour">—</span></div>
           <div><strong>Style:</strong> <span id="modalStyle">—</span></div>
         </div>
-        <!-- 🆕 DIMENSIONS BOX -->
-<div class="meta">
-  <div id="modalDimensions">
-    <strong>Dimensions (W×D×H):</strong>
-    <span id="modalWidth">—</span> ×
-    <span id="modalDepth">—</span> ×
-    <span id="modalHeight">—</span> cm
-  </div>
-</div>
-
         <div class="desc" id="modalDescription">Description here…</div>
         <a id="modalLink" class="btn-primary" href="#" target="_blank" rel="noopener" style="display:none">View product</a>
         <!-- modal heart -->
@@ -862,14 +845,25 @@
       if(t.includes("coastal")||t.includes("beach")) return "Coastal";
       return "Modern";
     }
+// --- dimensions formatter (returns "W90cm x D160cm x H77cm" or "")
+function formatDims(p){
+  const w = (p.width_cm || p.width || "").toString().trim();
+  const d = (p.depth_cm || p.depth || "").toString().trim();
+  const h = (p.height_cm || p.height || "").toString().trim();
 
-let allProducts = [];
-let selectedStyle = "";
-let selectedRoom = ""; // 🆕 Added for room filtering
-let selectedColour = "";
-let showFavourites = false;
-let favourites = JSON.parse(localStorage.getItem("favourites")||"[]");
+  const parts = [];
+  if (w) parts.push(`W${w}cm`);
+  if (d) parts.push(`D${d}cm`);
+  if (h) parts.push(`H${h}cm`);
+  return parts.join(" x ");
+}
 
+
+    let allProducts = [];
+    let selectedStyle = "";
+    let selectedColour = "";
+    let showFavourites = false;
+    let favourites = JSON.parse(localStorage.getItem("favourites")||"[]");
 
     // --- state helpers
     function getState(){
@@ -913,51 +907,32 @@ let favourites = JSON.parse(localStorage.getItem("favourites")||"[]");
       });
       return [...s];
     };
-// 🆕 Build Room Cards
-function buildRoomCards() {
-  const rooms = [...new Set(allProducts.map(p => p.room).filter(Boolean))].sort();
-  const container = document.getElementById("roomSelector");
-  container.innerHTML = "";
-  rooms.forEach(room => {
-    const btn = document.createElement("div");
-    btn.className = "room-card";
-    btn.textContent = room;
-    btn.addEventListener("click", () => {
-      document.querySelectorAll(".room-card").forEach(b => b.classList.remove("active"));
-      if (selectedRoom === room) {
-        selectedRoom = "";
-      } else {
-        selectedRoom = room;
-        btn.classList.add("active");
-      }
-      updateStyleCards();
-      applyFilters();
-    });
-    container.appendChild(btn);
-  });
-}
+// Build a "Width × Depth × Height" string from whatever keys we get
+function formatDims(p){
+  // Accept multiple possible keys coming from the CSV
+  const w = p.width_cm ?? p.width ?? p.Width ?? p.WIDTH ?? null;
+  const d = p.depth_cm ?? p.depth ?? p.Depth ?? p.DEPTH ?? null;
+  const h = p.height_cm ?? p.height ?? p.Height ?? p.HEIGHT ?? null;
 
-// 🆕 Update style cards based on selected room
-function updateStyleCards() {
-  const filtered = selectedRoom
-    ? allProducts.filter(p => p.room === selectedRoom)
-    : allProducts;
-  const styles = [...new Set(filtered.map(p => p.style).filter(Boolean))].sort();
-  const row = document.getElementById("styleSelector");
-  row.innerHTML = "";
-  styles.forEach(style => {
-    const card = document.createElement("div");
-    card.className = "style-card";
-    const imgSrc = STYLE_IMAGES[style.toLowerCase()] || `https://placehold.co/200x150?text=${encodeURIComponent(style)}`;
-    card.innerHTML = `<img src="${imgSrc}" alt="${style}"><span>${style}</span>`;
-    card.addEventListener("click", () => {
-      document.querySelectorAll(".style-card").forEach(c => c.classList.remove("active"));
-      if (selectedStyle === style) selectedStyle = "";
-      else { selectedStyle = style; card.classList.add("active"); }
-      applyFilters();
-    });
-    row.appendChild(card);
-  });
+  // Clean numbers; allow strings like "120", "120 cm"
+  const clean = (v) => {
+    if (v == null) return null;
+    const n = parseFloat(String(v).replace(/[^\d.]/g,""));
+    return Number.isFinite(n) ? n : null;
+  };
+
+  const W = clean(w), D = clean(d), H = clean(h);
+
+  // If nothing valid, return empty string (so we render nothing)
+  if (W==null && D==null && H==null) return "";
+
+  // Build pieces that exist
+  const parts = [];
+  if (W!=null) parts.push(`${W}W`);
+  if (D!=null) parts.push(`${D}D`);
+  if (H!=null) parts.push(`${H}H`);
+
+  return parts.join(" × ") + " cm";
 }
 
     // --- UI builders
@@ -1052,15 +1027,18 @@ function updateStyleCards() {
         const div = document.createElement("div");
         div.className = "product";
         div.setAttribute("data-index", idx);
-        div.innerHTML = `
-          <div class="style-label">${p.style || ""}</div>
-          <img src="${p.image_url}" alt="${p.title}" onerror="this.src='https://placehold.co/340x240?text=No+Image'"/>
-          <div class="product-info">
-            <h3>${p.title}</h3>
-            <p class="price">£${price.toFixed(2)}</p>
-          </div>
-          <button class="heart-btn ${liked ? "liked":""}" title="Favourite" data-key="${p.title || p.sku || ""}">❤</button>
-        `;
+
+div.innerHTML = `
+  <div class="style-label">${p.style || ""}</div>
+  <img src="${p.image_url}" alt="${p.title}" onerror="this.src='https://placehold.co/340x240?text=No+Image'"/>
+  <div class="product-info">
+    <h3>${p.title}</h3>
+    <p class="price">£${price.toFixed(2)}</p>
+  </div>
+  <button class="heart-btn ${liked ? "liked":""}" title="Favourite" data-key="${p.title || p.sku || ""}">❤</button>
+`;
+
+
         div.addEventListener("click", (e)=>{ if(!e.target.classList.contains("heart-btn")) openProductModal(idx); });
         div.querySelector(".heart-btn").addEventListener("click", (e)=>{
           e.stopPropagation();
@@ -1127,6 +1105,10 @@ function updateStyleCards() {
       modalImage.onerror = () => modalImage.src = "https://placehold.co/640x480?text=No+Image";
       modalTitle.textContent = p.title || "Untitled";
       modalPrice.textContent = `£${(parseFloat(p.price)||0).toFixed(2)}`;
+      const dims = formatDims(p);
+const dimsEl = document.getElementById("modalDims");
+if (dims) { dimsEl.textContent = dims; dimsEl.style.display = "block"; } else { dimsEl.style.display = "none"; }
+
       modalCat.textContent = p.category || "—";
       modalMat.textContent = p.material || "—";
       modalCol.textContent = p.colour || "—";
@@ -1143,10 +1125,6 @@ function updateStyleCards() {
       modalOverlay.setAttribute("aria-hidden","false");
       document.body.style.overflow = "hidden";
     }
-    document.getElementById("modalWidth").textContent = p.width || "—";
-document.getElementById("modalDepth").textContent = p.depth || "—";
-document.getElementById("modalHeight").textContent = p.height || "—";
-
     function closeProductModal(){
       modalOverlay.style.display = "none";
       modalOverlay.setAttribute("aria-hidden","true");
@@ -1175,7 +1153,6 @@ document.getElementById("modalHeight").textContent = p.height || "—";
       const cols   = uniqueValues(allProducts, "colour").sort();
 
       buildStyleCards(styles);
-buildRoomCards();
 
       const catSel = document.getElementById("category");
       const matSel = document.getElementById("material");
