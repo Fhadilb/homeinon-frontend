@@ -785,7 +785,7 @@
       <div class="modal-body">
         <h2 id="modalTitle">Title</h2>
         <div class="price-lg" id="modalPrice">£0.00</div>
-        <div id="modalDims" class="dims-line" style="display:none"></div>
+    <div id="modalDims" class="dims-line" style="display:none"></div>
 
         <div class="meta">
           <div><strong>Category:</strong> <span id="modalCategory">—</span></div>
@@ -845,11 +845,11 @@
       if(t.includes("coastal")||t.includes("beach")) return "Coastal";
       return "Modern";
     }
-// returns "W90cm x D160cm x H77cm" or "" if missing
-function formatDims(p){
-  const w = (p.width_cm || p.width || "").toString().trim();
-  const d = (p.depth_cm || p.depth || "").toString().trim();
-  const h = (p.height_cm || p.height || "").toString().trim();
+// Always returns exactly "W90cm x D160cm x H77cm" (or "" if none)
+function formatDims(p) {
+  const w = (p.width_cm ?? p.width ?? "").toString().trim();
+  const d = (p.depth_cm ?? p.depth ?? "").toString().trim();
+  const h = (p.height_cm ?? p.height ?? "").toString().trim();
 
   const parts = [];
   if (w) parts.push(`W${w}cm`);
@@ -857,6 +857,7 @@ function formatDims(p){
   if (h) parts.push(`H${h}cm`);
   return parts.join(" x ");
 }
+
 
 
 
@@ -1038,6 +1039,7 @@ div.innerHTML = `
   </div>
   <button class="heart-btn ${liked ? "liked":""}" title="Favourite" data-key="${p.title || p.sku || ""}">❤</button>
 `;
+
 
 
         div.addEventListener("click", (e)=>{ if(!e.target.classList.contains("heart-btn")) openProductModal(idx); });
