@@ -536,19 +536,23 @@ function renderRoomset(){
     return;
   }
 
-roomsetList.innerHTML = roomset.map(it => `
-  <div class="roomset-item-list">
-    <img src="${it.image_url || 'https://placehold.co/100x80'}" 
-         alt="${it.title}">
-    <div class="roomset-item-info">
-      <h4>${it.title}</h4>
-      <p>${it.style || '—'} | £${parseFloat(it.price || 0).toFixed(2)}</p>
+  roomsetList.innerHTML = roomset.map(it => `
+    <div class="roomset-item-list">
+      <img src="${it.cutout_local_path && it.cutout_local_path.trim() !== '' 
+                    ? it.cutout_local_path 
+                    : (it.image_url && it.image_url.trim() !== '' 
+                        ? it.image_url 
+                        : 'https://placehold.co/100x80')}" 
+           alt="${it.title}">
+      <div class="roomset-item-info">
+        <h4>${it.title}</h4>
+        <p>${it.style || '—'} | £${parseFloat(it.price || 0).toFixed(2)}</p>
+      </div>
+      <button class="roomset-remove-btn" onclick="removeFromRoomset('${it.key}');renderRoomset();">Remove</button>
     </div>
-    <button class="roomset-remove-btn" onclick="removeFromRoomset('${it.key}');renderRoomset();">Remove</button>
-  </div>
-`).join("");
-
+  `).join("");
 }
+
 
 toggleRoomsetBtn.addEventListener("click", ()=>{
   renderRoomset();
