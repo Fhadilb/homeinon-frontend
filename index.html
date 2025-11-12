@@ -47,6 +47,11 @@
       max-width: 1600px;
       margin: 0 auto;
     }
+.header-buttons {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
 
     .logo img{
       height:60px; 
@@ -96,7 +101,6 @@
       padding: 16px 24px; 
       scrollbar-width: thin;
       scrollbar-color: var(--brand-accent) transparent;
-      /* Fade effect to show more cards */
       mask-image: linear-gradient(to right, black 90%, transparent 100%);
       -webkit-mask-image: linear-gradient(to right, black 90%, transparent 100%);
     }
@@ -121,7 +125,7 @@
     }
     .style-card:hover{
       transform: translateY(-4px) scale(1.02);
-      box-shadow: var(--shadow-md);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
     .style-card img{
       width:100%; 
@@ -303,7 +307,6 @@
       display: grid; 
       gap: 28px; 
       padding: 0 24px 40px; 
-      /* FIX: Use auto-fill with max width to prevent stretching */
       grid-template-columns: repeat(auto-fill, minmax(280px, 340px));
       justify-content: center;
       max-width: 1600px;
@@ -364,13 +367,11 @@
       line-height: 1.4;
       color: var(--ink);
       font-weight: 600;
-      /* Limit to 2 lines */
       display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
     }
-    /* === Product card dimensions badge === */
 .dims-badge{
   background: var(--brand-accent);
   color: #fff;
@@ -383,10 +384,9 @@
   box-shadow: 0 2px 6px rgba(244,162,123,0.25);
 }
 
- /* ===== PRICE STYLES ===== */
 .price {
   font-weight: 800;
-  color: var(--ink); /* now black */
+  color: var(--ink);
   font-size: 1.15rem;
   margin-top: auto;
 }
@@ -444,19 +444,26 @@
       to { opacity: 1; }
     }
 
-    .modal{
-      width:min(1100px, 94vw);
-      max-height:92vh; 
-      overflow:auto;
-      background:#fff; 
-      border-radius:20px; 
-      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-      display:grid; 
-      grid-template-columns: 1.4fr 1fr; 
-      gap:0; 
-      position:relative;
-      animation: modalSlide 0.3s ease;
-    }
+.modal {
+  width: min(1250px, 96vw);
+  max-height: 100vh;
+  overflow: auto;
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 0;
+  position: relative;
+  animation: modalSlide 0.3s ease;
+}
+#roomsetModal .modal {
+  display: block;
+  width: min(1250px, 96vw);
+  max-height: 90vh;
+  overflow: hidden;
+}
+
     @keyframes modalSlide {
       from { opacity: 0; transform: scale(0.95) translateY(20px); }
       to { opacity: 1; transform: scale(1) translateY(0); }
@@ -476,11 +483,14 @@
       border-bottom-left-radius:20px;
     }
 
-    .modal .modal-body{ 
-      padding:32px 28px 28px; 
-      position:relative;
-      overflow-y: auto;
-    }
+ .modal .modal-body{ 
+  padding:32px 28px 28px; 
+  position:relative;
+  overflow-y: auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+
     .modal h2{ 
       margin-bottom:12px; 
       padding-right:48px;
@@ -491,10 +501,9 @@
     .modal .price-lg {
   font-size: 1.5rem;
   font-weight: 800;
-  color: var(--ink); /* now black inside modal too */
+  color: var(--ink);
   margin-bottom: 16px;
 }
-/* Styled dimensions badge inside modal */
 .dims-line {
   display: inline-block;
   background: var(--brand-accent);
@@ -506,7 +515,6 @@
   margin: 6px 0 16px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.1);
 }
-
 
     .meta{
       display:grid; 
@@ -539,7 +547,6 @@
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
-
 
     .desc{
       color:#555; 
@@ -632,6 +639,20 @@
         -webkit-backdrop-filter:none; 
         background:var(--card);
       }
+
+      .header-buttons button {
+        font-size: 0.75rem;
+        padding: 6px 10px;
+        border-radius: 6px;
+        white-space: nowrap;
+        line-height: 1;
+        min-width: auto;
+      }
+
+      .header-buttons {
+        gap: 6px;
+        flex-wrap: nowrap;
+      }
       
       .top-bar{
         padding: 12px 16px;
@@ -695,14 +716,12 @@
         grid-template-columns: 1fr;
       }
     }
-    /* Add breathing space above "Show Filters" on mobile */
 @media (max-width: 768px) {
   #filterToggle {
-    margin-top: 8px; /* small gap between style cards and button */
+    margin-top: 8px;
   }
 }
 
-    /* === FIX MOBILE IMAGE SIZING === */
 @media (max-width:768px){
   .product img{
     width: 100%;
@@ -712,7 +731,6 @@
   }
 }
 
-/* === FIX FILTER TOGGLE ARROW === */
 #filterToggle {
   background-image: var(--caret-svg);
   background-repeat: no-repeat;
@@ -722,23 +740,432 @@
 }
 
 #filterToggle.active {
-  transform: rotate(0); /* same base arrow, but we’ll flip text only */
+  transform: rotate(0);
+}
+.roomset-card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: var(--transition);
+}
+.roomset-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+}
+.roomset-card img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+}
+.roomset-card .info {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.roomset-card .title {
+  font-size: 0.95rem;
+  color: var(--ink);
+  font-weight: 600;
+  line-height: 1.3;
+}
+.roomset-card .row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.roomset-card .remove {
+  background: #fff;
+  color: #c0392b;
+  border: 2px solid #f2d7d5;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-weight: 700;
+}
+.roomset-card .remove:hover {
+  background: #fdf2f2;
+}
+.roomset-item {
+  position: absolute;
+  width: 140px;
+  height: 140px;
+  background: transparent;
+  box-shadow: none;
+  border: none;
+  overflow: visible;
+  cursor: move;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s;
+}
+
+.roomset-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  mix-blend-mode: normal;
+  pointer-events: none;
+}
+
+.roomset-item::after {
+  content: "";
+  position: absolute;
+  bottom: 4px;
+  left: 10%;
+  right: 10%;
+  height: 6px;
+  background: rgba(0, 0, 0, 0.15);
+  filter: blur(6px);
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.roomset-item:hover::after {
+  opacity: 1;
+}
+
+.roomset-item:active {
+  transform: scale(1.05);
+  z-index: 10;
+}
+.roomset-item .handle {
+  position: absolute;
+  z-index: 5;
+  transition: transform 0.2s ease;
+}
+
+.roomset-item .resize-handle {
+  position: absolute;
+  bottom: -12px;
+  right: -12px;
+  width: 28px;
+  height: 28px;
+  border: 2px solid rgba(244,162,123,0.9);
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 6px rgba(0,0,0,0.2);
+  cursor: se-resize;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: none;
+  z-index: 10;
+}
+
+.roomset-item .resize-handle::after {
+  content: "↘";
+  font-size: 14px;
+  color: var(--brand-accent);
+  font-weight: bold;
+  pointer-events: none;
+}
+
+.roomset-item.rotating .rotate-handle {
+  cursor: grabbing;
+  background: #e18f6a;
+  transform: translateX(-50%) scale(1.05);
+}
+.roomset-bg-selector {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 12px 0 16px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--brand-accent) transparent;
+}
+
+.roomset-bg-selector::-webkit-scrollbar {
+  height: 6px;
+}
+.roomset-bg-selector::-webkit-scrollbar-thumb {
+  background: var(--brand-accent);
+  border-radius: 10px;
+}
+
+.roomset-bg-selector img {
+  width: 120px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 3px solid transparent;
+  transition: transform 0.2s, border-color 0.2s;
+  box-shadow: var(--shadow-sm);
+}
+.roomset-bg-selector img:hover {
+  transform: scale(1.05);
+  border-color: var(--brand-accent);
+}
+.roomset-bg-selector img.active {
+  border-color: var(--brand-accent);
+  transform: scale(1.08);
+  box-shadow: 0 4px 12px rgba(244,162,123,0.4);
+}
+
+#roomsetCanvas {
+  position: relative;
+  width: 100%;
+  height: 600px;
+  margin-top: 20px;
+  background: #f8f8f8;
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+  touch-action: none;
+  overflow: visible;
+  user-select: none;
+}
+.roomset-item, 
+.roomset-item * {
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+#roomsetModal .modal-body {
+  width: 100%;
+  padding: 28px;
+  box-sizing: border-box;
+}
+
+.roomset-buttons {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+  justify-content: flex-start;
+}
+
+.roomset-buttons .btn-primary {
+  width: auto;
+  padding: 10px 20px;
+  font-weight: 700;
+  flex: 0 0 auto;
+  text-align: center;
+}
+
+.roomset-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: transparent;
+  mix-blend-mode: multiply;
+  filter: contrast(1.05) brightness(1.05);
+  pointer-events: none;
+  transition: transform 0.25s ease;
+  border: none;
+  box-shadow: none;
+}
+
+.roomset-item:hover img {
+  transform: scale(1.02);
+}
+
+.roomset-item {
+  position: absolute;
+  z-index: 5;
+  transition: transform 0.1s linear;
+}
+.roomset-item.rotating {
+  z-index: 10;
+}
+
+@media (max-width: 768px) {
+  #roomsetCanvas {
+    height: 400px;
+    border-width: 1.5px;
+    overflow: visible;
+    touch-action: none;
+  }
+
+.roomset-item {
+  min-width: 60px;
+  min-height: 60px;
+}
+
+  .roomset-item img {
+    object-fit: contain;
+  }
+
+.roomset-item .resize-handle {
+  bottom: -10px;
+  right: -10px;
+  width: 22px;
+  height: 22px;
+  border: 2px solid rgba(244,162,123,0.9);
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 4px rgba(0,0,0,0.2);
+  cursor: se-resize;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: none;
+  z-index: 10;
+}
+
+}
+@media (max-width: 768px) {
+  .top-bar {
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    text-align: center;
+  }
+
+  .logo img {
+    height: 46px;
+  }
+
+  .header-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .header-buttons button {
+    flex: 1 1 auto;
+    min-width: 120px;
+    text-align: center;
+    font-size: 0.85rem;
+    padding: 8px 12px;
+  }
+
+  .filters, #filterToggle {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+}
+@media (max-width: 768px) {
+  #roomsetList {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .roomset-item-list {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background: #fff;
+    border-radius: 12px;
+    padding: 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    flex-wrap: wrap;
+  }
+
+  .roomset-item-list img {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+    border-radius: 8px;
+    flex-shrink: 0;
+  }
+
+  .roomset-item-info {
+    flex: 1 1 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .roomset-item-info h4 {
+    font-size: 0.9rem;
+    line-height: 1.3;
+    color: var(--ink);
+  }
+
+  .roomset-item-info p {
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin: 0;
+  }
+
+  .roomset-remove-btn {
+    display: block;
+    width: 100%;
+    margin-top: 8px;
+    background: var(--brand-accent);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 8px 0;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-align: center;
+    box-shadow: 0 2px 6px rgba(244,162,123,0.3);
+    transition: var(--transition);
+  }
+
+  .roomset-remove-btn:hover {
+    background: #e18f6a;
+    transform: translateY(-1px);
+  }
+}
+@media (min-width: 769px) {
+  .roomset-item-list {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px;
+    background: var(--brand-bg);
+    border-radius: 10px;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .roomset-item-list img {
+    width: 100px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 8px;
+  }
+
+  .roomset-item-info {
+    flex: 1;
+  }
+
+  .roomset-remove-btn {
+    width: auto;
+    margin-top: 0;
+    background: #fff;
+    color: #c0392b;
+    border: 2px solid #f2d7d5;
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-weight: 700;
+    box-shadow: none;
+  }
+
+  .roomset-remove-btn:hover {
+    background: #fdf2f2;
+    transform: none;
+  }
 }
 
   </style>
 </head>
 <body>
   <header>
-    <div class="top-bar">
-      <div class="logo"><img src="Home-in-on-logo.webp" alt="HomeInOn Logo"></div>
-      <button id="toggleFavourites">⭐ View Favourites</button>
-    </div>
-<!-- New room selector -->
+<div class="top-bar">
+  <div class="logo"><img src="Home-in-on-logo.webp" alt="HomeInOn Logo"></div>
+
+  <div class="header-buttons">
+    <button id="toggleFavourites">⭐ View Favourites</button>
+    <button id="toggleRoomset">🪄 View Roomset</button>
+  </div>
+</div>
+
 <div class="styles" id="roomSelector"></div>
     <div class="styles" id="styleSelector"></div>
 
    <button id="filterToggle">Show Filters ▼</button>
-
 
     <section class="filters" id="filters">
       <div class="filter-group">
@@ -768,7 +1195,6 @@
         <span id="priceValue">£2000</span>
       </div>
 
-      <!-- Clear filters -->
       <div class="filter-group">
         <label>&nbsp;</label>
         <button id="clearFilters" class="btn-outline">Clear filters</button>
@@ -785,518 +1211,198 @@
       <div class="modal-img"><img id="modalImage" alt="Product image"/></div>
       <div class="modal-body">
         <h2 id="modalTitle">Title</h2>
-        <div class="price-lg" id="modalPrice">£0.00</div>
-   <div id="modalDims" class="dims-line" style="display:none"></div>
+<div class="price-lg" id="modalPrice">£0.00</div>
 
+<div class="meta">
+  <div><strong>Category:</strong> <span id="modalCategory">—</span></div>
+  <div><strong>Material:</strong> <span id="modalMaterial">—</span></div>
+  <div><strong>Colour:</strong> <span id="modalColour">—</span></div>
+  <div><strong>Style:</strong> <span id="modalStyle">—</span></div>
+  <div><strong>Room:</strong> <span id="modalRoom">—</span></div>
+  <div><strong>DIMENSIONS:</strong> <span id="modalDimsText">—</span></div>
+</div>
 
-        <div class="meta">
-          <div><strong>Category:</strong> <span id="modalCategory">—</span></div>
-          <div><strong>Material:</strong> <span id="modalMaterial">—</span></div>
-          <div><strong>Colour:</strong> <span id="modalColour">—</span></div>
-          <div><strong>Style:</strong> <span id="modalStyle">—</span></div>
-        </div>
-        <div class="desc" id="modalDescription">Description here…</div>
-        <a id="modalLink" class="btn-primary" href="#" target="_blank" rel="noopener" style="display:none">View product</a>
-        <!-- modal heart -->
-        <button id="modalHeart" class="modal-heart" title="Favourite">❤</button>
+<div class="desc" id="modalDescription">Description here…</div>
+
+<div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:10px;">
+  <a id="modalLink" class="btn-primary" href="#" target="_blank" rel="noopener" style="display:none">View product</a>
+  <button id="modalRoomsetBtn" class="btn-outline">＋ Add to Roomset</button>
+</div>
+
+<button id="modalHeart" class="modal-heart" title="Favourite">❤</button>
+</div>
+</div>
+</div>
+
+<div id="roomsetModal" class="modal-overlay" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="roomsetTitle">
+    <button class="close-x" id="roomsetClose" aria-label="Close">✕</button>
+
+    <div class="modal-body" style="padding:28px; max-height:90vh; overflow:auto;">
+      <h2 id="roomsetTitle" style="margin-bottom:12px;">🪄 Your Roomset</h2>
+<div id="roomsetViewToggle" class="roomset-buttons">
+  <button id="viewListBtn" class="btn-primary">📋 List View</button>
+  <button id="viewCanvasBtn" class="btn-primary">🖼️ Canvas View</button>
+</div>
+
+<div id="roomsetBackgrounds" class="roomset-bg-selector">
+</div>
+
+<div id="roomsetCanvas"
+     style="display:none;
+            min-height:500px;
+            border:2px dashed #ddd;
+            border-radius:12px;
+            background:#fafafa;
+            position:relative;
+            overflow:visible;
+            width:100%;
+            max-width:100%;
+            box-sizing:border-box;">
+</div>
+
+      <div id="roomsetList"
+           style="display:grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap:16px;">
       </div>
+
+<div style="margin-top:16px; text-align:left;">
+  <button id="roomsetClear" class="btn-primary" style="width:auto;">Clear Roomset</button>
+</div>
+
     </div>
   </div>
+</div>
 
-  <script>
-    const API_URL = "https://homeinon-backend.onrender.com/products";
+<!-- 3D VIEWER -->
+<div id="threeContainer" style="
+  width: 100%;
+  max-width: 1200px;
+  height: 520px;
+  margin: 30px auto;
+  border-radius: 12px;
+  background: #f7f7f7;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  position: relative;
+  overflow: hidden;
+"></div>
 
-   const STYLE_IMAGES = {
-  "contemporary": "assets/style-contemporary.jpg",
-  "scandinavian": "assets/style-scandinavian.jpg",
-  "transitional": "assets/style-transitional.jpg",
-  "mid century modern": "assets/style-mid-century-modern.jpg",
-  "traditional": "assets/style-traditional.jpg",
-  "minimalism": "assets/style-minimalism.jpg",
-  "art deco": "assets/style-art-deco.jpg",
-  "bohemian": "assets/style-bohemian.jpg",
-  "coastal": "assets/style-coastal.jpg",
-  "japandi": "assets/style-japandi.jpg",
-  "country": "assets/style-country.jpg",
-  "maximalism": "assets/style-maximalism.jpg",
-  "regency": "assets/style-regency.jpg"
-};
-const ROOM_IMAGES = {
-  "bedroom": "assets/room-bedroom.jpg",
-  "dining": "assets/room-dining.jpg",
-  "living": "assets/room-living.jpg",
-  "office": "assets/room-office.jpg"
-};
+<script src="script.js"></script>
 
 
-    const colourMap = {
-      white:"#ffffff", black:"#000000", grey:"#9e9e9e", gray:"#9e9e9e",
-      oak:"#c49a6c", walnut:"#7a5734", pine:"#d5b887", beige:"#d9c7a2",
-      gold:"#c8a951", silver:"#bdbdbd", blue:"#5a7abf", green:"#6aa67a",
-      red:"#c74c4c", brown:"#8b5a2b", cream:"#f3e9d2", yellow:"#f8e473",
-      ivory:"#fffff0", natural:"#d6b98c", charcoal:"#36454f", teal:"#367588",
-      taupe:"#b38b6d", stone:"#c2b59b", pink:"#f7c6d9", orange:"#f6a04d",
-      navy:"#001f3f", mink:"#b7a295", copper:"#b87333", bronze:"#cd7f32",
-      lilac:"#c8a2c8", sage:"#a9bfa5", mustard:"#e1ad01", terracotta:"#e2725b",
-      pewter:"#8e9292"
-    };
-    const colourHex = n => colourMap[String(n||"").toLowerCase()] || "#ccc";
+<script type="module">
+  // ✅ esm.sh correctly exports all modules
+  import * as THREE from "https://esm.sh/three@0.160.0";
+  import { OrbitControls } from "https://esm.sh/three@0.160.0/examples/jsm/controls/OrbitControls.js";
+  import { GLTFLoader } from "https://esm.sh/three@0.160.0/examples/jsm/loaders/GLTFLoader.js";
+  import { DRACOLoader } from "https://esm.sh/three@0.160.0/examples/jsm/loaders/DRACOLoader.js";
 
-    function deriveStyle(txt=""){
-      const t = String(txt).toLowerCase();
-      if(t.includes("boho")) return "Boho";
-      if(t.includes("industrial")||t.includes("metal")) return "Industrial";
-      if(t.includes("scandi")||t.includes("nordic")) return "Scandi";
-      if(t.includes("farmhouse")||t.includes("rustic")) return "Farmhouse";
-      if(t.includes("mid")||t.includes("retro")) return "Mid-century";
-      if(t.includes("art deco")||t.includes("glam")) return "Art Deco";
-      if(t.includes("coastal")||t.includes("beach")) return "Coastal";
-      return "Modern";
-    }
-// Always returns exactly "W90cm x D160cm x H77cm" (or "" if none)
-function formatDims(p) {
-  const w = (p.width_cm ?? p.width ?? "").toString().trim();
-  const d = (p.depth_cm ?? p.depth ?? "").toString().trim();
-  const h = (p.height_cm ?? p.height ?? "").toString().trim();
+  function initThreeViewer(modelUrl = "assets/models/11_albany002-_1_-albany_charcoal_fabric_2_seater-lifestyle-web-pdp_3d.glb") {
+    const container = document.getElementById("threeContainer");
+    if (!container) return;
 
-  const parts = [];
-  if (w) parts.push(`W${w}cm`);
-  if (d) parts.push(`D${d}cm`);
-  if (h) parts.push(`H${h}cm`);
-  return parts.join(" x ");
-}
+    // --- Scene setup ---
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xf7f7f7);
 
+    const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+    camera.position.set(0.8, 0.6, 1.2);
 
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    if (THREE.SRGBColorSpace) renderer.outputColorSpace = THREE.SRGBColorSpace;
+    container.appendChild(renderer.domElement);
 
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
 
-    let allProducts = [];
-    let selectedStyle = "";
-    let selectedRoom = "";
-    let selectedColour = "";
-    let showFavourites = false;
-    let favourites = JSON.parse(localStorage.getItem("favourites")||"[]");
+    // --- Lighting ---
+    const hemi = new THREE.HemisphereLight(0xffffff, 0x444444, 1.2);
+    const dir = new THREE.DirectionalLight(0xffffff, 1.2);
+    dir.position.set(1, 2, 3);
+    scene.add(hemi, dir);
 
-    // --- state helpers
-    function getState(){
-      return {
-        q: document.getElementById("searchBox").value.toLowerCase(),
-        category: document.getElementById("category").value,
-        material: document.getElementById("material").value,
-        colour: selectedColour,
-        style: selectedStyle,
-        room: selectedRoom,
-        max: parseFloat(document.getElementById("priceRange").value) || Infinity
-      };
-    }
-    function filterProducts(state, ignoreField){
-      return allProducts.filter(p=>{
-        const t = (p.title||"").toLowerCase();
-        const d = (p.description||"").toLowerCase();
-        const price = parseFloat(p.price)||0;
+    // --- Visual helper ---
+    const axes = new THREE.AxesHelper(0.5);
+    scene.add(axes);
 
-        const checks = {
-          q: (!state.q) || t.includes(state.q) || d.includes(state.q),
-          category: (!state.category) || p.category === state.category,
-          material: (!state.material) || p.material === state.material,
-          colour: (!state.colour) || (p.colour && p.colour.toLowerCase().includes(state.colour.toLowerCase())),
-          style: (!state.style) || p.style === state.style,
-          room: (!state.room) || p.room === state.room,
-          max: price <= state.max
-        };
-        if(ignoreField){ checks[ignoreField] = true; }
-        if(showFavourites){
-          checks.fav = favourites.includes(p.title || p.sku || "");
+    // --- Loading overlay ---
+    const loadingDiv = document.createElement("div");
+    loadingDiv.textContent = "Loading 3D model...";
+    Object.assign(loadingDiv.style, {
+      position: "absolute",
+      top: "50%",
+      left: "50%",
+      transform: "translate(-50%, -50%)",
+      color: "#333",
+      background: "rgba(255,255,255,0.9)",
+      padding: "8px 12px",
+      borderRadius: "8px",
+      fontSize: "1.1rem",
+      fontWeight: "600"
+    });
+    container.appendChild(loadingDiv);
+
+    // --- GLTF + DRACO Loaders ---
+    const loader = new GLTFLoader();
+    const draco = new DRACOLoader();
+    draco.setDecoderPath("https://esm.sh/three@0.160.0/examples/jsm/libs/draco/");
+    loader.setDRACOLoader(draco);
+
+loader.load(
+  modelUrl,
+  (gltf) => {
+    console.log("✅ Model loaded successfully:", gltf);
+    loadingDiv.remove();
+    const model = gltf.scene;
+    scene.add(model);
+
+    // ✅ Center the model and move the camera so it's visible
+    const box = new THREE.Box3().setFromObject(model);
+    const center = box.getCenter(new THREE.Vector3());
+    const size = box.getSize(new THREE.Vector3());
+
+    model.position.sub(center);
+    camera.position.set(center.x, center.y + size.y * 0.5, center.z + size.z * 2.0);
+    controls.target.copy(center);
+    controls.update();
+
+    // (optional) add a grid to see orientation
+    const grid = new THREE.GridHelper(10, 20);
+    scene.add(grid);
+  },
+
+      (xhr) => {
+        if (xhr.total) {
+          loadingDiv.textContent =
+            "Loading 3D model... " + Math.round((xhr.loaded / xhr.total) * 100) + "%";
         }
-        return Object.values(checks).every(Boolean);
-      });
-    }
-    const uniqueValues = (arr, field)=>{
-      const s = new Set();
-      arr.forEach(p=>{
-        const v = p[field]; if(!v) return;
-        String(v).split(/[,/|;]/).forEach(x=>{
-          const val = x.trim(); if(val) s.add(val);
-        });
-      });
-      return [...s];
-    };
-// Build a "Width × Depth × Height" string from whatever keys we get
-function formatDims(p){
-  // Accept multiple possible keys coming from the CSV
-  const w = p.width_cm ?? p.width ?? p.Width ?? p.WIDTH ?? null;
-  const d = p.depth_cm ?? p.depth ?? p.Depth ?? p.DEPTH ?? null;
-  const h = p.height_cm ?? p.height ?? p.Height ?? p.HEIGHT ?? null;
-
-  // Clean numbers; allow strings like "120", "120 cm"
-  const clean = (v) => {
-    if (v == null) return null;
-    const n = parseFloat(String(v).replace(/[^\d.]/g,""));
-    return Number.isFinite(n) ? n : null;
-  };
-
-  const W = clean(w), D = clean(d), H = clean(h);
-
-  // If nothing valid, return empty string (so we render nothing)
-  if (W==null && D==null && H==null) return "";
-
-  // Build pieces that exist
-  const parts = [];
-  if (W!=null) parts.push(`${W}W`);
-  if (D!=null) parts.push(`${D}D`);
-  if (H!=null) parts.push(`${H}H`);
-
-  return parts.join(" × ") + " cm";
-}
-
-    // --- UI builders
-    function buildStyleCards(styles){
-      const row = document.getElementById("styleSelector");
-      row.innerHTML = "";
-      styles.forEach(style=>{
-        const card = document.createElement("div");
-        card.className = "style-card";
-        const imgSrc = STYLE_IMAGES[style.toLowerCase()] || `https://placehold.co/200x150?text=${encodeURIComponent(style)}`;
-        card.innerHTML = `<img src="${imgSrc}" alt="${style}"><span>${style}</span>`;
-        card.addEventListener("click", ()=>{
-          document.querySelectorAll(".style-card").forEach(c=>c.classList.remove("active"));
-          if(selectedStyle === style){ selectedStyle = ""; }
-          else { selectedStyle = style; card.classList.add("active"); }
-          updateFilterOptions();
-          applyFilters();
-        });
-        row.appendChild(card);
-      });
-    }
-    function buildRoomCards(rooms) {
-  const row = document.getElementById("roomSelector");
-  row.innerHTML = "";
-  rooms.forEach(room => {
-    const card = document.createElement("div");
-    card.className = "style-card";
-    const imgSrc = ROOM_IMAGES[room.toLowerCase()] || `https://placehold.co/200x150?text=${encodeURIComponent(room)}`;
-    card.innerHTML = `<img src="${imgSrc}" alt="${room}"><span>${room}</span>`;
-    card.addEventListener("click", () => {
-      document.querySelectorAll("#roomSelector .style-card").forEach(c => c.classList.remove("active"));
-      if (selectedRoom === room) {
-        selectedRoom = "";
-      } else {
-        selectedRoom = room;
-        card.classList.add("active");
+      },
+      (err) => {
+        loadingDiv.textContent = "Error loading model";
+        console.error("GLB load error:", err);
       }
-      updateFilterOptions();
-      applyFilters();
+    );
+
+    // --- Render loop ---
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    // --- Handle window resize ---
+    window.addEventListener("resize", () => {
+      const w = container.clientWidth, h = container.clientHeight;
+      renderer.setSize(w, h);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
     });
-    row.appendChild(card);
-  });
-}
-
-    function buildColourDropdown(colours, keepSelection=true){
-      const select = document.getElementById("colourSelect");
-      const list = document.getElementById("colourList");
-      const prev = keepSelection ? selectedColour : "";
-
-      list.innerHTML = "";
-      const allItem = document.createElement("div");
-      allItem.className = "colour-item";
-      allItem.textContent = "All";
-      allItem.addEventListener("click", ()=>{
-        selectedColour = ""; select.textContent = "All"; list.classList.remove("active"); applyFilters();
-      });
-      list.appendChild(allItem);
-
-      colours.forEach(c=>{
-        const item = document.createElement("div");
-        item.className = "colour-item";
-        item.innerHTML = `<span class="swatch" style="background:${colourHex(c)}"></span>${c}`;
-        item.addEventListener("click", ()=>{
-          selectedColour = c;
-          select.innerHTML = `<span class="swatch" style="background:${colourHex(c)}"></span>${c}`;
-          list.classList.remove("active");
-          updateFilterOptions();
-          applyFilters();
-        });
-        list.appendChild(item);
-      });
-
-      if(prev){
-        selectedColour = colours.includes(prev) ? prev : "";
-        if(selectedColour){
-          select.innerHTML = `<span class="swatch" style="background:${colourHex(selectedColour)}"></span>${selectedColour}`;
-        }else{
-          select.textContent = "All";
-        }
-      }else{
-        select.textContent = "All";
-      }
-
-      select.onclick = ()=> list.classList.toggle("active");
-      document.addEventListener("click", e=>{
-        if(!e.target.closest(".colour-dropdown")) list.classList.remove("active");
-      });
-    }
-
-    function renderProducts(products){
-      const list = document.getElementById("product-list");
-      const count = document.getElementById("product-count");
-      list.innerHTML = "";
-      count.textContent = `${products.length} product${products.length!==1?"s":""} found`;
-
-      // Empty state
-      if(products.length === 0){
-        list.innerHTML = `
-          <div style="grid-column: 1/-1; text-align:center; padding:80px 20px">
-            <div style="font-size:4rem; margin-bottom:16px">${showFavourites ? '💔' : '🔍'}</div>
-            <h3 style="color:var(--ink); margin-bottom:8px">
-              ${showFavourites ? 'No favourites yet' : 'No products found'}
-            </h3>
-            <p style="color:var(--muted)">
-              ${showFavourites ? 'Click the ❤️ on products you love!' : 'Try adjusting your filters'}
-            </p>
-          </div>
-        `;
-        return;
-      }
-
-      products.forEach((p, idx)=>{
-        const price = parseFloat(p.price) || 0;
-        const liked = favourites.includes(p.title || p.sku || "");
-        const div = document.createElement("div");
-        div.className = "product";
-        div.setAttribute("data-index", idx);
-
-div.innerHTML = `
-  <div class="style-label">${p.style || ""}</div>
-  <img src="${p.image_url}" alt="${p.title}" onerror="this.src='https://placehold.co/340x240?text=No+Image'"/>
-  <div class="product-info">
-    <h3>${p.title}</h3>
-    <p class="price">£${price.toFixed(2)}</p>
-  </div>
-  <button class="heart-btn ${liked ? "liked":""}" title="Favourite" data-key="${p.title || p.sku || ""}">❤</button>
-`;
-
-
-
-        div.addEventListener("click", (e)=>{ if(!e.target.classList.contains("heart-btn")) openProductModal(idx); });
-        div.querySelector(".heart-btn").addEventListener("click", (e)=>{
-          e.stopPropagation();
-          toggleFavourite(e.currentTarget.dataset.key, e.currentTarget);
-        });
-
-        list.appendChild(div);
-      });
-    }
-
-    function applyFilters(){
-      const filtered = filterProducts(getState());
-      renderProducts(filtered);
-    }
-
-    function updateFilterOptions(){
-      const state = getState();
-
-      const catList = uniqueValues(filterProducts(state, 'category'), 'category').sort();
-      const catSel = document.getElementById("category");
-      const currentCat = state.category;
-      catSel.innerHTML = '<option value="">All</option>' + catList.map(c=>`<option value="${c}">${c}</option>`).join("");
-      if(currentCat && catList.includes(currentCat)) catSel.value = currentCat; else catSel.value = "";
-
-      const matList = uniqueValues(filterProducts(state, 'material'), 'material').sort();
-      const matSel = document.getElementById("material");
-      const currentMat = state.material;
-      matSel.innerHTML = '<option value="">All</option>' + matList.map(m=>`<option value="${m}">${m}</option>`).join("");
-      if(currentMat && matList.includes(currentMat)) matSel.value = currentMat; else matSel.value = "";
-
-      const colourList = uniqueValues(filterProducts(state, 'colour'), 'colour').sort();
-      buildColourDropdown(colourList, true);
-    }
-
-    function toggleFavourite(key, btnEl){
-      if(!key) return;
-      const i = favourites.indexOf(key);
-      if(i>=0){ favourites.splice(i,1); btnEl.classList.remove("liked"); }
-      else{ favourites.push(key); btnEl.classList.add("liked","pulse"); setTimeout(()=>btnEl.classList.remove("pulse"),300); }
-      localStorage.setItem("favourites", JSON.stringify(favourites));
-    }
-
-    // modal
-    const modalOverlay = document.getElementById("productModal");
-    const modalImage   = document.getElementById("modalImage");
-    const modalTitle   = document.getElementById("modalTitle");
-    const modalPrice   = document.getElementById("modalPrice");
-    const modalCat     = document.getElementById("modalCategory");
-    const modalMat     = document.getElementById("modalMaterial");
-    const modalCol     = document.getElementById("modalColour");
-    const modalStyle   = document.getElementById("modalStyle");
-    const modalDesc    = document.getElementById("modalDescription");
-    const modalLink    = document.getElementById("modalLink");
-    const modalClose   = document.getElementById("modalClose");
-    const modalHeart   = document.getElementById("modalHeart");
-    const dimsEl = document.getElementById("modalDims");
-
-    let modalKey = "";
-
-    function openProductModal(index){
-      const filtered = filterProducts(getState());
-      const p = filtered[index];
-      if(!p) return;
-
-      modalImage.src = p.image_url || "https://placehold.co/640x480?text=No+Image";
-      modalImage.onerror = () => modalImage.src = "https://placehold.co/640x480?text=No+Image";
-      modalTitle.textContent = p.title || "Untitled";
-      modalPrice.textContent = `£${(parseFloat(p.price)||0).toFixed(2)}`;
-      // --- STEP 3: Insert formatted dimensions
-
-// --- Clean dimension display (inside modal only)
-const dims = formatDimsStrict(p);
-if (dims) {
-  dimsEl.textContent = dims;
-  dimsEl.style.display = "inline-block";
-} else {
-  dimsEl.style.display = "none";
-}
-
-      modalCat.textContent = p.category || "—";
-      modalMat.textContent = p.material || "—";
-      modalCol.textContent = p.colour || "—";
-      modalStyle.textContent = p.style || deriveStyle(p.title || p.description);
-      modalDesc.textContent = p.description || "—";
-      modalKey = p.title || p.sku || "";
-
-      if(p.url){ modalLink.style.display="inline-block"; modalLink.href=p.url; }
-      else { modalLink.style.display="none"; modalLink.removeAttribute("href"); }
-
-      if(favourites.includes(modalKey)) modalHeart.classList.add("liked"); else modalHeart.classList.remove("liked");
-
-      modalOverlay.style.display = "flex";
-      modalOverlay.setAttribute("aria-hidden","false");
-      document.body.style.overflow = "hidden";
-    }
-    function closeProductModal(){
-      modalOverlay.style.display = "none";
-      modalOverlay.setAttribute("aria-hidden","true");
-      document.body.style.overflow = "";
-    }
-    modalClose.addEventListener("click", closeProductModal);
-    modalOverlay.addEventListener("click", (e)=>{ if(e.target === modalOverlay) closeProductModal(); });
-    document.addEventListener("keydown", (e)=>{ if(e.key === "Escape") closeProductModal(); });
-    modalHeart.addEventListener("click", ()=>{
-      toggleFavourite(modalKey, modalHeart);
-      applyFilters();
-    });
-
-    // load & boot
-    async function loadProducts(){
-      const res = await fetch(API_URL);
-      const data = await res.json();
-allProducts = (data.products || []).map(p => {
-  const roomRaw = (p.room || "").toString().trim().toLowerCase();
-  let room = "";
-  if (roomRaw.includes("bed")) room = "bedroom";
-  else if (roomRaw.includes("din")) room = "dining";
-  else if (roomRaw.includes("liv")) room = "living";
-  else if (roomRaw.includes("off")) room = "office";
-
-  return {
-    ...p,
-    room,
-    style: p.style || deriveStyle(p.title || p.description)
-  };
-});
-
-
-      const styles = uniqueValues(allProducts, "style").sort();
-      const cats   = uniqueValues(allProducts, "category").sort();
-      const mats   = uniqueValues(allProducts, "material").sort();
-      const cols   = uniqueValues(allProducts, "colour").sort();
-const rooms  = uniqueValues(allProducts, "room").sort();
-buildRoomCards(rooms);
-      buildStyleCards(styles);
-
-      const catSel = document.getElementById("category");
-      const matSel = document.getElementById("material");
-      catSel.innerHTML = '<option value="">All</option>' + cats.map(c=>`<option value="${c}">${c}</option>`).join("");
-      matSel.innerHTML = '<option value="">All</option>' + mats.map(m=>`<option value="${m}">${m}</option>`).join("");
-
-      buildColourDropdown(cols, true);
-
-      const maxP = Math.ceil(Math.max(0, ...allProducts.map(p=>parseFloat(p.price)||0))/50)*50 || 2000;
-      const pr = document.getElementById("priceRange");
-      pr.max = maxP; pr.value = maxP;
-      document.getElementById("priceValue").textContent = `£${maxP}`;
-
-      renderProducts(allProducts);
-    }
-
-    document.getElementById("toggleFavourites").addEventListener("click", ()=>{
-      showFavourites = !showFavourites;
-      document.getElementById("toggleFavourites").textContent = showFavourites ? "🔙 View All Products" : "⭐ View Favourites";
-      applyFilters();
-    });
-
-    document.getElementById("clearFilters").addEventListener("click", ()=>{
-      document.getElementById("searchBox").value = "";
-      document.getElementById("category").value = "";
-      document.getElementById("material").value = "";
-      selectedColour = "";
-      document.getElementById("colourSelect").textContent = "All";
-      selectedStyle = "";
-      document.querySelectorAll(".style-card").forEach(c=>c.classList.remove("active"));
-
-      const max = document.getElementById("priceRange").max || 2000;
-      document.getElementById("priceRange").value = max;
-      document.getElementById("priceValue").textContent = `£${max}`;
-
-      updateFilterOptions();
-      applyFilters();
-    });
-
-document.getElementById("filterToggle").addEventListener("click", ()=>{
-  const btn = document.getElementById("filterToggle");
-  const f = document.getElementById("filters");
-  const isActive = f.classList.toggle("active");
-  btn.textContent = isActive ? "Hide Filters ▲" : "Show Filters ▼";
-});
-    document.getElementById("searchBox").addEventListener("input", ()=>{ updateFilterOptions(); applyFilters(); });
-    document.getElementById("category").addEventListener("change", ()=>{ updateFilterOptions(); applyFilters(); });
-    document.getElementById("material").addEventListener("change", ()=>{ updateFilterOptions(); applyFilters(); });
-    document.getElementById("priceRange").addEventListener("input", e=>{
-      document.getElementById("priceValue").textContent = `£${e.target.value}`;
-      updateFilterOptions(); applyFilters();
-    });
-// --- STEP 1: Standardise dimensions to "W90cm x D160cm x H77cm"
-const DIM_KEYS = {
-  w: ["width_cm", "width", "w"],
-  d: ["depth_cm", "depth", "d"],
-  h: ["height_cm", "height", "h"]
-};
-
-function pickDim(p, keys){
-  for (const k of keys) {
-    if (p && p[k] != null && String(p[k]).trim() !== "") {
-      return String(p[k]).trim();
-    }
   }
-  return "";
-}
 
-// ALWAYS returns: W<cm> x D<cm> x H<cm> (no "×", no trailing cm at end)
-function formatDimsStrict(p){
-  const rawW = pickDim(p, DIM_KEYS.w);
-  const rawD = pickDim(p, DIM_KEYS.d);
-  const rawH = pickDim(p, DIM_KEYS.h);
+  // 👇 Use your local frontend model path
+  initThreeViewer("assets/models/11_albany002-_1_-albany_charcoal_fabric_2_seater-lifestyle-web-pdp_3d.glb");
+</script>
 
-  // strip any existing "cm" and whitespace
-  const clean = v => v.replace(/\s*cm\s*$/i, "").trim();
-
-  const w = rawW ? `W${clean(rawW)}cm` : "";
-  const d = rawD ? `D${clean(rawD)}cm` : "";
-  const h = rawH ? `H${clean(rawH)}cm` : "";
-
-  // join exactly with " x "
-  return [w, d, h].filter(Boolean).join(" x ");
-}
-
-    loadProducts();
-  </script>
 </body>
 </html>
