@@ -1,5 +1,8 @@
-/*
+/
   Access-Control-Allow-Origin: https://homeinon-frontend-static.onrender.com
   Access-Control-Allow-Methods: GET, POST, OPTIONS
   Access-Control-Allow-Headers: Content-Type, Authorization
   Content-Security-Policy: default-src 'self' https://homeinon-backend.onrender.com https://esm.sh https://unpkg.com https://cdn.jsdelivr.net data: blob: 'unsafe-inline' 'unsafe-eval';
+
+/script.js
+  Content-Type: application/javascript; charset=utf-8
