@@ -553,6 +553,55 @@ document.getElementById("priceRange").addEventListener("input", e=>{
   document.getElementById("priceValue").textContent = `£${e.target.value}`;
   updateFilterOptions(); applyFilters();
 });
+// --------- ROOMSET BACKGROUND SELECTOR ----------
+
+// Paths to your preset canvas backgrounds
+const ROOMSET_BACKGROUNDS = Array.from({ length: 13 }, (_, i) =>
+  `assets/roomset-canvas-image-${i + 1}.jpg`
+);
+
+const roomsetBackgrounds = document.getElementById("roomsetBackgrounds");
+
+// Render thumbnails into selector
+function renderRoomsetBackgrounds() {
+  if (!roomsetBackgrounds) return;
+
+  roomsetBackgrounds.innerHTML = "";
+
+  ROOMSET_BACKGROUNDS.forEach((src, idx) => {
+    const div = document.createElement("div");
+    div.className = "roomset-bg-thumb";
+    div.style.backgroundImage = `url('${src}')`;
+    div.style.backgroundSize = "cover";
+    div.style.backgroundPosition = "center";
+    div.style.cursor = "pointer";
+    div.style.width = "120px";
+    div.style.height = "80px";
+    div.style.borderRadius = "8px";
+    div.style.boxShadow = "var(--shadow-sm)";
+    div.style.border = "3px solid transparent";
+    div.style.marginBottom = "8px";
+
+    div.addEventListener("click", () => {
+      // clear previous backgrounds
+      roomsetCanvas.style.backgroundImage = `url('${src}')`;
+      roomsetCanvas.style.backgroundSize = "cover";
+      roomsetCanvas.style.backgroundPosition = "center";
+      roomsetCanvas.style.backgroundRepeat = "no-repeat";
+
+      // highlight selected
+      document.querySelectorAll(".roomset-bg-thumb")
+        .forEach(el => el.style.border = "3px solid transparent");
+
+      div.style.border = "3px solid var(--accent)";
+    });
+
+    roomsetBackgrounds.appendChild(div);
+  });
+}
+
+// run on load
+renderRoomsetBackgrounds();
 
 // --------- ROOMSET MODAL & CANVAS / LIST ----------
 const roomsetModal = document.getElementById("roomsetModal");
@@ -1022,6 +1071,7 @@ if (closeFloorplanBtn && fpPopup) {
 
 if (createFloorplanBtn && fpPopup) {
   createFloorplanBtn.addEventListener("click", () => {
+    
     const width = parseFloat(document.getElementById("fpWidth").value);
     const depth = parseFloat(document.getElementById("fpDepth").value);
     const height = parseFloat(document.getElementById("fpHeight").value); // future use
@@ -1031,19 +1081,25 @@ if (createFloorplanBtn && fpPopup) {
       return;
     }
 
-    // create SVG background behind items
+    // 1️⃣ Create the SVG room background
     createFloorplanSvg(width, depth);
 
-    // switch view to canvas mode inside roomset modal
+    // 2️⃣ Remove any image background so the floorplan is visible
+    roomsetCanvas.style.backgroundImage = "none";
+
+    // 3️⃣ Switch view to canvas mode
     canvasMode = true;
     roomsetList.style.display = "none";
     roomsetCanvas.style.display = "block";
 
+    // 4️⃣ Re-render items on top of new background
     renderRoomsetCanvas();
 
+    // 5️⃣ Close popup
     fpPopup.style.display = "none";
   });
 }
+
 
 // finally load products
 loadProducts();
