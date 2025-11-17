@@ -595,14 +595,25 @@ let canvasMode = false;
 
 viewListBtn.addEventListener("click", ()=>{
   canvasMode = false;
-  roomsetList.style.display = "block";
-  roomsetCanvas.style.display = "none";
+roomsetList.style.display = "block";
+roomsetCanvas.style.display = "none";
+
+// Wait to allow proper layout
+setTimeout(() => {
+    renderRoomset();
+}, 20);
+
 });
 viewCanvasBtn.addEventListener("click", ()=>{
   canvasMode = true;
-  roomsetList.style.display = "none";
-  roomsetCanvas.style.display = "block";
-  renderRoomsetCanvas();
+roomsetList.style.display = "none";
+roomsetCanvas.style.display = "block";
+
+// Wait for browser to paint before rendering
+setTimeout(() => {
+    renderRoomsetCanvas();
+}, 20);
+
 });
 let wasDesktop = window.innerWidth > 768;
 
