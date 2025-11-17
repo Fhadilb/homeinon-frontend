@@ -1241,25 +1241,24 @@
 
     <div class="modal-body" style="padding:28px; max-height:90vh; overflow:auto;">
 
-      <h2 id="roomsetTitle" style="margin-bottom:12px;">🪄 Your Roomset</h2>
+<!-- 🔹 Combined Suggest + View Buttons Row -->
+<div style="display:flex; gap:12px; align-items:center; margin-bottom:16px; flex-wrap:wrap;">
 
-      <!-- 🔹 Natural language roomset prompt -->
-      <div style="margin-bottom:16px;">
-        <input
-          id="roomsetPrompt"
-          type="text"
-          placeholder="Describe your room (e.g. blue bedroom with a bed, wardrobe and mirror under £1000)…"
-          style="width:100%; padding:12px; border-radius:10px; border:2px solid #ddd; font-size:0.95rem;"
-        />
-        <button id="roomsetSuggestBtn" class="btn-primary" style="margin-top:8px;">
-          ✨ Suggest items for me
-        </button>
-      </div>
+    <input
+      id="roomsetPrompt"
+      type="text"
+      placeholder="Describe your room (e.g. blue bedroom with a bed, wardrobe and mirror under £1000)…"
+      style="flex:1; padding:12px; border-radius:10px; border:2px solid #ddd; font-size:0.95rem;"
+    />
 
-      <div id="roomsetViewToggle" class="roomset-buttons">
-        <button id="viewListBtn" class="btn-primary">📋 List View</button>
-        <button id="viewCanvasBtn" class="btn-primary">🖼️ Canvas View</button>
-      </div>
+    <button id="roomsetSuggestBtn" class="btn-primary">
+        ✨ Suggest items
+    </button>
+
+    <button id="viewListBtn" class="btn-primary">📋 List</button>
+    <button id="viewCanvasBtn" class="btn-primary">🖼️ Canvas</button>
+</div>
+
 
       <div id="roomsetBackgrounds" class="roomset-bg-selector"></div>
 

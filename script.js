@@ -853,6 +853,13 @@ renderRoomsetBackgrounds();
 ---------------------------- */
 
 document.getElementById("roomsetSuggestBtn").addEventListener("click", () => {
+  // Allow ENTER key to run suggestions
+document.getElementById("roomsetPrompt").addEventListener("keyup", (e) => {
+    if (e.key === "Enter") {
+        document.getElementById("roomsetSuggestBtn").click();
+    }
+});
+
     const input = document.getElementById("roomsetPrompt").value.toLowerCase().trim();
     if (!input) {
         alert("Please describe your room first 🙂");
