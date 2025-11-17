@@ -1500,6 +1500,18 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 </script>
 <script>
+// OPEN DIMENSION POPUP WHEN CLICKING THE BIG ORANGE BOX
+document.addEventListener("DOMContentLoaded", () => {
+  const btn1 = document.getElementById("floorplanBtn");
+  const btn2 = document.getElementById("bgFloorplanOption");
+  const popup = document.getElementById("floorplanDimPopup");
+
+  if (btn1) btn1.addEventListener("click", () => popup.style.display = "flex");
+  if (btn2) btn2.addEventListener("click", () => popup.style.display = "flex");
+});
+</script>
+
+<script>
 // STEP 3 — Create 3D Floorplan from Dimensions
 document.addEventListener("DOMContentLoaded", () => {
   const createBtn = document.getElementById("createFloorplan");
