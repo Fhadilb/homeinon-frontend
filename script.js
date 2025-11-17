@@ -848,3 +848,104 @@ function renderRoomsetBackgrounds() {
 renderRoomsetBackgrounds();
 
     loadProducts();
+/* ---------------------------
+   SIMPLE ROOMSET SUGGESTION ENGINE
+---------------------------- */
+
+document.getElementById("roomsetSuggestBtn").addEventListener("click", () => {
+    const input = document.getElementById("roomsetPrompt").value.toLowerCase().trim();
+    if (!input) {
+        alert("Please describe your room first 🙂");
+        return;
+    }
+
+    // --- Extract room type ---
+    let roomType = "";
+    if (input.includes("bed")) roomType = "bedroom";
+    if (input.includes("din")) roomType = "dining";
+    if (input.includes("liv")) roomType = "living";
+    if (input.includes("off")) roomType = "office";
+
+    // --- Extract colours ---
+    const detectedColours = [];
+    for (const c of Object.keys(colourMap)) {
+        if (input.includes(c)) detectedColours.push(c);
+    }
+
+    // --- Extract categories ---
+    const categoryKeywords = {
+        bed: "Beds",
+        wardrobe: "Wardrobes",
+        dresser: "Dressers",
+        mirror: "Mirrors",
+        table: "Tables",
+        dining: "Dining Tables",
+        chair: "Chairs",
+        sofa: "Sofas",
+        desk: "Desks",
+        coffee: "Coffee Tables",
+        cabinet: "Cabinets",
+        blanket: "Blanket Boxes"
+    };
+    const detectedCategories = [];
+    for (const word in categoryKeywords) {
+        if (input.includes(word)) detectedCategories.push(categoryKeywords[word]);
+    }
+
+    // --- Extract price ---
+    let maxPrice = Infinity;
+    const priceMatch = input.match(/(under|below|less than)\s*£?(\d+)/i);
+    if (priceMatch) {
+        maxPrice = parseFloat(priceMatch[2]);
+    }
+
+    // --- Build filter ---
+    let matches = allProducts.filter(p => {
+        let ok = true;
+
+        // room
+        if (roomType && p.room !== roomType) ok = false;
+
+        // colours
+        if (detectedColours.length > 0) {
+            ok = ok && detectedColours.some(c => (p.colour || "").toLowerCase().includes(c));
+        }
+
+        // categories
+        if (detectedCategories.length > 0) {
+            ok = ok && detectedCategories.includes(p.category);
+        }
+
+        // price
+        if (p.price && maxPrice !== Infinity) {
+            ok = ok && parseFloat(p.price) <= maxPrice;
+        }
+
+        return ok;
+    });
+
+    // Safety: If no matches using strict filters → fallback to broad search
+    if (matches.length === 0) {
+        matches = allProducts.filter(p => {
+            return (
+                input.includes(p.room) ||
+                input.includes((p.category || "").toLowerCase()) ||
+                detectedColours.some(c => (p.colour || "").toLowerCase().includes(c))
+            );
+        });
+    }
+
+    if (matches.length === 0) {
+        alert("No matching items found for your description.");
+        return;
+    }
+
+    // Add only the top 6 matches (limit clutter)
+    const selected = matches.slice(0, 6);
+
+    selected.forEach(p => addToRoomset(p));
+    saveRoomset();
+    renderRoomset();
+
+    alert(`✨ Added ${selected.length} suggested items to your Roomset!`);
+});
