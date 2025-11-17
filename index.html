@@ -1401,29 +1401,26 @@
 </div>
 
 
+<!-- Background thumbnail container (JS will fill this automatically) -->
+<div id="roomsetBackgrounds" class="roomset-bg-selector"></div>
 
-
-<div id="roomsetBackgrounds" class="roomset-bg-selector">
-
-  <!-- ⭐ 3D FLOORPLAN TILE — FIRST OPTION -->
-  <div id="bgFloorplanOption" 
-       style="
-         width:120px; 
-         height:80px; 
-         border-radius:8px; 
-         background:#e8e8e8; 
-         display:flex; 
-         align-items:center; 
-         justify-content:center; 
-         font-weight:700; 
-         color:#555;
-         cursor:pointer;
-         border:3px solid transparent;
-         box-shadow: var(--shadow-sm);
-       ">
-    📐 3D Floorplan
-  </div>
-
+<!-- 3D FLOORPLAN TILE (SEPARATE BUTTON) -->
+<div id="bgFloorplanOption" 
+     style="
+       width:120px; 
+       height:80px; 
+       border-radius:8px; 
+       background:#e8e8e8; 
+       display:flex; 
+       align-items:center; 
+       justify-content:center; 
+       font-weight:700; 
+       color:#555;
+       cursor:pointer;
+       border:3px solid transparent;
+       box-shadow: var(--shadow-sm);
+     ">
+  📐 3D Floorplan
 </div>
 
 
@@ -1485,70 +1482,6 @@
 "></div>
 
 <script src="script.js"></script>
-
-<script>
-// FLOORPLAN TILE CLICK → SHOW DIMENSION POPUP
-document.addEventListener("DOMContentLoaded", () => {
-  const fpTile = document.getElementById("bgFloorplanOption");
-  const fpPopup = document.getElementById("floorplanDimPopup");
-
-  if (fpTile) {
-    fpTile.addEventListener("click", () => {
-      fpPopup.style.display = "flex";
-    });
-  }
-});
-</script>
-<script>
-// FLOORPLAN: GENERATE SVG ROOM WHEN USER ENTERS DIMENSIONS
-document.addEventListener("DOMContentLoaded", () => {
-  const btn = document.getElementById("createFloorplan");
-  const popup = document.getElementById("floorplanDimPopup");
-  const canvas = document.getElementById("roomsetCanvas");
-
-  if (!btn) return;
-
-  btn.addEventListener("click", () => {
-    const width = parseFloat(document.getElementById("fpWidth").value);
-    const depth = parseFloat(document.getElementById("fpDepth").value);
-    const height = parseFloat(document.getElementById("fpHeight").value);
-
-    if (!width || !depth || !height) {
-      alert("Please enter all dimensions.");
-      return;
-    }
-
-    // Close popup
-    popup.style.display = "none";
-
-    // ⭐ Force Canvas View Mode (very important)
-    const switchCanvas = document.getElementById("viewCanvasBtn");
-    if (switchCanvas) switchCanvas.click();
-
-    // Show canvas area
-    canvas.style.display = "block";
-
-    // Draw SVG room
-    canvas.innerHTML = `
-      <svg width="100%" height="100%" viewBox="0 0 800 500">
-        <rect x="50" y="200" width="${width * 60}" height="${depth * 60}"
-              fill="#e8e8e8" stroke="#999" stroke-width="3"></rect>
-
-        <text x="${50 + (width * 60) / 2}" y="190"
-              font-size="16" text-anchor="middle" fill="#555">
-          Width: ${width}m
-        </text>
-
-        <text x="30" y="${200 + (depth * 60) / 2}"
-              font-size="16" text-anchor="middle" fill="#555"
-              transform="rotate(-90, 30, ${200 + (depth * 60) / 2})">
-          Depth: ${depth}m
-        </text>
-      </svg>
-    `;
-  });
-});
-</script>
 
 
 <script>
