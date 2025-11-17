@@ -1241,9 +1241,8 @@
 
     <div class="modal-body" style="padding:28px; max-height:90vh; overflow:auto;">
 
-<!-- 🔹 Combined Suggest + View Buttons Row -->
-<div style="display:flex; gap:12px; align-items:center; margin-bottom:16px; flex-wrap:wrap;">
-
+<!-- Row 1: Suggest input -->
+<div style="display:flex; gap:12px; align-items:center; margin-bottom:12px; flex-wrap:wrap;">
     <input
       id="roomsetPrompt"
       type="text"
@@ -1254,10 +1253,14 @@
     <button id="roomsetSuggestBtn" class="btn-primary">
         ✨ Suggest items
     </button>
-
-    <button id="viewListBtn" class="btn-primary">📋 List</button>
-    <button id="viewCanvasBtn" class="btn-primary">🖼️ Canvas</button>
 </div>
+
+<!-- Row 2: View Mode Buttons -->
+<div id="roomsetViewToggle" class="roomset-buttons" style="margin-bottom:16px; display:flex; gap:12px;">
+    <button id="viewListBtn" class="btn-primary">📋 List View</button>
+    <button id="viewCanvasBtn" class="btn-primary">🖼️ Canvas View</button>
+</div>
+
 
 
       <div id="roomsetBackgrounds" class="roomset-bg-selector"></div>
