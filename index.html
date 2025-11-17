@@ -1221,6 +1221,46 @@
 .roomset-controls-right button {
   flex: 1 1 auto;
 }
+/* TOP AREA LAYOUT */
+.roomset-topbar {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-bottom: 16px;
+}
+
+/* FULL-WIDTH INPUT ROW */
+.roomset-input-row {
+    width: 100%;
+}
+
+.roomset-input {
+    width: 100%;
+    padding: 14px;
+    border-radius: 10px;
+    border: 2px solid #ddd;
+    font-size: 1rem;
+}
+
+/* BUTTON ROW BELOW INPUT */
+.roomset-buttons-row {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+/* Buttons style */
+.top-btn,
+.suggest-btn {
+    padding: 12px 22px;
+    background: var(--brand-accent);
+    color: #fff;
+    border-radius: 10px;
+    border: none;
+    font-weight: 700;
+    cursor: pointer;
+}
 
   </style>
 </head>
@@ -1314,23 +1354,28 @@
 
     <div class="modal-body" style="padding:28px; max-height:90vh; overflow:auto;">
 
-<!-- Combined top bar -->
+<!-- TOP AREA -->
 <div class="roomset-topbar">
 
-    <input
-      id="roomsetPrompt"
-      type="text"
-      placeholder="Describe your room (e.g. blue bedroom with a bed, wardrobe and mirror under £1000)…"
-      class="roomset-input"
-    />
+    <!-- Row 1 – FULL WIDTH INPUT -->
+    <div class="roomset-input-row">
+        <input
+            id="roomsetPrompt"
+            type="text"
+            placeholder="Describe your room (e.g. blue bedroom with a bed, wardrobe and mirror under £1000)…"
+            class="roomset-input"
+        />
+    </div>
 
-    <div class="roomset-controls-right">
+    <!-- Row 2 – BUTTONS BELOW -->
+    <div class="roomset-buttons-row">
         <button id="viewListBtn" class="top-btn">📋 List View</button>
         <button id="viewCanvasBtn" class="top-btn">🖼️ Canvas View</button>
         <button id="roomsetSuggestBtn" class="suggest-btn">✨ Suggest items</button>
     </div>
 
 </div>
+
 
 
 
