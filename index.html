@@ -1380,48 +1380,33 @@
 <!-- 3D FLOORPLAN ENTRY -->
 <div class="roomset-bg-selector" style="margin-bottom: 14px;">
 
-  <div id="floorplanBtn"
+</div>
+
+
+<!-- Background thumbnail strip (JS fills these automatically + adds floorplan tile) -->
+<div id="roomsetBackgrounds" class="roomset-bg-selector">
+  
+  <!-- 3D Floorplan button — MUST stay INSIDE the strip -->
+  <div id="bgFloorplanOption"
        style="
-         min-width: 160px;
-         height: 90px;
-         border-radius: 10px;
-         background: #fff;
-         border: 3px dashed #F4A27B;
-         display: flex;
-         align-items: center;
-         justify-content: center;
-         cursor: pointer;
-         font-weight: 700;
-         color: #F4A27B;
+         width:120px;
+         height:80px;
+         border-radius:8px;
+         background:#e8e8e8;
+         display:flex;
+         align-items:center;
+         justify-content:center;
+         font-weight:700;
+         color:#555;
+         cursor:pointer;
+         border:3px solid transparent;
          box-shadow: var(--shadow-sm);
        ">
-       ➕ Create 3D Floorplan
+    📐 3D Floorplan
   </div>
 
 </div>
 
-
-<!-- Background thumbnail container (JS will fill this automatically) -->
-<div id="roomsetBackgrounds" class="roomset-bg-selector"></div>
-
-<!-- 3D FLOORPLAN TILE (SEPARATE BUTTON) -->
-<div id="bgFloorplanOption" 
-     style="
-       width:120px; 
-       height:80px; 
-       border-radius:8px; 
-       background:#e8e8e8; 
-       display:flex; 
-       align-items:center; 
-       justify-content:center; 
-       font-weight:700; 
-       color:#555;
-       cursor:pointer;
-       border:3px solid transparent;
-       box-shadow: var(--shadow-sm);
-     ">
-  📐 3D Floorplan
-</div>
 
 
       <div id="roomsetCanvas"
