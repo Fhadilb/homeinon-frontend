@@ -575,12 +575,24 @@ function renderRoomset(){
 }
 
 
-toggleRoomsetBtn.addEventListener("click", ()=>{
-  renderRoomset();
+toggleRoomsetBtn.addEventListener("click", () => {
   roomsetModal.style.display = "flex";
   roomsetModal.setAttribute("aria-hidden","false");
   document.body.style.overflow = "hidden";
+
+  setTimeout(() => {
+      if (canvasMode) {
+          roomsetList.style.display = "none";
+          roomsetCanvas.style.display = "block";
+          renderRoomsetCanvas();
+      } else {
+          roomsetList.style.display = "block";
+          roomsetCanvas.style.display = "none";
+          renderRoomset();
+      }
+  }, 20);
 });
+
 
 closeRoomset.addEventListener("click", ()=>{
   roomsetModal.style.display = "none";
