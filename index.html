@@ -1518,9 +1518,17 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
+    // Close popup
     popup.style.display = "none";
+
+    // ⭐ Force Canvas View Mode (very important)
+    const switchCanvas = document.getElementById("viewCanvasBtn");
+    if (switchCanvas) switchCanvas.click();
+
+    // Show canvas area
     canvas.style.display = "block";
 
+    // Draw SVG room
     canvas.innerHTML = `
       <svg width="100%" height="100%" viewBox="0 0 800 500">
         <rect x="50" y="200" width="${width * 60}" height="${depth * 60}"
@@ -1532,7 +1540,8 @@ document.addEventListener("DOMContentLoaded", () => {
         </text>
 
         <text x="30" y="${200 + (depth * 60) / 2}"
-              font-size="16" text-anchor="middle" fill="#555" transform="rotate(-90, 30, ${200 + (depth * 60) / 2})">
+              font-size="16" text-anchor="middle" fill="#555"
+              transform="rotate(-90, 30, ${200 + (depth * 60) / 2})">
           Depth: ${depth}m
         </text>
       </svg>
@@ -1540,6 +1549,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 </script>
+
 
 <script>
 // OPEN DIMENSION POPUP WHEN CLICKING THE BIG ORANGE BOX
