@@ -900,6 +900,29 @@
   transition: transform 0.2s, border-color 0.2s;
   box-shadow: var(--shadow-sm);
 }
+.roomset-bg-selector img {
+  width: 120px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 3px solid transparent;
+  transition: transform 0.2s, border-color 0.2s;
+  box-shadow: var(--shadow-sm);
+}
+
+/* ⭐ FLOORPLAN SPECIAL TILE (3D OPTION) */
+#bgFloorplanOption:hover {
+  transform: scale(1.05);
+  border-color: var(--brand-accent);
+}
+
+#bgFloorplanOption.active {
+  border-color: var(--brand-accent);
+  transform: scale(1.08);
+  box-shadow: 0 4px 12px rgba(244,162,123,0.4);
+}
+
 .roomset-bg-selector img:hover {
   transform: scale(1.05);
   border-color: var(--brand-accent);
@@ -1354,11 +1377,55 @@
 </div>
 
 
+<!-- 3D FLOORPLAN ENTRY -->
+<div class="roomset-bg-selector" style="margin-bottom: 14px;">
+
+  <div id="floorplanBtn"
+       style="
+         min-width: 160px;
+         height: 90px;
+         border-radius: 10px;
+         background: #fff;
+         border: 3px dashed #F4A27B;
+         display: flex;
+         align-items: center;
+         justify-content: center;
+         cursor: pointer;
+         font-weight: 700;
+         color: #F4A27B;
+         box-shadow: var(--shadow-sm);
+       ">
+       ➕ Create 3D Floorplan
+  </div>
+
+</div>
 
 
 
 
-      <div id="roomsetBackgrounds" class="roomset-bg-selector"></div>
+<div id="roomsetBackgrounds" class="roomset-bg-selector">
+
+  <!-- ⭐ 3D FLOORPLAN TILE — FIRST OPTION -->
+  <div id="bgFloorplanOption" 
+       style="
+         width:120px; 
+         height:80px; 
+         border-radius:8px; 
+         background:#e8e8e8; 
+         display:flex; 
+         align-items:center; 
+         justify-content:center; 
+         font-weight:700; 
+         color:#555;
+         cursor:pointer;
+         border:3px solid transparent;
+         box-shadow: var(--shadow-sm);
+       ">
+    📐 3D Floorplan
+  </div>
+
+</div>
+
 
       <div id="roomsetCanvas"
         style="display:none; min-height:500px; border:2px dashed #ddd; border-radius:12px; background:#fafafa; position:relative;">
@@ -1371,6 +1438,33 @@
       <div style="margin-top:16px; text-align:left;">
         <button id="roomsetClear" class="btn-primary">Clear Roomset</button>
       </div>
+
+    </div>
+  </div>
+</div>
+<!-- FLOORPLAN DIMENSIONS MODAL -->
+<div id="floorplanDimPopup" class="modal-overlay" style="display:none;">
+  <div class="modal" style="max-width:480px; padding:20px;">
+
+    <button class="close-x" id="closeFloorplanDims">✕</button>
+
+    <div class="modal-body">
+
+      <h2 style="margin-bottom:15px;">Room Dimensions</h2>
+
+      <label>Width (m)</label>
+      <input id="fpWidth" type="number" min="1" value="3" 
+             style="width:100%; padding:10px; margin-bottom:10px;">
+
+      <label>Depth (m)</label>
+      <input id="fpDepth" type="number" min="1" value="3" 
+             style="width:100%; padding:10px; margin-bottom:10px;">
+
+      <label>Wall Height (m)</label>
+      <input id="fpHeight" type="number" min="2" value="2.4" 
+             style="width:100%; padding:10px; margin-bottom:20px;">
+
+      <button id="createFloorplan" class="btn-primary" style="width:100%;">Generate Floorplan</button>
 
     </div>
   </div>
@@ -1391,6 +1485,367 @@
 "></div>
 
 <script src="script.js"></script>
+
+<script>
+// FLOORPLAN TILE CLICK → SHOW DIMENSION POPUP
+document.addEventListener("DOMContentLoaded", () => {
+  const fpTile = document.getElementById("bgFloorplanOption");
+  const fpPopup = document.getElementById("floorplanDimPopup");
+
+  if (fpTile) {
+    fpTile.addEventListener("click", () => {
+      fpPopup.style.display = "flex";
+    });
+  }
+});
+</script>
+<script>
+// STEP 3 — Create 3D Floorplan from Dimensions
+document.addEventListener("DOMContentLoaded", () => {
+  const createBtn = document.getElementById("createFloorplan");
+  const fpPopup = document.getElementById("floorplanDimPopup");
+
+  createBtn.addEventListener("click", () => {
+    const width = parseFloat(document.getElementById("fpWidth").value);
+    const depth = parseFloat(document.getElementById("fpDepth").value);
+    const height = parseFloat(document.getElementById("fpHeight").value);
+
+    // Close popup
+    fpPopup.style.display = "none";
+
+    // Switch to Canvas View automatically
+    document.getElementById("viewCanvasBtn").click();
+
+    // Render floorplan room
+    generateFloorplanRoom(width, depth, height);
+  });
+});
+
+// ----------------------------------------------------------
+// FUNCTION: Generate 3D room inside #roomsetCanvas
+// ----------------------------------------------------------
+function generateFloorplanRoom(widthM, depthM, heightM) {
+  const container = document.getElementById("roomsetCanvas");
+
+  // Clear previous drawings
+  container.innerHTML = "";
+
+  // Convert meters → pixels (simple ratio)
+  const scale = 120;  // 1 meter = 120 pixels
+
+  const W = widthM * scale;
+  const D = depthM * scale;
+  const H = heightM * scale;
+
+  // Create SVG-based 3D illusion (fast, light)
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("width", "100%");
+  svg.setAttribute("height", "100%");
+  svg.style.position = "absolute";
+  svg.style.top = "0";
+  svg.style.left = "0";
+
+  // FLOOR
+  const floor = document.createElementNS(svg.namespaceURI, "rect");
+  floor.setAttribute("id", "floorRect");
+  floor.setAttribute("x", (container.clientWidth - W) / 2);
+  floor.setAttribute("y", (container.clientHeight - (D / 2)) / 2);
+  floor.setAttribute("width", W);
+  floor.setAttribute("height", D / 2);
+  floor.setAttribute("fill", "#dcdcdc");
+  floor.setAttribute("stroke", "#999");
+  floor.setAttribute("stroke-width", "3");
+  floor.style.opacity = 0.9;
+
+  // BACK WALL
+  const backWall = document.createElementNS(svg.namespaceURI, "rect");
+  backWall.setAttribute("id", "backWallRect");
+  backWall.setAttribute("x", (container.clientWidth - W) / 2);
+  backWall.setAttribute("y", (container.clientHeight - (D / 2)) / 2 - H);
+  backWall.setAttribute("width", W);
+  backWall.setAttribute("height", H);
+  backWall.setAttribute("fill", "#f5f5f5");
+  backWall.setAttribute("stroke", "#aaa");
+  backWall.setAttribute("stroke-width", "3");
+
+  // LEFT WALL
+  const leftWall = document.createElementNS(svg.namespaceURI, "polygon");
+  const lx = (container.clientWidth - W) / 2;
+  const ly = (container.clientHeight - (D / 2)) / 2;
+  const leftPoints = `
+    ${lx},${ly} 
+    ${lx},${ly - H}
+    ${lx - (D / 3)},${ly - H + (D / 3)} 
+    ${lx - (D / 3)},${ly + (D / 3)}
+  `;
+  leftWall.setAttribute("points", leftPoints);
+  leftWall.setAttribute("fill", "#efefef");
+  leftWall.setAttribute("stroke", "#bbb");
+  leftWall.setAttribute("stroke-width", "3");
+
+  // RIGHT WALL
+  const rightWall = document.createElementNS(svg.namespaceURI, "polygon");
+  const rx = (container.clientWidth + W) / 2;
+  const rightPoints = `
+    ${rx},${ly} 
+    ${rx},${ly - H}
+    ${rx + (D / 3)},${ly - H + (D / 3)} 
+    ${rx + (D / 3)},${ly + (D / 3)}
+  `;
+  rightWall.setAttribute("points", rightPoints);
+  rightWall.setAttribute("fill", "#efefef");
+  rightWall.setAttribute("stroke", "#bbb");
+  rightWall.setAttribute("stroke-width", "3");
+
+  // Append in correct stacking order
+  svg.appendChild(backWall);
+  svg.appendChild(leftWall);
+  svg.appendChild(rightWall);
+  svg.appendChild(floor);
+
+  container.appendChild(svg);
+}
+</script>
+<script>
+// STEP 4 — Add Roomset Items Into 3D Floorplan Room
+
+// This function will be called instead of the normal 2D canvas placement
+// whenever the 3D room exists.
+function addItemTo3DRoom(itemData) {
+  const container = document.getElementById("roomsetCanvas");
+  const svg = container.querySelector("svg");
+  if (!svg) {
+    alert("You must generate a 3D room before adding items!");
+    return;
+  }
+
+  // Convert item dimensions (cm → px)
+  const scale = 1.2; // 1cm = 1.2px simple ratio
+  const w = (itemData.width || 80) * scale;
+  const h = (itemData.height || 80) * scale;
+
+  // Floor position
+  const floorY = parseFloat(svg.querySelector("rect").getAttribute("y"));
+  const centerX = container.clientWidth / 2;
+
+  // Create furniture image inside the SVG
+const img = document.createElementNS("http://www.w3.org/2000/svg", "image");
+img.setAttribute("href", itemData.image);
+img.setAttribute("width", w);
+img.setAttribute("height", h);
+
+// 👇 Add these
+img.originalWidth = w;
+img.originalHeight = h;
+
+
+  // Start on floor, centered
+  img.setAttribute("x", centerX - w / 2);
+  img.setAttribute("y", floorY - h);
+
+  img.style.cursor = "pointer";
+  img.style.transition = "0.15s";
+
+  svg.appendChild(img);
+}
+
+
+// --------------------------------------------------------------------------
+// OVERRIDE: When user adds product to roomset, send to 3D placement if enabled
+// --------------------------------------------------------------------------
+document.addEventListener("DOMContentLoaded", () => {
+  const addBtn = document.getElementById("modalRoomsetBtn");
+
+  addBtn.addEventListener("click", () => {
+    // Read current product from modal
+    const item = {
+      title: document.getElementById("modalTitle").innerText,
+      image: document.getElementById("modalImage").src,
+      width: extractNumber(document.getElementById("modalDimsText").innerText, 0),
+      height: extractNumber(document.getElementById("modalDimsText").innerText, 1),
+      depth: extractNumber(document.getElementById("modalDimsText").innerText, 2),
+    };
+
+    // If 3D canvas exists → place item in 3D
+    const canvas = document.getElementById("roomsetCanvas");
+    const has3DRoom = canvas.querySelector("svg");
+
+    if (has3DRoom) {
+      addItemTo3DRoom(item);
+    } else {
+      // fallback: standard 2D placement (your existing JS handles this)
+      console.log("No 3D room yet — adding item using 2D system");
+    }
+
+    document.getElementById("productModal").style.display = "none";
+  });
+});
+
+
+// Helper: Extract dims like "120 x 80 x 60 cm"
+function extractNumber(dimText, index) {
+  if (!dimText) return 80;
+
+  const nums = dimText.match(/\d+/g);
+  if (!nums || nums.length < 3) return 80;
+
+  return parseFloat(nums[index]);
+}
+</script>
+<script>
+// STEP 5+6 — Drag, depth-scale, z-ordering, wall snapping
+document.addEventListener("DOMContentLoaded", () => {
+  const canvas = document.getElementById("roomsetCanvas");
+  if (!canvas) return;
+
+  let selected = null;
+  let offsetX = 0;
+  let offsetY = 0;
+
+  canvas.addEventListener("mousedown", startDrag);
+  canvas.addEventListener("touchstart", startDrag, { passive: false });
+
+  function startDrag(e) {
+    const svg = canvas.querySelector("svg");
+    if (!svg) return;
+
+    const target = e.target.closest("image");
+    if (!target) return;
+
+    selected = target;
+
+    const rect = canvas.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+    const curX = parseFloat(selected.getAttribute("x")) || 0;
+    const curY = parseFloat(selected.getAttribute("y")) || 0;
+
+    offsetX = clientX - rect.left - curX;
+    offsetY = clientY - rect.top - curY;
+
+    // Bring item to front
+    svg.appendChild(selected);
+
+    document.addEventListener("mousemove", drag);
+    document.addEventListener("mouseup", endDrag);
+    document.addEventListener("touchmove", drag, { passive: false });
+    document.addEventListener("touchend", endDrag);
+  }
+
+  function drag(e) {
+    if (!selected) return;
+    e.preventDefault();
+
+    const svg = canvas.querySelector("svg");
+    const rect = canvas.getBoundingClientRect();
+
+    const floorRect = svg.querySelector("#floorRect");
+    if (!floorRect) return;
+
+    const floorY = parseFloat(floorRect.getAttribute("y"));
+
+    const baseW = selected.originalWidth || selected.width.baseVal.value;
+    const baseH = selected.originalHeight || selected.height.baseVal.value;
+
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+    let newX = clientX - rect.left - offsetX;
+    let newY = clientY - rect.top - offsetY;
+
+    if (newY > floorY - baseH) {
+      newY = floorY - baseH;
+    }
+
+    const depthRange = floorY - 40;
+    const depthFactor = 1 - (newY / depthRange);
+    const scale = Math.max(0.45, Math.min(1.2, depthFactor));
+
+    selected.setAttribute("x", newX);
+    selected.setAttribute("y", newY);
+    selected.setAttribute("width", baseW * scale);
+    selected.setAttribute("height", baseH * scale);
+  }
+
+  function endDrag() {
+    if (!selected) {
+      cleanup();
+      return;
+    }
+
+    const svg = canvas.querySelector("svg");
+    const backWall = svg.querySelector("#backWallRect");
+
+    if (backWall) {
+      const backY = parseFloat(backWall.getAttribute("y"));
+      const y = parseFloat(selected.getAttribute("y"));
+
+      if (y < backY + 30) {
+        selected.setAttribute("y", backY + 10);
+      }
+    }
+
+    const items = [...svg.querySelectorAll("image")];
+    items
+      .sort((a, b) => {
+        const ay = parseFloat(a.getAttribute("y"));
+        const by = parseFloat(b.getAttribute("y"));
+        return ay - by;
+      })
+      .forEach((img) => svg.appendChild(img));
+
+    selected = null;
+    cleanup();
+  }
+
+  function cleanup() {
+    document.removeEventListener("mousemove", drag);
+    document.removeEventListener("mouseup", endDrag);
+    document.removeEventListener("touchmove", drag);
+    document.removeEventListener("touchend", endDrag);
+  }
+});
+</script>
+<script>
+// STEP 6 — Make 3D Floorplan behave like a selectable background option
+document.addEventListener("DOMContentLoaded", () => {
+  const fpTile = document.getElementById("bgFloorplanOption");
+  const backgrounds = document.getElementById("roomsetBackgrounds");
+  const canvas = document.getElementById("roomsetCanvas");
+
+  if (!fpTile) return;
+
+  // When clicked → mark active & show popup
+  fpTile.addEventListener("click", () => {
+    // Remove active class from ALL background thumbnails
+    backgrounds.querySelectorAll("img, div").forEach(el => {
+      el.classList.remove("active");
+    });
+
+    // Make Floorplan thumbnail active
+    fpTile.classList.add("active");
+
+    // Open the popup (dimensions modal)
+    document.getElementById("floorplanDimPopup").style.display = "flex";
+  });
+
+  // When floorplan is created, the 3D room becomes the background
+  document.getElementById("createFloorplan").addEventListener("click", () => {
+    // Switch to canvas view automatically
+    document.getElementById("viewCanvasBtn").click();
+
+    // Clear any OLD 2D background image (if exists)
+    canvas.style.backgroundImage = "none";
+    canvas.style.backgroundSize = "contain";
+    canvas.style.backgroundRepeat = "no-repeat";
+
+    // Also clear previously rendered SVG for safety
+    const oldSVG = canvas.querySelector("svg");
+    if (oldSVG) oldSVG.remove();
+  });
+});
+</script>
 
 
 <script type="module">
