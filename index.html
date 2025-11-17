@@ -1235,43 +1235,50 @@
 </div>
 
 <div id="roomsetModal" class="modal-overlay" aria-hidden="true">
-  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="roomsetTitle">
+  <div class="modal" role="dialog" aria-modal="true">
+    
     <button class="close-x" id="roomsetClose" aria-label="Close">✕</button>
 
     <div class="modal-body" style="padding:28px; max-height:90vh; overflow:auto;">
+
       <h2 id="roomsetTitle" style="margin-bottom:12px;">🪄 Your Roomset</h2>
-<div id="roomsetViewToggle" class="roomset-buttons">
-  <button id="viewListBtn" class="btn-primary">📋 List View</button>
-  <button id="viewCanvasBtn" class="btn-primary">🖼️ Canvas View</button>
-</div>
 
-<div id="roomsetBackgrounds" class="roomset-bg-selector">
-</div>
+      <!-- 🔹 Natural language roomset prompt -->
+      <div style="margin-bottom:16px;">
+        <input
+          id="roomsetPrompt"
+          type="text"
+          placeholder="Describe your room (e.g. blue bedroom with a bed, wardrobe and mirror under £1000)…"
+          style="width:100%; padding:12px; border-radius:10px; border:2px solid #ddd; font-size:0.95rem;"
+        />
+        <button id="roomsetSuggestBtn" class="btn-primary" style="margin-top:8px;">
+          ✨ Suggest items for me
+        </button>
+      </div>
 
-<div id="roomsetCanvas"
-     style="display:none;
-            min-height:500px;
-            border:2px dashed #ddd;
-            border-radius:12px;
-            background:#fafafa;
-            position:relative;
-            overflow:visible;
-            width:100%;
-            max-width:100%;
-            box-sizing:border-box;">
-</div>
+      <div id="roomsetViewToggle" class="roomset-buttons">
+        <button id="viewListBtn" class="btn-primary">📋 List View</button>
+        <button id="viewCanvasBtn" class="btn-primary">🖼️ Canvas View</button>
+      </div>
+
+      <div id="roomsetBackgrounds" class="roomset-bg-selector"></div>
+
+      <div id="roomsetCanvas"
+        style="display:none; min-height:500px; border:2px dashed #ddd; border-radius:12px; background:#fafafa; position:relative;">
+      </div>
 
       <div id="roomsetList"
            style="display:grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap:16px;">
       </div>
 
-<div style="margin-top:16px; text-align:left;">
-  <button id="roomsetClear" class="btn-primary" style="width:auto;">Clear Roomset</button>
-</div>
+      <div style="margin-top:16px; text-align:left;">
+        <button id="roomsetClear" class="btn-primary">Clear Roomset</button>
+      </div>
 
     </div>
   </div>
 </div>
+
 
 <!-- 3D VIEWER -->
 <div id="threeContainer" style="

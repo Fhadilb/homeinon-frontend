@@ -50,17 +50,38 @@ const ROOM_IMAGES = {
       return "Modern";
     }
 
-    function formatDims(p) {
-      const w = (p.width_cm ?? p.width ?? "").toString().trim();
-      const d = (p.depth_cm ?? p.depth ?? "").toString().trim();
-      const h = (p.height_cm ?? p.height ?? "").toString().trim();
+function formatDims(p) {
+  const rawW = p.width_cm ?? p.width ?? "";
+  const rawD = p.depth_cm ?? p.depth ?? "";
+  const rawH = p.height_cm ?? p.height ?? "";
 
-      const parts = [];
-      if (w) parts.push(`W${w}cm`);
-      if (d) parts.push(`D${d}cm`);
-      if (h) parts.push(`H${h}cm`);
-      return parts.join(" x ");
-    }
+  const normalize = (val) => {
+    const s = (val || "").toString().trim();
+    if (!s) return "";
+    // strip any existing "cm", "CM", spaces etc
+    const num = s.replace(/cm/gi, "").trim();
+    if (!num) return "";
+    // rebuild as "90cm"
+    return `${num}cm`;
+  };
+
+  const w = normalize(rawW);
+  const d = normalize(rawD);
+  const h = normalize(rawH);
+
+  const parts = [];
+  if (w) parts.push(`W${w}`);
+  if (d) parts.push(`D${d}`);
+  if (h) parts.push(`H${h}`);
+
+  // final safety: if somehow "cmcm" sneaks in, squash it
+  let out = parts.join(" x ");
+  out = out.replace(/cm\s*cm/gi, "cm");
+  return out;
+}
+
+
+
 function normalizeCutoutPath(p) {
   if (!p) return "";
   const s = String(p).trim();
