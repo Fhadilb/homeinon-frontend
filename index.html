@@ -1148,6 +1148,61 @@
     transform: none;
   }
 }
+/* ================================
+      ROOMSET TOP BAR (NEW FIX)
+=================================== */
+
+.roomset-topbar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 18px;
+  background: #fff;
+  padding: 14px 18px;
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+}
+
+.roomset-topbar input.roomset-input {
+  flex: 1;
+  padding: 12px 14px;
+  border: 2px solid var(--input-border);
+  border-radius: 10px;
+  font-size: 0.95rem;
+}
+
+.roomset-controls-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.roomset-controls-right .top-btn,
+.roomset-controls-right .suggest-btn {
+  padding: 10px 16px;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+/* MOBILE — STACKED BUT NEAT */
+@media(max-width: 768px){
+  .roomset-topbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .roomset-controls-right {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .roomset-controls-right button {
+    flex: 1;
+    text-align: center;
+  }
+}
 
   </style>
 </head>
@@ -1241,25 +1296,24 @@
 
     <div class="modal-body" style="padding:28px; max-height:90vh; overflow:auto;">
 
-<!-- Row 1: Suggest input -->
-<div style="display:flex; gap:12px; align-items:center; margin-bottom:12px; flex-wrap:wrap;">
+<!-- Combined top bar -->
+<div class="roomset-topbar">
+
     <input
       id="roomsetPrompt"
       type="text"
       placeholder="Describe your room (e.g. blue bedroom with a bed, wardrobe and mirror under £1000)…"
-      style="flex:1; padding:12px; border-radius:10px; border:2px solid #ddd; font-size:0.95rem;"
+      class="roomset-input"
     />
 
-    <button id="roomsetSuggestBtn" class="btn-primary">
-        ✨ Suggest items
-    </button>
+    <div class="roomset-controls-right">
+        <button id="viewListBtn" class="top-btn">📋 List View</button>
+        <button id="viewCanvasBtn" class="top-btn">🖼️ Canvas View</button>
+        <button id="roomsetSuggestBtn" class="suggest-btn">✨ Suggest items</button>
+    </div>
+
 </div>
 
-<!-- Row 2: View Mode Buttons -->
-<div id="roomsetViewToggle" class="roomset-buttons" style="margin-bottom:16px; display:flex; gap:12px;">
-    <button id="viewListBtn" class="btn-primary">📋 List View</button>
-    <button id="viewCanvasBtn" class="btn-primary">🖼️ Canvas View</button>
-</div>
 
 
 
