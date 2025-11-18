@@ -1263,6 +1263,22 @@
   top: 50%;
   transform: translate(50%, -50%) rotate(90deg);
 }
+/* --- FIX MOBILE ROOMSET THUMBNAIL SQUASHING --- */
+@media (max-width: 768px) {
+  .roomset-bg-selector img,
+  #bgFloorplanOption {
+    width: 120px !important;
+    height: 80px !important;
+    flex: 0 0 auto !important;
+    object-fit: cover !important;
+  }
+
+  .roomset-bg-selector {
+    flex-wrap: nowrap !important;
+    white-space: nowrap !important;
+    overflow-x: auto !important;
+  }
+}
 
   </style>
 </head>
