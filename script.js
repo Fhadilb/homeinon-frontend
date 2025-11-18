@@ -1056,106 +1056,48 @@ roomsetCanvas.style.backgroundRepeat = "";
 }
 
 /* -----------------------------------------------------------
-    AI SUGGESTION ENGINE — POWERED BY WEBLLM (LOCAL MODEL)
+    AI TEMPORARILY DISABLED — prevents site from breaking
 ----------------------------------------------------------- */
 
-let ai;
+let ai = null;
 let aiReady = false;
 
-// Configure model paths for WebLLM
-webllm.configure({
-  modelPaths: {
-    "phi-3-mini-4k-instruct-q4f32_1-mlc": "models/webllm/phi-3-mini-4k-instruct-q4f32_1-mlc/"
-  }
-});
-
-async function initAI() {
+function initAI() {
   const status = document.getElementById("roomsetSuggestStatus");
-  if (!status) return;
-
-  status.textContent = "Loading local AI model… (20–40 sec first time)";
-
-  try {
-    ai = await webllm.ChatModule.create({
-      model: "phi-3-mini-4k-instruct-q4f32_1-mlc",
-      initProgressCallback: (p) => {
-        status.textContent =
-          "Loading AI model… " + Math.round(p.progress * 100) + "%";
-      }
-    });
-
-    aiReady = true;
-    status.textContent = "AI Ready! 🎉";
-
-  } catch (err) {
-    console.error("AI Load Error:", err);
-    status.textContent = "❌ AI failed to load";
+  if (status) {
+    status.textContent = "AI suggestions are temporarily disabled.";
   }
 }
 
 /* -----------------------------------------------------------
-    HANDLE SUGGEST BUTTON
+    SUGGEST BUTTON (AI DISABLED SAFELY)
 ----------------------------------------------------------- */
+
 const roomsetPromptInput = document.getElementById("roomsetPrompt");
-// Allow pressing Enter to trigger suggestions
-roomsetPromptInput.addEventListener("keyup", (e) => {
-  if (e.key === "Enter") {
-    document.getElementById("roomsetSuggestBtn").click();
-  }
-});
-document.getElementById("roomsetSuggestBtn").addEventListener("click", async () => {
-  const status = document.getElementById("roomsetSuggestStatus");
-  const out = document.getElementById("roomsetSuggestOutput");
 
-  const input = roomsetPromptInput.value.trim();
-
-  if (!input) {
-    alert("Please describe your room first 🙂");
-    return;
-  }
-
-  if (!aiReady) {
-    alert("The AI model is still loading. Please wait 10–20 seconds.");
-    return;
-  }
-
-  status.textContent = "Thinking… 🤔";
-  out.textContent = "";
-
-  // Run AI
-  const response = await ai.generate(input, {
-    maxTokens: 200,
-    temperature: 0.4
+if (roomsetPromptInput) {
+  roomsetPromptInput.addEventListener("keyup", (e) => {
+    if (e.key === "Enter") {
+      document.getElementById("roomsetSuggestBtn")?.click();
+    }
   });
+}
 
-  const text = response.choices[0].message.content;
-  out.textContent = text;
+const suggestBtn = document.getElementById("roomsetSuggestBtn");
 
-  // Now use AI text to filter products
-  const lower = text.toLowerCase();
+if (suggestBtn) {
+  suggestBtn.addEventListener("click", () => {
+    const input = roomsetPromptInput?.value.trim() || "";
 
-  let matches = allProducts.filter(p => {
-    return lower.includes((p.room || "").toLowerCase()) ||
-           lower.includes((p.style || "").toLowerCase()) ||
-           lower.includes((p.category || "").toLowerCase()) ||
-           lower.includes((p.colour || "").toLowerCase());
+    if (!input) {
+      alert("Please describe your room first 🙂");
+      return;
+    }
+
+    alert("AI suggestions are temporarily disabled while we fix an issue.");
   });
+}
 
-  if (matches.length === 0) {
-    alert("AI understood your request, but couldn’t match items from the catalogue.");
-    return;
-  }
-
-  // Limit to 6 results
-  matches = matches.slice(0, 6);
-
-  matches.forEach(p => addToRoomset(p));
-  saveRoomset();
-  renderRoomset();
-  renderRoomsetCanvas();
-
-  alert(`✨ AI added ${matches.length} items to your roomset!`);
-});
 
 // finally load products
 loadProducts();
