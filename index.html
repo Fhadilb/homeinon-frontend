@@ -880,7 +880,10 @@
   padding: 12px 0 16px;
   scrollbar-width: thin;
   scrollbar-color: var(--brand-accent) transparent;
+  flex-wrap: nowrap;        /* 👈 keep in one horizontal row */
+  white-space: nowrap;      /* 👈 avoid wrapping/squashing   */
 }
+
 
 .roomset-bg-selector::-webkit-scrollbar {
   height: 6px;
@@ -899,17 +902,13 @@
   border: 3px solid transparent;
   transition: transform 0.2s, border-color 0.2s;
   box-shadow: var(--shadow-sm);
+  flex: 0 0 auto;            /* 👈 keep each image same size */
 }
-.roomset-bg-selector img {
-  width: 120px;
-  height: 80px;
-  object-fit: cover;
-  border-radius: 8px;
-  cursor: pointer;
-  border: 3px solid transparent;
-  transition: transform 0.2s, border-color 0.2s;
-  box-shadow: var(--shadow-sm);
+#bgFloorplanOption {
+  flex: 0 0 auto;            /* 👈 don’t let this tile shrink */
 }
+
+
 
 /* ⭐ FLOORPLAN SPECIAL TILE (3D OPTION) */
 #bgFloorplanOption:hover {
@@ -1191,9 +1190,9 @@
 
 .roomset-controls-row {
   display: flex;
+  justify-content: flex-start;  /* 👈 align buttons to the left */
   gap: 12px;
   flex-wrap: wrap;
-  justify-content: flex-start !important;
 }
 
 
