@@ -1524,9 +1524,6 @@
   overflow: hidden;
 "></div>
 
-<!-- Load WebLLM FIRST -->
-<script src="https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.73/dist/web-llm.min.js"></script>
-
 <!-- Load THREE.js (ONLY ONCE!) -->
 <script type="module">
   import * as THREE from "https://esm.sh/three@0.160.0";
@@ -1543,11 +1540,6 @@
 <!-- Load your app AFTER Three + WebLLM -->
 <script src="script.js"></script>
 
-<script>
-window.addEventListener("load", () => {
-  if (typeof initAI === "function") initAI();
-});
-</script>
 
 
 <script>
