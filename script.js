@@ -1029,34 +1029,45 @@ roomsetCanvas.style.backgroundRepeat = "";
 }
 
 /* -----------------------------------------------------------
-    AI SUGGESTION ENGINE — POWERED BY WEBLLM (IN-BROWSER LLM)
+    AI SUGGESTION ENGINE — POWERED BY WEBLLM (LOCAL MODEL)
 ----------------------------------------------------------- */
 
 let ai;
 let aiReady = false;
+webllm.configure({
+  modelPaths: {
+    "phi-3-mini-4k-instruct-q4f32_1-mlc": "models/webllm/phi-3-mini-4k-instruct-q4f32_1-mlc/"
+  }
+});
 
 async function initAI() {
   const status = document.getElementById("roomsetSuggestStatus");
-  status.textContent = "Loading local AI model… (20–40 sec first time)";
+  status.textContent = "Loading local AI model… (first load 20–40 sec)";
 
   try {
-    ai = await webllm.ChatModule.create({
-      model: "Phi-3-mini-4k-instruct-q4f32_1-MLC",
-      initProgressCallback: (p) => {
-        status.textContent = "Loading AI model… " + Math.round(p.progress * 100) + "%";
-      }
-    });
+ai = await webllm.ChatModule.create({
+  model: "phi-3-mini-4k-instruct-q4f32_1-mlc",
+  model_url_type: "local",
+  local_model_dir: "models/webllm/phi-3-mini-4k-instruct-q4f32_1-mlc/",
+  initProgressCallback: (p) => {
+    status.textContent = "Loading AI… " + Math.round(p.progress * 100) + "%";
+  },
+});
+
 
     aiReady = true;
-    status.textContent = "AI Ready! 🎉";
+    status.textContent = "AI Ready! ✨";
 
   } catch (err) {
     console.error("AI Load Error:", err);
-    status.textContent = "❌ AI failed to load";
+    status.textContent = "❌ AI failed to load (check console)";
   }
 }
-////  ADD THIS ↓
-initAI();
+
+window.addEventListener("DOMContentLoaded", () => {
+  initAI();
+});
+
 
 /* -----------------------------------------------------------
     HANDLE SUGGEST BUTTON
