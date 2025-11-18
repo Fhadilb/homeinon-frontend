@@ -1527,7 +1527,6 @@
 <!-- WebLLM (AI LLM running fully in-browser) -->
 <script src="https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@latest/dist/web-llm.min.js"></script>
 
-<script src="script.js"></script>
 
 
 <script>
@@ -2005,6 +2004,7 @@ loader.load(
   // 👇 Use your local frontend model path
   initThreeViewer("assets/models/11_albany002-_1_-albany_charcoal_fabric_2_seater-lifestyle-web-pdp_3d.glb");
 </script>
-
+<!-- Load main logic LAST so DOM exists -->
+<script src="script.js" defer></script>
 </body>
 </html>
