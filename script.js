@@ -1011,10 +1011,10 @@ let aiReady = false;
 
 async function initAI() {
   const status = document.getElementById("roomsetSuggestStatus");
-  status.textContent = "Loading local AI model… (about 20–40 sec first time)";
+  status.textContent = "Loading local AI model… (20–40 sec first time)";
 
   try {
-    ai = await webllm.createChatSession({
+    ai = await webllm.ChatModule.create({
       model: "Phi-3-mini-4k-instruct-q4f32_1-MLC",
       initProgressCallback: (p) => {
         status.textContent = "Loading AI model… " + Math.round(p.progress * 100) + "%";
@@ -1023,19 +1023,11 @@ async function initAI() {
 
     aiReady = true;
     status.textContent = "AI Ready! 🎉";
+
   } catch (err) {
-    console.error(err);
+    console.error("AI Load Error:", err);
     status.textContent = "❌ AI failed to load";
   }
-}
-
-// Prevent WebLLM from loading on mobile (too heavy)
-if (window.innerWidth < 768) {
-  document.getElementById("roomsetSuggestStatus").textContent =
-    "AI disabled on mobile for performance reasons.";
-  aiReady = false;
-} else {
-  initAI();
 }
 
 
