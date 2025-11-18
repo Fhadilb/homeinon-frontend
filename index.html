@@ -1891,11 +1891,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 <script type="module">
-  // ✅ esm.sh correctly exports all modules
-  import * as THREE from "https://esm.sh/three@0.160.0";
-  import { OrbitControls } from "https://esm.sh/three@0.160.0/examples/jsm/controls/OrbitControls.js";
-  import { GLTFLoader } from "https://esm.sh/three@0.160.0/examples/jsm/loaders/GLTFLoader.js";
-  import { DRACOLoader } from "https://esm.sh/three@0.160.0/examples/jsm/loaders/DRACOLoader.js";
+  import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
+  import { OrbitControls } from "https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js";
+  import { GLTFLoader } from "https://unpkg.com/three@0.160.0/examples/jsm/loaders/GLTFLoader.js";
+  import { DRACOLoader } from "https://unpkg.com/three@0.160.0/examples/jsm/loaders/DRACOLoader.js";
+</script>
+
 
   function initThreeViewer(modelUrl = "assets/models/11_albany002-_1_-albany_charcoal_fabric_2_seater-lifestyle-web-pdp_3d.glb") {
     const container = document.getElementById("threeContainer");
