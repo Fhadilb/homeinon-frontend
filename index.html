@@ -1888,124 +1888,21 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 </script>
-
-
 <script type="module">
   import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
   import { OrbitControls } from "https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js";
   import { GLTFLoader } from "https://unpkg.com/three@0.160.0/examples/jsm/loaders/GLTFLoader.js";
   import { DRACOLoader } from "https://unpkg.com/three@0.160.0/examples/jsm/loaders/DRACOLoader.js";
+
+  // expose to global so script.js can use them
+  window.THREE = THREE;
+  window.OrbitControls = OrbitControls;
+  window.GLTFLoader = GLTFLoader;
+  window.DRACOLoader = DRACOLoader;
 </script>
 
-
-  function initThreeViewer(modelUrl = "assets/models/11_albany002-_1_-albany_charcoal_fabric_2_seater-lifestyle-web-pdp_3d.glb") {
-    const container = document.getElementById("threeContainer");
-    if (!container) return;
-
-    // --- Scene setup ---
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xf7f7f7);
-
-    const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
-    camera.position.set(0.8, 0.6, 1.2);
-
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(container.clientWidth, container.clientHeight);
-    if (THREE.SRGBColorSpace) renderer.outputColorSpace = THREE.SRGBColorSpace;
-    container.appendChild(renderer.domElement);
-
-    const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-
-    // --- Lighting ---
-    const hemi = new THREE.HemisphereLight(0xffffff, 0x444444, 1.2);
-    const dir = new THREE.DirectionalLight(0xffffff, 1.2);
-    dir.position.set(1, 2, 3);
-    scene.add(hemi, dir);
-
-    // --- Visual helper ---
-    const axes = new THREE.AxesHelper(0.5);
-    scene.add(axes);
-
-    // --- Loading overlay ---
-    const loadingDiv = document.createElement("div");
-    loadingDiv.textContent = "Loading 3D model...";
-    Object.assign(loadingDiv.style, {
-      position: "absolute",
-      top: "50%",
-      left: "50%",
-      transform: "translate(-50%, -50%)",
-      color: "#333",
-      background: "rgba(255,255,255,0.9)",
-      padding: "8px 12px",
-      borderRadius: "8px",
-      fontSize: "1.1rem",
-      fontWeight: "600"
-    });
-    container.appendChild(loadingDiv);
-
-    // --- GLTF + DRACO Loaders ---
-    const loader = new GLTFLoader();
-    const draco = new DRACOLoader();
-    draco.setDecoderPath("https://esm.sh/three@0.160.0/examples/jsm/libs/draco/");
-    loader.setDRACOLoader(draco);
-
-loader.load(
-  modelUrl,
-  (gltf) => {
-    console.log("✅ Model loaded successfully:", gltf);
-    loadingDiv.remove();
-    const model = gltf.scene;
-    scene.add(model);
-
-    // ✅ Center the model and move the camera so it's visible
-    const box = new THREE.Box3().setFromObject(model);
-    const center = box.getCenter(new THREE.Vector3());
-    const size = box.getSize(new THREE.Vector3());
-
-    model.position.sub(center);
-    camera.position.set(center.x, center.y + size.y * 0.5, center.z + size.z * 2.0);
-    controls.target.copy(center);
-    controls.update();
-
-    // (optional) add a grid to see orientation
-    const grid = new THREE.GridHelper(10, 20);
-    scene.add(grid);
-  },
-
-      (xhr) => {
-        if (xhr.total) {
-          loadingDiv.textContent =
-            "Loading 3D model... " + Math.round((xhr.loaded / xhr.total) * 100) + "%";
-        }
-      },
-      (err) => {
-        loadingDiv.textContent = "Error loading model";
-        console.error("GLB load error:", err);
-      }
-    );
-
-    // --- Render loop ---
-    function animate() {
-      requestAnimationFrame(animate);
-      controls.update();
-      renderer.render(scene, camera);
-    }
-    animate();
-
-    // --- Handle window resize ---
-    window.addEventListener("resize", () => {
-      const w = container.clientWidth, h = container.clientHeight;
-      renderer.setSize(w, h);
-      camera.aspect = w / h;
-      camera.updateProjectionMatrix();
-    });
-  }
-
-  // 👇 Use your local frontend model path
-  initThreeViewer("assets/models/11_albany002-_1_-albany_charcoal_fabric_2_seater-lifestyle-web-pdp_3d.glb");
-</script>
 <!-- Load main logic LAST so DOM exists -->
 <script src="script.js" defer></script>
+
 </body>
 </html>
