@@ -950,107 +950,6 @@ document.getElementById("roomsetClear").addEventListener("click", ()=>{
   }
 });
 
-// --------- SUGGESTION ENGINE ----------
-const roomsetPromptInput = document.getElementById("roomsetPrompt");
-const roomsetSuggestBtn = document.getElementById("roomsetSuggestBtn");
-
-roomsetPromptInput.addEventListener("keyup", (e) => {
-  if (e.key === "Enter") {
-    roomsetSuggestBtn.click();
-  }
-});
-
-roomsetSuggestBtn.addEventListener("click", () => {
-  const input = roomsetPromptInput.value.toLowerCase().trim();
-  if (!input) {
-      alert("Please describe your room first 🙂");
-      return;
-  }
-
-  // room type
-  let roomType = "";
-  if (input.includes("bed")) roomType = "bedroom";
-  if (input.includes("din")) roomType = "dining";
-  if (input.includes("liv")) roomType = "living";
-  if (input.includes("off")) roomType = "office";
-
-  // colours
-  const detectedColours = [];
-  for (const c of Object.keys(colourMap)) {
-      if (input.includes(c)) detectedColours.push(c);
-  }
-
-  // categories
-  const categoryKeywords = {
-      bed: "Beds",
-      wardrobe: "Wardrobes",
-      dresser: "Dressers",
-      mirror: "Mirrors",
-      table: "Tables",
-      dining: "Dining Tables",
-      chair: "Chairs",
-      sofa: "Sofas",
-      desk: "Desks",
-      coffee: "Coffee Tables",
-      cabinet: "Cabinets",
-      blanket: "Blanket Boxes"
-  };
-  const detectedCategories = [];
-  for (const word in categoryKeywords) {
-      if (input.includes(word)) detectedCategories.push(categoryKeywords[word]);
-  }
-
-  // price
-  let maxPrice = Infinity;
-  const priceMatch = input.match(/(under|below|less than)\s*£?(\d+)/i);
-  if (priceMatch) {
-      maxPrice = parseFloat(priceMatch[2]);
-  }
-
-  // build filter
-  let matches = allProducts.filter(p => {
-      let ok = true;
-      if (roomType && p.room !== roomType) ok = false;
-
-      if (detectedColours.length > 0) {
-          ok = ok && detectedColours.some(c => (p.colour || "").toLowerCase().includes(c));
-      }
-
-      if (detectedCategories.length > 0) {
-          ok = ok && detectedCategories.includes(p.category);
-      }
-
-      if (p.price && maxPrice !== Infinity) {
-          ok = ok && parseFloat(p.price) <= maxPrice;
-      }
-
-      return ok;
-  });
-
-  if (matches.length === 0) {
-      matches = allProducts.filter(p => {
-          return (
-              input.includes(p.room) ||
-              input.includes((p.category || "").toLowerCase()) ||
-              detectedColours.some(c => (p.colour || "").toLowerCase().includes(c))
-          );
-      });
-  }
-
-  if (matches.length === 0) {
-      alert("No matching items found for your description.");
-      return;
-  }
-
-  const selected = matches.slice(0, 6);
-  selected.forEach(p => addToRoomset(p));
-  saveRoomset();
-  renderRoomset();
-  renderRoomsetCanvas();
-
-  alert(`✨ Added ${selected.length} suggested items to your Roomset!`);
-});
-
 // --------- FLOORPLAN POPUP & GENERATION ----------
 const fpTile = document.getElementById("bgFloorplanOption");
 const fpPopup = document.getElementById("floorplanDimPopup");
@@ -1086,6 +985,9 @@ if (createFloorplanBtn && fpPopup) {
 
     // 2️⃣ Remove any image background so the floorplan is visible
     roomsetCanvas.style.backgroundImage = "none";
+roomsetCanvas.style.backgroundSize = "";
+roomsetCanvas.style.backgroundPosition = "";
+roomsetCanvas.style.backgroundRepeat = "";
 
     // 3️⃣ Switch view to canvas mode
     canvasMode = true;
@@ -1100,6 +1002,106 @@ if (createFloorplanBtn && fpPopup) {
   });
 }
 
+/* -----------------------------------------------------------
+    AI SUGGESTION ENGINE — POWERED BY WEBLLM (IN-BROWSER LLM)
+----------------------------------------------------------- */
+
+let ai;
+let aiReady = false;
+
+async function initAI() {
+  const status = document.getElementById("roomsetSuggestStatus");
+  status.textContent = "Loading local AI model… (about 20–40 sec first time)";
+
+  try {
+    ai = await webllm.createChatSession({
+      model: "Phi-3-mini-4k-instruct-q4f32_1-MLC",
+      initProgressCallback: (p) => {
+        status.textContent = "Loading AI model… " + Math.round(p.progress * 100) + "%";
+      }
+    });
+
+    aiReady = true;
+    status.textContent = "AI Ready! 🎉";
+  } catch (err) {
+    console.error(err);
+    status.textContent = "❌ AI failed to load";
+  }
+}
+
+// Prevent WebLLM from loading on mobile (too heavy)
+if (window.innerWidth < 768) {
+  document.getElementById("roomsetSuggestStatus").textContent =
+    "AI disabled on mobile for performance reasons.";
+  aiReady = false;
+} else {
+  initAI();
+}
+
+
+/* -----------------------------------------------------------
+    HANDLE SUGGEST BUTTON
+----------------------------------------------------------- */
+const roomsetPromptInput = document.getElementById("roomsetPrompt");
+// Allow pressing Enter to trigger suggestions
+roomsetPromptInput.addEventListener("keyup", (e) => {
+  if (e.key === "Enter") {
+    document.getElementById("roomsetSuggestBtn").click();
+  }
+});
+document.getElementById("roomsetSuggestBtn").addEventListener("click", async () => {
+  const status = document.getElementById("roomsetSuggestStatus");
+  const out = document.getElementById("roomsetSuggestOutput");
+
+  const input = roomsetPromptInput.value.trim();
+
+  if (!input) {
+    alert("Please describe your room first 🙂");
+    return;
+  }
+
+  if (!aiReady) {
+    alert("The AI model is still loading. Please wait 10–20 seconds.");
+    return;
+  }
+
+  status.textContent = "Thinking… 🤔";
+  out.textContent = "";
+
+  // Run AI
+  const response = await ai.generate(input, {
+    maxTokens: 200,
+    temperature: 0.4
+  });
+
+  const text = response.choices[0].message.content;
+  out.textContent = text;
+
+  // Now use AI text to filter products
+  const lower = text.toLowerCase();
+
+  let matches = allProducts.filter(p => {
+    return lower.includes((p.room || "").toLowerCase()) ||
+           lower.includes((p.style || "").toLowerCase()) ||
+           lower.includes((p.category || "").toLowerCase()) ||
+           lower.includes((p.colour || "").toLowerCase());
+  });
+
+  if (matches.length === 0) {
+    alert("AI understood your request, but couldn’t match items from the catalogue.");
+    return;
+  }
+
+  // Limit to 6 results
+  matches = matches.slice(0, 6);
+
+  matches.forEach(p => addToRoomset(p));
+  saveRoomset();
+  renderRoomset();
+  renderRoomsetCanvas();
+
+  alert(`✨ AI added ${matches.length} items to your roomset!`);
+});
 
 // finally load products
 loadProducts();
