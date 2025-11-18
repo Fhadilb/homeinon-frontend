@@ -141,7 +141,7 @@ function addToRoomset(p){
     sku: p.sku || p.SKU || "",
     price: p.price || "",
     cutout_local_path: normalizeCutoutPath(p.cutout_local_path) || "",
-    image_url: p.image_url || "",
+    image_url: getImage(p),
     url: p.url || "",
     category: p.category || "",
     material: p.material || "",
@@ -191,15 +191,27 @@ function filterProducts(state, ignoreField){
     const d = (p.description||"").toLowerCase();
     const price = parseFloat(p.price)||0;
 
-    const checks = {
-      q: (!state.q) || t.includes(state.q) || d.includes(state.q),
-      category: (!state.category) || p.category === state.category,
-      material: (!state.material) || p.material === state.material,
-      colour: (!state.colour) || (p.colour && p.colour.toLowerCase().includes(state.colour.toLowerCase())),
-      style: (!state.style) || p.style === state.style,
-      room: (!state.room) || p.room === state.room,
-      max: price <= state.max
-    };
+const checks = {
+  q: (!state.q) || t.includes(state.q) || d.includes(state.q),
+
+  category: (!state.category) ||
+    (p.category && p.category.toLowerCase() === state.category.toLowerCase()),
+
+  material: (!state.material) ||
+    (p.material && p.material.toLowerCase() === state.material.toLowerCase()),
+
+  colour: (!state.colour) ||
+    (p.colour && p.colour.toLowerCase().includes(state.colour.toLowerCase())),
+
+  style: (!state.style) ||
+    (p.style && p.style.toLowerCase() === state.style.toLowerCase()),
+
+  room: (!state.room) ||
+    (p.room && p.room.toLowerCase() === state.room.toLowerCase()),
+
+  max: price <= state.max
+};
+
     if(ignoreField){ checks[ignoreField] = true; }
     if(showFavourites){
       checks.fav = favourites.includes(p.title || p.sku || "");
@@ -431,8 +443,10 @@ function openProductModal(index){
   const p = filtered[index];
   if(!p) return;
 
-  modalImage.src = p.image_url || "https://placehold.co/640x480?text=No+Image";
-  modalImage.onerror = () => modalImage.src = "https://placehold.co/640x480?text=No+Image";
+  modalImage.src = getImage(p);
+modalImage.onerror = () => {
+  modalImage.src = "https://placehold.co/640x480?text=No+Image";
+};
   modalTitle.textContent = p.title || "Untitled";
   modalPrice.textContent = `£${(parseFloat(p.price)||0).toFixed(2)}`;
 
@@ -453,7 +467,7 @@ function openProductModal(index){
     modalRoomsetBtn.classList.remove("active");
   }
 
-  modalKey = p.title || p.sku || "";
+  modalKey = productKey(p);
 
   if(p.url){ modalLink.style.display="inline-block"; modalLink.href=p.url; }
   else { modalLink.style.display="none"; modalLink.removeAttribute("href"); }
@@ -482,8 +496,11 @@ modalHeart.addEventListener("click", ()=>{
 
 modalRoomsetBtn.addEventListener("click", () => {
   const filtered = filterProducts(getState());
-  const p = filtered.find(prod => (prod.title || prod.sku) === modalTitle.textContent);
+
+  // Find product by its unique key instead of title text
+  const p = filtered.find(prod => productKey(prod) === modalKey);
   if (!p) return;
+
   toggleRoomset(p);
 
   if (inRoomset(productKey(p))) {
@@ -495,11 +512,15 @@ modalRoomsetBtn.addEventListener("click", () => {
   }
 });
 
+
 // --------- LOAD PRODUCTS ----------
 async function loadProducts(){
   const res = await fetch(API_URL);
-  const data = await res.json();
-  allProducts = (data.products || []).map(p => {
+const data = await res.json();
+const raw = Array.isArray(data) ? data : (data.products || []);
+
+allProducts = raw.map(p => {
+
     const roomRaw = (p.room || "").toString().trim().toLowerCase();
     let room = "";
     if (roomRaw.includes("bed")) room = "bedroom";
@@ -509,11 +530,17 @@ async function loadProducts(){
 
     return {
       ...p,
+      category: p.category || "Misc",
+      material: p.material || "Unknown",
+      colour: p.colour || "",
       cutout_local_path: normalizeCutoutPath(p.cutout_local_path),
       room,
       style: p.style || deriveStyle(p.title || p.description)
     };
-  });
+});
+
+
+
 
   const styles = uniqueValues(allProducts, "style").sort();
   const cats   = uniqueValues(allProducts, "category").sort();
@@ -1034,6 +1061,8 @@ roomsetCanvas.style.backgroundRepeat = "";
 
 let ai;
 let aiReady = false;
+
+// Configure model paths for WebLLM
 webllm.configure({
   modelPaths: {
     "phi-3-mini-4k-instruct-q4f32_1-mlc": "models/webllm/phi-3-mini-4k-instruct-q4f32_1-mlc/"
@@ -1042,31 +1071,30 @@ webllm.configure({
 
 async function initAI() {
   const status = document.getElementById("roomsetSuggestStatus");
-  status.textContent = "Loading local AI model… (first load 20–40 sec)";
+  if (!status) return;
+
+  status.textContent = "Loading local AI model… (20–40 sec first time)";
 
   try {
-ai = await webllm.ChatModule.create({
-  model: "phi-3-mini-4k-instruct-q4f32_1-mlc",
-  model_url_type: "local",
-  local_model_dir: "models/webllm/phi-3-mini-4k-instruct-q4f32_1-mlc/",
-  initProgressCallback: (p) => {
-    status.textContent = "Loading AI… " + Math.round(p.progress * 100) + "%";
-  },
-});
-
+    ai = await webllm.ChatModule.create({
+      model: "phi-3-mini-4k-instruct-q4f32_1-mlc",
+      initProgressCallback: (p) => {
+        status.textContent =
+          "Loading AI model… " + Math.round(p.progress * 100) + "%";
+      }
+    });
 
     aiReady = true;
-    status.textContent = "AI Ready! ✨";
+    status.textContent = "AI Ready! 🎉";
 
   } catch (err) {
     console.error("AI Load Error:", err);
-    status.textContent = "❌ AI failed to load (check console)";
+    status.textContent = "❌ AI failed to load";
   }
 }
 
-window.addEventListener("DOMContentLoaded", () => {
-  initAI();
-});
+window.addEventListener("DOMContentLoaded", initAI);
+
 
 
 /* -----------------------------------------------------------
