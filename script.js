@@ -36,6 +36,31 @@ const colourMap = {
 };
 
 const colourHex = n => colourMap[String(n||"").toLowerCase()] || "#ccc";
+function getImage(p) {
+  // Accept ANY possible backend field name
+  const candidates = [
+    p.image_url,
+    p.imageUrl,
+    p.Image_URL,
+    p["image-url"],
+    p["image_url "],
+    p[" image_url"],
+    p["Image Url"],
+    p.image,
+    p.img,
+    p.picture,
+    p.photo,
+    p.images && p.images[0]
+  ];
+
+  for (let c of candidates) {
+    if (c && typeof c === "string" && c.trim() !== "") {
+      return c.trim();
+    }
+  }
+
+  return "https://placehold.co/340x240?text=No+Image";
+}
 
 function deriveStyle(txt=""){
   const t = String(txt).toLowerCase();
@@ -312,7 +337,7 @@ function renderProducts(products){
 
     div.innerHTML = `
       <div class="style-label">${p.style || ""}</div>
-      <img src="${p.image_url}" alt="${p.title}" onerror="this.src='https://placehold.co/340x240?text=No+Image'"/>
+    <img src="${getImage(p)}" alt="${p.title}" />
       <div class="product-info">
         <h3>${p.title}</h3>
         <p class="price">£${price.toFixed(2)}</p>
@@ -622,22 +647,24 @@ function renderRoomset(){
     return;
   }
 
-  roomsetList.innerHTML = roomset.map(it => `
-    <div class="roomset-item-list">
-      <img src="${it.cutout_local_path && it.cutout_local_path.trim() !== '' 
-                    ? it.cutout_local_path 
-                    : (it.image_url && it.image_url.trim() !== '' 
-                        ? it.image_url 
-                        : 'https://placehold.co/100x80')}" 
-           alt="${it.title}">
-      <div class="roomset-item-info">
-        <h4>${it.title}</h4>
-        <p>${it.style || '—'} | £${parseFloat(it.price || 0).toFixed(2)}</p>
+  roomsetList.innerHTML = roomset.map(it => {
+    const imgSrc = it.cutout_local_path?.trim()
+      ? it.cutout_local_path
+      : getImage(it);
+
+    return `
+      <div class="roomset-item-list">
+        <img src="${imgSrc}" alt="${it.title}">
+        <div class="roomset-item-info">
+          <h4>${it.title}</h4>
+          <p>${it.style || '—'} | £${parseFloat(it.price || 0).toFixed(2)}</p>
+        </div>
+        <button class="roomset-remove-btn" onclick="removeFromRoomset('${it.key}');renderRoomset();">Remove</button>
       </div>
-      <button class="roomset-remove-btn" onclick="removeFromRoomset('${it.key}');renderRoomset();">Remove</button>
-    </div>
-  `).join("");
+    `;
+  }).join("");
 }
+
 
 // floorplan helper - background SVG behind items
 function createFloorplanSvg(width, depth) {
@@ -731,16 +758,15 @@ function renderRoomsetCanvas(){
     item.style.transform = `rotate(${rot}deg)`;
     item.style.zIndex = "1";
 
-    item.innerHTML = `
-      <img src="${it.cutout_local_path && it.cutout_local_path.trim() !== '' 
-                  ? it.cutout_local_path 
-                  : (it.image_url && it.image_url.trim() !== '' 
-                      ? it.image_url 
-                      : 'https://placehold.co/140x140')}" 
-           alt="${it.title || ''}" 
-           title="${it.title || ''}">
-      <div class="handle resize-handle"></div>
-    `;
+    const imgSrc = it.cutout_local_path?.trim()
+  ? it.cutout_local_path
+  : getImage(it);   // uses the universal image fixer
+
+item.innerHTML = `
+  <img src="${imgSrc}" alt="${it.title || ''}" title="${it.title || ''}">
+  <div class="handle resize-handle"></div>
+`;
+
 
     roomsetCanvas.appendChild(item);
 
