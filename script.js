@@ -1055,7 +1055,8 @@ async function initAI() {
     status.textContent = "❌ AI failed to load";
   }
 }
-
+////  ADD THIS ↓
+initAI();
 
 /* -----------------------------------------------------------
     HANDLE SUGGEST BUTTON
