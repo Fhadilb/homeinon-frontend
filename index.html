@@ -1414,13 +1414,25 @@
     />
   </div>
 
+  <!-- Only ONE status element -->
+  <div id="roomsetSuggestStatus"
+       style="margin-top:6px; color:#888; font-size:14px;">
+    AI loading…
+  </div>
+
   <div class="roomset-controls-row">
       <button id="viewListBtn" class="top-btn">📋 List View</button>
       <button id="viewCanvasBtn" class="top-btn">🖼️ Canvas View</button>
       <button id="roomsetSuggestBtn" class="suggest-btn">✨ Suggest items</button>
   </div>
 
+  <!-- Output (keep only this, do NOT add another status here) -->
+  <div id="roomsetSuggestOutput"
+       style="margin-top:8px; font-size:0.9rem; white-space:pre-wrap;">
+  </div>
+
 </div>
+
 
 
 <!-- 3D FLOORPLAN ENTRY -->
@@ -1511,6 +1523,9 @@
   position: relative;
   overflow: hidden;
 "></div>
+
+<!-- WebLLM (AI LLM running fully in-browser) -->
+<script src="https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@latest/dist/web-llm.min.js"></script>
 
 <script src="script.js"></script>
 
