@@ -883,6 +883,27 @@
   flex-wrap: nowrap;        /* 👈 keep in one horizontal row */
   white-space: nowrap;      /* 👈 avoid wrapping/squashing   */
 }
+.roomset-bg-thumb {
+  width: 120px !important;
+  height: 80px !important;
+  flex: 0 0 120px !important;
+  background-size: cover !important;
+  background-position: center !important;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 3px solid transparent;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s, border-color 0.2s;
+}
+.roomset-bg-thumb:hover {
+  transform: scale(1.05);
+  border-color: var(--brand-accent);
+}
+.roomset-bg-thumb.active {
+  border-color: var(--brand-accent);
+  transform: scale(1.08);
+  box-shadow: 0 4px 12px rgba(244,162,123,0.4);
+}
 
 
 .roomset-bg-selector::-webkit-scrollbar {
@@ -893,17 +914,7 @@
   border-radius: 10px;
 }
 
-.roomset-bg-selector img {
-  width: 120px;
-  height: 80px;
-  object-fit: cover;
-  border-radius: 8px;
-  cursor: pointer;
-  border: 3px solid transparent;
-  transition: transform 0.2s, border-color 0.2s;
-  box-shadow: var(--shadow-sm);
-  flex: 0 0 auto;            /* 👈 keep each image same size */
-}
+
 /* ⭐ FIX MOBILE SQUASHING — add this below the main block */
 @media (max-width: 768px) {
   .roomset-bg-selector {
