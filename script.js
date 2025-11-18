@@ -1093,10 +1093,6 @@ async function initAI() {
   }
 }
 
-window.addEventListener("DOMContentLoaded", initAI);
-
-
-
 /* -----------------------------------------------------------
     HANDLE SUGGEST BUTTON
 ----------------------------------------------------------- */
