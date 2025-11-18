@@ -904,6 +904,25 @@
   box-shadow: var(--shadow-sm);
   flex: 0 0 auto;            /* 👈 keep each image same size */
 }
+/* ⭐ FIX MOBILE SQUASHING — add this below the main block */
+@media (max-width: 768px) {
+  .roomset-bg-selector {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    padding: 10px 4px;
+    scrollbar-width: thin;
+  }
+
+  .roomset-bg-selector img,
+  .roomset-bg-selector #bgFloorplanOption {
+    flex: 0 0 auto;        /* Prevents shrinking on mobile */
+    width: 120px !important;
+    height: 80px !important;
+    object-fit: cover;
+  }
+}
+
 #bgFloorplanOption {
   flex: 0 0 auto;            /* 👈 don’t let this tile shrink */
 }
