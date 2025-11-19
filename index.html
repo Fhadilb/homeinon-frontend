@@ -1531,10 +1531,10 @@
   console.log("Axios loaded?", typeof axios);
 </script>
 
-<!-- Load WebLLM (CDN, latest version) -->
-<script src="https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.73/dist/index.bundle.min.js"></script>
+<!-- WebLLM (CDN — CORRECT FILE) -->
+<script src="https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.73/dist/index.min.js"></script>
 
-<!-- Load THREE.js (ONLY ONCE!) -->
+<!-- THREE.js -->
 <script type="module">
   import * as THREE from "https://esm.sh/three@0.160.0";
   import { OrbitControls } from "https://esm.sh/three@0.160.0/examples/jsm/controls/OrbitControls.js";
@@ -1547,8 +1547,10 @@
   window.DRACOLoader = DRACOLoader;
 </script>
 
-<!-- Load your app -->
+<!-- Your app -->
 <script src="/script.js"></script>
+
+
 
 
 
