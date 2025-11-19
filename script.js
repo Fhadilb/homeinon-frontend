@@ -1064,7 +1064,8 @@ let aiReady = false;
 let aiLoading = false;
 
 // Correct WebLLM model ID
-const WEBLLM_MODEL_URL = "Phi-3-mini-4k-instruct-q4f16_1";
+const WEBLLM_MODEL_URL = "Phi-3-mini-4k-instruct-q4f16_1-MLC";
+
 
 
 function setupAISuggestions() {
