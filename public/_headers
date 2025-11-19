@@ -1,3 +1,6 @@
+/_headers
+  Content-Type: text/plain
+
 /
   Access-Control-Allow-Origin: https://homeinon-frontend-static.onrender.com
   Access-Control-Allow-Methods: GET, POST, OPTIONS
@@ -7,17 +10,17 @@
 /script.js
   Content-Type: application/javascript; charset=utf-8
 
-/models/webllm/*/*.json
+/public/models/webllm/*/*.json
   Content-Type: application/json
   Access-Control-Allow-Origin: *
 
-/models/webllm/*/*.bin
+/public/models/webllm/*/*.bin
   Content-Type: application/octet-stream
   Access-Control-Allow-Origin: *
 
-/models/webllm/*/*.txt
+/public/models/webllm/*/*.txt
   Content-Type: text/plain
   Access-Control-Allow-Origin: *
 
-/models/webllm/*
+/public/models/webllm/*
   Access-Control-Allow-Origin: *
