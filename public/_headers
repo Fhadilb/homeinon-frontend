@@ -2,7 +2,6 @@
   Access-Control-Allow-Origin: *
   Access-Control-Allow-Methods: GET, POST, OPTIONS
   Access-Control-Allow-Headers: Content-Type, Authorization
-  Content-Security-Policy: default-src 'self' https://homeinon-backend.onrender.com https://esm.sh https://unpkg.com https://cdn.jsdelivr.net data: blob: 'unsafe-inline' 'unsafe-eval';
 
 /models/webllm/phi-3-mini-4k-instruct-q4f32_1-mlc/*.json
   Content-Type: application/json
@@ -12,6 +11,3 @@
 
 /models/webllm/phi-3-mini-4k-instruct-q4f32_1-mlc/*.txt
   Content-Type: text/plain
-
-/models/webllm/*
-  Access-Control-Allow-Origin: *
