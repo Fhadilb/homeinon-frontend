@@ -13,14 +13,16 @@
       "source": "/models/webllm/:model*/*.bin",
       "headers": {
         "Access-Control-Allow-Origin": "*",
-        "Content-Type": "application/octet-stream"
+        "Content-Type": "application/octet-stream",
+        "Content-Disposition": "inline"
       }
     },
     {
       "source": "/models/webllm/:model*/*.txt",
       "headers": {
         "Access-Control-Allow-Origin": "*",
-        "Content-Type": "text/plain"
+        "Content-Type": "text/plain",
+        "Content-Disposition": "inline"
       }
     }
   ]
