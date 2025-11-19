@@ -1524,7 +1524,17 @@
   overflow: hidden;
 "></div>
 
-<!-- Load THREE.js -->
+
+<!-- TEST IF ANY CDN SCRIPT CAN LOAD (Axios test) -->
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+<script>
+  console.log("Axios loaded?", typeof axios);
+</script>
+
+<!-- Load WebLLM (CDN, latest version) -->
+<script src="https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm/dist/index.bundle.min.js"></script>
+
+<!-- Load THREE.js (ONLY ONCE!) -->
 <script type="module">
   import * as THREE from "https://esm.sh/three@0.160.0";
   import { OrbitControls } from "https://esm.sh/three@0.160.0/examples/jsm/controls/OrbitControls.js";
@@ -1537,11 +1547,9 @@
   window.DRACOLoader = DRACOLoader;
 </script>
 
-<!-- Load WebLLM (fallback CDN that ALWAYS works) -->
-<script src="https://unpkg.com/@mlc-ai/web-llm@latest/dist/index.bundle.js"></script>
-
 <!-- Load your app -->
 <script src="/script.js"></script>
+
 
 
 <script>
