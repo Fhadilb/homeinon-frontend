@@ -1,4 +1,27 @@
 {
-  "public": "."
+  "public": "public",
+  "clean_urls": true,
+  "headers": [
+    {
+      "source": "/models/webllm/:model*/*.json",
+      "headers": {
+        "Access-Control-Allow-Origin": "*",
+        "Content-Type": "application/json"
+      }
+    },
+    {
+      "source": "/models/webllm/:model*/*.bin",
+      "headers": {
+        "Access-Control-Allow-Origin": "*",
+        "Content-Type": "application/octet-stream"
+      }
+    },
+    {
+      "source": "/models/webllm/:model*/*.txt",
+      "headers": {
+        "Access-Control-Allow-Origin": "*",
+        "Content-Type": "text/plain"
+      }
+    }
+  ]
 }
-
