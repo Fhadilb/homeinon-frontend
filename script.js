@@ -1063,9 +1063,8 @@ let ai = null;
 let aiReady = false;
 let aiLoading = false;
 
-// Official, compatible model folder URL (required for newer WebLLM builds)
-const WEBLLM_MODEL_URL =
-  "https://raw.githubusercontent.com/mlc-ai/web-llm/main/models/phi-3-mini-4k-instruct-q4f16_1/";
+// Correct WebLLM model ID
+const WEBLLM_MODEL_URL = "Phi-3-mini-4k-instruct-q4f16_1";
 
 function setupAISuggestions() {
   const statusEl   = document.getElementById("roomsetSuggestStatus");
