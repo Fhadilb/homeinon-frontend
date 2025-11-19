@@ -6,3 +6,18 @@
 
 /script.js
   Content-Type: application/javascript; charset=utf-8
+
+/models/webllm/*/*.json
+  Content-Type: application/json
+  Access-Control-Allow-Origin: *
+
+/models/webllm/*/*.bin
+  Content-Type: application/octet-stream
+  Access-Control-Allow-Origin: *
+
+/models/webllm/*/*.txt
+  Content-Type: text/plain
+  Access-Control-Allow-Origin: *
+
+/models/webllm/*
+  Access-Control-Allow-Origin: *
