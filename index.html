@@ -1527,18 +1527,13 @@
 
 <!-- Axios test -->
 <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
-<script>
-  console.log("Axios loaded?", typeof axios);
-</script>
+<script>console.log("Axios loaded?", typeof axios);</script>
 
-<!-- Load WebLLM correctly -->
-<script type="module">
-  import * as webllm from "https://unpkg.com/@mlc-ai/web-llm@0.2.74/dist/index.js";
-  window.webllm = webllm;
-  console.log("WebLLM loaded?", window.webllm);
-</script>
+<!-- Load WebLLM (CORS-safe UMD build) -->
+<script src="https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.74/dist/index.umd.js"></script>
+<script>console.log("WebLLM loaded?", window.webllm);</script>
 
-<!-- Load THREE.js -->
+<!-- Load THREE.js (as module) -->
 <script type="module">
   import * as THREE from "https://esm.sh/three@0.160.0";
   import { OrbitControls } from "https://esm.sh/three@0.160.0/examples/jsm/controls/OrbitControls.js";
@@ -1551,9 +1546,8 @@
   window.DRACOLoader = DRACOLoader;
 </script>
 
-<!-- Your main script -->
+<!-- Your main app -->
 <script src="/script.js"></script>
-
 
 
 <script>
