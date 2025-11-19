@@ -1072,7 +1072,7 @@ function setupAISuggestions() {
   // If any of the elements are missing, just bail out silently
   if (!statusEl || !promptEl || !suggestBtn || !outputEl) return;
 
-  // If WebLLM didn’t load for some reason, don't crash the site
+  // If WebLLM didn't load for some reason, don't crash the site
   if (typeof window.webllm === "undefined") {
     statusEl.textContent = "AI unavailable (WebLLM library not loaded).";
     suggestBtn.addEventListener("click", () => {
@@ -1080,7 +1080,7 @@ function setupAISuggestions() {
       if (!text) {
         alert("Please describe your room first 🙂");
       } else {
-        alert("AI suggestions aren’t available right now.");
+        alert("AI suggestions aren't available right now.");
       }
     });
     return;
@@ -1101,67 +1101,54 @@ function setupAISuggestions() {
       return;
     }
 
-// First time: load + initialise the model
-if (!aiReady && !aiLoading) {
-  aiLoading = true;
-  statusEl.textContent = "Loading local AI model…";
+    // First time: load + initialise the model
+    if (!aiReady && !aiLoading) {
+      aiLoading = true;
+      statusEl.textContent = "Loading local AI model…";
 
-  try {
-    // Create a new Web Worker for WebLLM
-    const worker = new Worker(
-      new URL("https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm/lib/worker.js", import.meta.url),
-      { type: "module" }
-    );
+      try {
+        ai = await window.webllm.CreateMLCEngine(
+          "Phi-3-mini-4k-instruct-q4f16_1-MLC",
+          {
+            initProgressCallback: (p) => {
+              statusEl.textContent =
+                "Loading AI model… " + Math.round(p.progress * 100) + "%";
+            }
+          }
+        );
 
-    // Now create the engine with the worker
-    ai = await window.webllm.CreateWebWorkerMLCEngine(
-      worker,
-      "phi-3-mini-4k-instruct-q4f32_1-mlc",
-      {
-        initProgressCallback: (p) => {
-          statusEl.textContent =
-            "Loading AI model… " + Math.round(p.progress * 100) + "%";
-        }
+        aiReady = true;
+        statusEl.textContent = "AI ready! 🎉 Type a room description and press 'Suggest items'.";
+
+      } catch (err) {
+        console.error("AI Load Error:", err);
+        statusEl.textContent = "❌ AI failed to load: " + err.message;
+        aiLoading = false;
+        return;
       }
-    );
-
-    aiReady = true;
-    statusEl.textContent = "AI ready! 🎉 Type a room description and press 'Suggest items'.";
-
-  } catch (err) {
-    console.error("AI Load Error:", err);
-    statusEl.textContent = "❌ AI failed to load: " + err.message;
-    aiLoading = false;
-    return;
-  }
-}
-
-
-
+    }
 
     // Generate suggestions
     statusEl.textContent = "Thinking… 🤔";
     outputEl.textContent = "";
 
     try {
-const response = await ai.chat.completions.create({
-  messages: [
-    { 
-      role: "system", 
-      content: "You are a helpful interior design assistant. Suggest furniture items based on room descriptions." 
-    },
-    { 
-      role: "user", 
-      content: input 
-    }
-  ],
-  max_tokens: 200,
-  temperature: 0.4
-});
+      const response = await ai.chat.completions.create({
+        messages: [
+          { 
+            role: "system", 
+            content: "You are a helpful interior design assistant. Suggest furniture items based on room descriptions. Be concise." 
+          },
+          { 
+            role: "user", 
+            content: input 
+          }
+        ],
+        max_tokens: 200,
+        temperature: 0.4
+      });
 
-
-      const text =
-        response?.choices?.[0]?.message?.content || "No suggestion generated.";
+      const text = response?.choices?.[0]?.message?.content || "No suggestion generated.";
       outputEl.textContent = text;
 
       const lower = text.toLowerCase();
@@ -1178,7 +1165,7 @@ const response = await ai.chat.completions.create({
 
       if (matches.length === 0) {
         alert(
-          "AI understood your request, but couldn’t match items from the catalogue."
+          "AI understood your request, but couldn't match items from the catalogue."
         );
         return;
       }
@@ -1197,6 +1184,7 @@ const response = await ai.chat.completions.create({
     }
   });
 }
+
 
 // Make sure AI hookup runs AFTER the DOM is ready
 document.addEventListener("DOMContentLoaded", () => {
