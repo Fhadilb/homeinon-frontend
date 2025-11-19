@@ -1101,44 +1101,33 @@ function setupAISuggestions() {
       return;
     }
 
-    // First time: load + initialise the model
-    if (!aiReady && !aiLoading) {
-      aiLoading = true;
-      statusEl.textContent = "Loading local AI model…";
+// First time: load + initialise the model
+if (!aiReady && !aiLoading) {
+  aiLoading = true;
+  statusEl.textContent = "Loading local AI model…";
 
-      try {
-        // Tell WebLLM where your local model lives
-webllm.configure({
-  modelPaths: {
-    "phi-3-mini-4k-instruct-q4f32_1-mlc":
-      "/models/webllm/phi-3-mini-4k-instruct-q4f32_1-mlc/"
-  }
-});
-
-        ai = await webllm.ChatModule.create({
-          model: "phi-3-mini-4k-instruct-q4f32_1-mlc",
-          initProgressCallback: (p) => {
-            statusEl.textContent =
-              "Loading AI model… " + Math.round(p.progress * 100) + "%";
-          }
-        });
-
-        aiReady = true;
-        statusEl.textContent = "AI ready! 🎉 Type a room description and press 'Suggest items'.";
-      } catch (err) {
-        console.error("AI Load Error:", err);
-        statusEl.textContent = "❌ AI failed to load";
-        aiLoading = false;
-        return;
+  try {
+    ai = await window.webllm.CreateWebWorkerMLCEngine(
+      "phi-3-mini-4k-instruct-q4f32_1-mlc",
+      {
+        initProgressCallback: (p) => {
+          statusEl.textContent =
+            "Loading AI model… " + Math.round(p.progress * 100) + "%";
+        }
       }
+    );
 
-      aiLoading = false;
-    }
+    aiReady = true;
+    statusEl.textContent = "AI ready! 🎉 Type a room description and press 'Suggest items'.";
+  } catch (err) {
+    console.error("AI Load Error:", err);
+    statusEl.textContent = "❌ AI failed to load";
+    aiLoading = false;
+    return;
+  }
 
-    if (!aiReady) {
-      alert("AI couldn’t be initialised.");
-      return;
-    }
+}
+
 
     // Generate suggestions
     statusEl.textContent = "Thinking… 🤔";
