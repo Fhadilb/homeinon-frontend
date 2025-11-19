@@ -1107,7 +1107,15 @@ if (!aiReady && !aiLoading) {
   statusEl.textContent = "Loading local AI model…";
 
   try {
+    // Create a new Web Worker for WebLLM
+    const worker = new Worker(
+      new URL("https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm/lib/worker.js", import.meta.url),
+      { type: "module" }
+    );
+
+    // Now create the engine with the worker
     ai = await window.webllm.CreateWebWorkerMLCEngine(
+      worker,
       "phi-3-mini-4k-instruct-q4f32_1-mlc",
       {
         initProgressCallback: (p) => {
@@ -1119,14 +1127,16 @@ if (!aiReady && !aiLoading) {
 
     aiReady = true;
     statusEl.textContent = "AI ready! 🎉 Type a room description and press 'Suggest items'.";
+
   } catch (err) {
     console.error("AI Load Error:", err);
-    statusEl.textContent = "❌ AI failed to load";
+    statusEl.textContent = "❌ AI failed to load: " + err.message;
     aiLoading = false;
     return;
   }
-
 }
+
+
 
 
     // Generate suggestions
@@ -1134,10 +1144,21 @@ if (!aiReady && !aiLoading) {
     outputEl.textContent = "";
 
     try {
-      const response = await ai.generate(input, {
-        max_tokens: 200,
-        temperature: 0.4
-      });
+const response = await ai.chat.completions.create({
+  messages: [
+    { 
+      role: "system", 
+      content: "You are a helpful interior design assistant. Suggest furniture items based on room descriptions." 
+    },
+    { 
+      role: "user", 
+      content: input 
+    }
+  ],
+  max_tokens: 200,
+  temperature: 0.4
+});
+
 
       const text =
         response?.choices?.[0]?.message?.content || "No suggestion generated.";
