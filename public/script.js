@@ -1111,9 +1111,11 @@ function setupAISuggestions() {
 webllm.configure({
   modelPaths: {
     "phi-3-mini-4k-instruct-q4f32_1-mlc":
-      "public/models/webllm/phi-3-mini-4k-instruct-q4f32_1-mlc/"
+      "/public/models/webllm/phi-3-mini-4k-instruct-q4f32_1-mlc/"
   }
 });
+
+
 
 
 
