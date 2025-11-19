@@ -1108,12 +1108,13 @@ function setupAISuggestions() {
 
       try {
         // Tell WebLLM where your local model lives
- webllm.configure({
+webllm.configure({
   modelPaths: {
     "phi-3-mini-4k-instruct-q4f32_1-mlc":
-      "/models/webllm/phi-3-mini-4k-instruct-q4f32_1-mlc/"
+      "public/models/webllm/phi-3-mini-4k-instruct-q4f32_1-mlc/"
   }
 });
+
 
 
         ai = await webllm.ChatModule.create({
