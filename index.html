@@ -1531,15 +1531,14 @@
   console.log("Axios loaded?", typeof axios);
 </script>
 
-<!-- Load WebLLM from UNPKG instead of jsDelivr -->
-<script src="https://unpkg.com/@mlc-ai/web-llm@0.2.74/dist/index.js"></script>
-<script>
+<!-- Load WebLLM correctly -->
+<script type="module">
+  import * as webllm from "https://unpkg.com/@mlc-ai/web-llm@0.2.74/dist/index.js";
+  window.webllm = webllm;
   console.log("WebLLM loaded?", window.webllm);
 </script>
 
-
-
-<!-- Load THREE.js (ONLY ONCE) -->
+<!-- Load THREE.js -->
 <script type="module">
   import * as THREE from "https://esm.sh/three@0.160.0";
   import { OrbitControls } from "https://esm.sh/three@0.160.0/examples/jsm/controls/OrbitControls.js";
@@ -1552,8 +1551,9 @@
   window.DRACOLoader = DRACOLoader;
 </script>
 
-<!-- Your main script (must load LAST) -->
+<!-- Your main script -->
 <script src="/script.js"></script>
+
 
 
 <script>
