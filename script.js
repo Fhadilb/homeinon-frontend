@@ -1063,21 +1063,23 @@ let ai = null;
 let aiReady = false;
 let aiLoading = false;
 
+// Official, compatible model folder URL (required for newer WebLLM builds)
+const WEBLLM_MODEL_URL =
+  "https://raw.githubusercontent.com/mlc-ai/web-llm/main/models/phi-3-mini-4k-instruct-q4f16_1/";
+
 function setupAISuggestions() {
   const statusEl   = document.getElementById("roomsetSuggestStatus");
   const promptEl   = document.getElementById("roomsetPrompt");
   const suggestBtn = document.getElementById("roomsetSuggestBtn");
   const outputEl   = document.getElementById("roomsetSuggestOutput");
 
-  // If any of the elements are missing, just bail out silently
   if (!statusEl || !promptEl || !suggestBtn || !outputEl) return;
 
-  // If WebLLM didn't load for some reason, don't crash the site
+  // If WebLLM isn't loaded, fail safely
   if (typeof window.webllm === "undefined") {
-    statusEl.textContent = "AI unavailable (WebLLM library not loaded).";
+    statusEl.textContent = "AI unavailable (WebLLM not loaded).";
     suggestBtn.addEventListener("click", () => {
-      const text = promptEl.value.trim();
-      if (!text) {
+      if (!promptEl.value.trim()) {
         alert("Please describe your room first 🙂");
       } else {
         alert("AI suggestions aren't available right now.");
@@ -1089,7 +1091,7 @@ function setupAISuggestions() {
   statusEl.textContent =
     "AI is optional. Click 'Suggest items' to load it (first time may take a bit).";
 
-  // Allow Enter to trigger suggestions
+  // Allow Enter key to trigger suggestions
   promptEl.addEventListener("keyup", (e) => {
     if (e.key === "Enter") suggestBtn.click();
   });
@@ -1101,24 +1103,22 @@ function setupAISuggestions() {
       return;
     }
 
-    // First time: load + initialise the model
+    // First-time load
     if (!aiReady && !aiLoading) {
       aiLoading = true;
       statusEl.textContent = "Loading local AI model…";
 
       try {
-        ai = await window.webllm.CreateMLCEngine(
-          "Phi-3-mini-4k-instruct-q4f16_1-MLC",
-          {
-            initProgressCallback: (p) => {
-              statusEl.textContent =
-                "Loading AI model… " + Math.round(p.progress * 100) + "%";
-            }
+        ai = await window.webllm.CreateMLCEngine(WEBLLM_MODEL_URL, {
+          initProgressCallback: (p) => {
+            statusEl.textContent =
+              "Loading AI model… " + Math.round(p.progress * 100) + "%";
           }
-        );
+        });
 
         aiReady = true;
-        statusEl.textContent = "AI ready! 🎉 Type a room description and press 'Suggest items'.";
+        statusEl.textContent =
+          "AI ready! 🎉 Type a room description and press 'Suggest items'.";
 
       } catch (err) {
         console.error("AI Load Error:", err);
@@ -1135,25 +1135,27 @@ function setupAISuggestions() {
     try {
       const response = await ai.chat.completions.create({
         messages: [
-          { 
-            role: "system", 
-            content: "You are a helpful interior design assistant. Suggest furniture items based on room descriptions. Be concise." 
+          {
+            role: "system",
+            content: "You are a helpful interior design assistant. Suggest furniture items based on room descriptions. Be concise."
           },
-          { 
-            role: "user", 
-            content: input 
+          {
+            role: "user",
+            content: input
           }
         ],
         max_tokens: 200,
         temperature: 0.4
       });
 
-      const text = response?.choices?.[0]?.message?.content || "No suggestion generated.";
+      const text =
+        response?.choices?.[0]?.message?.content ||
+        "No suggestion generated.";
+
       outputEl.textContent = text;
 
       const lower = text.toLowerCase();
 
-      // Match products roughly to what AI suggested
       let matches = allProducts.filter((p) => {
         return (
           lower.includes((p.room || "").toLowerCase()) ||
@@ -1164,9 +1166,7 @@ function setupAISuggestions() {
       });
 
       if (matches.length === 0) {
-        alert(
-          "AI understood your request, but couldn't match items from the catalogue."
-        );
+        alert("AI understood your request, but couldn't match items from the catalogue.");
         return;
       }
 
@@ -1178,6 +1178,7 @@ function setupAISuggestions() {
 
       alert(`✨ AI added ${matches.length} items to your roomset!`);
       statusEl.textContent = "Done! You can tweak your description and try again.";
+
     } catch (err) {
       console.error("AI Generate Error:", err);
       statusEl.textContent = "❌ Error while generating suggestions.";
@@ -1185,11 +1186,6 @@ function setupAISuggestions() {
   });
 }
 
-
-// Make sure AI hookup runs AFTER the DOM is ready
-document.addEventListener("DOMContentLoaded", () => {
-  setupAISuggestions();
-});
 
 // finally load products
 loadProducts();
