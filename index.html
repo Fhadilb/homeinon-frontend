@@ -1525,14 +1525,17 @@
 "></div>
 
 
-<!-- TEST IF ANY CDN SCRIPT CAN LOAD (Axios test) -->
+<!-- Axios test -->
 <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 <script>
   console.log("Axios loaded?", typeof axios);
 </script>
 
-<!-- WebLLM (CDN — CORRECT FILE) -->
-<script src="https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.73/dist/index.min.js"></script>
+<!-- Load WebLLM via ES module CDN -->
+<script type="module">
+  import * as webllm from "https://esm.run/@mlc-ai/web-llm";
+  window.webllm = webllm;
+</script>
 
 <!-- THREE.js -->
 <script type="module">
@@ -1549,6 +1552,7 @@
 
 <!-- Your app -->
 <script src="/script.js"></script>
+
 
 
 
