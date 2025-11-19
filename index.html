@@ -1531,11 +1531,8 @@
   console.log("Axios loaded?", typeof axios);
 </script>
 
-<!-- Load WebLLM via ES module CDN -->
-<script type="module">
-  import * as webllm from "https://esm.run/@mlc-ai/web-llm";
-  window.webllm = webllm;
-</script>
+<!-- Load WebLLM (correct global browser build) -->
+<script src="https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.79/dist/web-llm.min.js"></script>
 
 <!-- THREE.js -->
 <script type="module">
@@ -1552,9 +1549,6 @@
 
 <!-- Your app -->
 <script src="/script.js"></script>
-
-
-
 
 
 
