@@ -1531,11 +1531,12 @@
   console.log("Axios loaded?", typeof axios);
 </script>
 
-<!-- Load WebLLM (official stable version without esm.sh) -->
-<script src="https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.74/dist/index.js"></script>
+<!-- Load WebLLM from UNPKG instead of jsDelivr -->
+<script src="https://unpkg.com/@mlc-ai/web-llm@0.2.74/dist/index.js"></script>
 <script>
   console.log("WebLLM loaded?", window.webllm);
 </script>
+
 
 
 <!-- Load THREE.js (ONLY ONCE) -->
