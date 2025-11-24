@@ -521,25 +521,22 @@ const raw = Array.isArray(data) ? data : (data.products || []);
 
 allProducts = raw.map(p => {
 
-    const roomRaw = (p.room || "").toString().trim().toLowerCase();
-    let room = "";
-    if (roomRaw.includes("bed")) room = "bedroom";
-    else if (roomRaw.includes("din")) room = "dining";
-    else if (roomRaw.includes("liv")) room = "living";
-    else if (roomRaw.includes("off")) room = "office";
+    // Step 2: normalised category
+    const cleanCategory = normalizeCategory(p.category || "");
+
+    // Step 3: assign room based on reduced category
+    const cleanRoom = deriveRoom(cleanCategory);
 
     return {
       ...p,
-      category: normalizeCategory(p.category || ""),
+      category: cleanCategory,
+      room: cleanRoom,
       material: p.material || "Unknown",
       colour: p.colour || "",
       cutout_local_path: normalizeCutoutPath(p.cutout_local_path),
-      room,
       style: p.style || deriveStyle(p.title || p.description)
     };
 });
-
-
 
 
   const styles = uniqueValues(allProducts, "style").sort();
@@ -1192,6 +1189,29 @@ FORMAT EXAMPLE:
 
 function scoreProduct(p, t) {
   let score = 0;
+// Title keyword boost
+if (p.title) {
+  const titleLower = p.title.toLowerCase();
+
+  if (t.includes("sideboard") && titleLower.includes("sideboard")) score += 40;
+  if (t.includes("sofa") && titleLower.includes("sofa")) score += 40;
+  if (t.includes("tv") && titleLower.includes("tv")) score += 40;
+  if (t.includes("armchair") && titleLower.includes("armchair")) score += 40;
+  if (t.includes("coffee table") && titleLower.includes("coffee table")) score += 40;
+  if (t.includes("console") && titleLower.includes("console")) score += 40;
+}
+// Colour synonyms
+const colourAliases = {
+  "charcoal": ["charcoal", "dark grey", "dark gray"],
+  "grey": ["grey", "gray", "light grey", "light gray", "graphite", "stone"],
+  "oak": ["oak", "light oak"],
+  "walnut": ["walnut", "dark walnut"],
+};
+for (const [colour, aliases] of Object.entries(colourAliases)) {
+  if (aliases.some(a => t.includes(a))) {
+    if (p.colour?.toLowerCase().includes(colour)) score += 15;
+  }
+}
 
   // CATEGORY KEYWORDS — STRONG MATCHING
   const mustMatch = [
@@ -1264,49 +1284,87 @@ function scoreProduct(p, t) {
 }     // ← CLOSES setupAISuggestions()
 
 function normalizeCategory(raw = "") {
-  const t = raw.toLowerCase();
+  const t = raw.toLowerCase().trim();
 
-  // --- SIDEBOARD / DINING STORAGE ---
-  if (
-    t.includes("sideboard") ||
-    t.includes("side board") ||
-    t.includes("buffet") ||
-    t.includes("credenza") ||
-    t.includes("dining storage") ||
-    t.includes("storage unit") && !t.includes("bath") &&
-    !t.includes("wardrobe")
-  ) return "sideboard";
+  // --- BEDROOM ---
+  if (t.includes("bed frame") || t.includes("ottoman bed") || t.includes("divan") || t.includes("upholstered bed") || t === "beds")
+    return "bed";
+  if (t.includes("bed")) return "bed";
+  if (t.includes("headboard")) return "headboard";
+  if (t.includes("bedside")) return "bedside table";
+  if (t.includes("drawer")) return "drawers";
+  if (t.includes("wardrobe")) return "wardrobe";
+  if (t.includes("dressing")) return "dressing table";
+  if (t.includes("furniture set")) return "furniture set";
 
-  // --- TV UNITS ---
-  if (
-    t.includes("tv") ||
-    t.includes("media") ||
-    t.includes("entertainment")
-  ) return "tv unit";
-
-  // --- COFFEE TABLE ---
-  if (t.includes("coffee") && t.includes("table")) return "coffee table";
-
-  // --- CONSOLE TABLE ---
-  if (t.includes("console") || t.includes("hall table")) return "console table";
-
-  // --- STORAGE CABINET ---
-  if (
-    t.includes("cabinet") ||
-    (t.includes("storage") && !t.includes("sideboard"))
-  ) return "storage cabinet";
-
-  // --- SOFA ---
-  if (t.includes("sofa") || t.includes("couch") || t.includes("settee"))
-    return "sofa";
-
-  // --- ARMCHAIR ---
-  if (t.includes("armchair") || t.includes("accent chair"))
+  // --- LIVING ROOM ---
+  if (t.includes("sofa")) return "sofa";
+  if (t.includes("armchair") || t.includes("accent chair") || t.includes("recliner"))
     return "armchair";
+  if (t.includes("coffee")) return "coffee table";
+  if (t.includes("console")) return "console table";
+  if (t.includes("media") || t.includes("tv") || t.includes("entertainment"))
+    return "tv unit";
+  if (t.includes("display")) return "cabinet";
+  if (t.includes("storage")) return "cabinet";
+  if (t.includes("bookcase")) return "bookcase";
 
-  // fallback
-  return raw.toLowerCase().trim() || "misc";
+  // --- DINING ROOM ---
+  if (t.includes("dining table")) return "dining table";
+  if (t.includes("dining chair")) return "dining chair";
+  if (t.includes("bench")) return "bench";
+  if (t.includes("sideboard") || t.includes("buffet")) return "sideboard";
+  if (t.includes("nest")) return "side table";
+
+  // --- OFFICE ---
+  if (t.includes("desk")) return "desk";
+  if (t.includes("office chair")) return "office chair";
+
+  // --- GENERIC ---
+  if (t.includes("cupboard")) return "cabinet";
+  if (t.includes("shoe")) return "cabinet";
+  if (t.includes("table")) return "table";
+  if (t.includes("box")) return "storage";
+
+  return t || "misc";
 }
+
+function deriveRoom(category) {
+  switch (category) {
+    case "bed":
+    case "headboard":
+    case "bedside table":
+    case "drawers":
+    case "wardrobe":
+    case "dressing table":
+    case "furniture set":
+      return "bedroom";
+
+    case "sofa":
+    case "armchair":
+    case "coffee table":
+    case "console table":
+    case "tv unit":
+    case "cabinet":
+    case "bookcase":
+      return "living";
+
+    case "dining table":
+    case "dining chair":
+    case "sideboard":
+    case "bench":
+    case "side table":
+      return "dining";
+
+    case "desk":
+    case "office chair":
+      return "office";
+
+    default:
+      return "";
+  }
+}
+
 
 
 
