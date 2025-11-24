@@ -512,19 +512,17 @@ modalRoomsetBtn.addEventListener("click", () => {
   }
 });
 
-
 // --------- LOAD PRODUCTS ----------
-async function loadProducts(){
+async function loadProducts() {
   const res = await fetch(API_URL);
-const data = await res.json();
-const raw = Array.isArray(data) ? data : (data.products || []);
+  const data = await res.json();
+  const raw = Array.isArray(data) ? data : (data.products || []);
 
-allProducts = raw.map(p => {
-
-    // Step 2: normalised category
+  allProducts = raw.map(p => {
+    // Normalise category first
     const cleanCategory = normalizeCategory(p.category || "");
 
-    // Step 3: assign room based on reduced category
+    // Derive room from cleaned category
     const cleanRoom = deriveRoom(cleanCategory);
 
     return {
@@ -532,13 +530,15 @@ allProducts = raw.map(p => {
       category: cleanCategory,
       room: cleanRoom,
       material: p.material || "Unknown",
-      colour: p.colour || "",
+      colour: (p.colour || "").toLowerCase().trim(),
       cutout_local_path: normalizeCutoutPath(p.cutout_local_path),
-      style: p.style || deriveStyle(p.title || p.description)
+      style: p.style || deriveStyle(p.title || p.description),
+      title: p.title || "",
+      price: p.price || 0
     };
-});
+  });
 
-
+  // Build unique lists AFTER normalisation
   const styles = uniqueValues(allProducts, "style").sort();
   const cats   = uniqueValues(allProducts, "category").sort();
   const mats   = uniqueValues(allProducts, "material").sort();
@@ -550,18 +550,31 @@ allProducts = raw.map(p => {
 
   const catSel = document.getElementById("category");
   const matSel = document.getElementById("material");
-  catSel.innerHTML = '<option value="">All</option>' + cats.map(c=>`<option value="${c}">${c}</option>`).join("");
-  matSel.innerHTML = '<option value="">All</option>' + mats.map(m=>`<option value="${m}">${m}</option>`).join("");
+
+  catSel.innerHTML =
+    '<option value="">All</option>' +
+    cats.map(c => `<option value="${c}">${c}</option>`).join("");
+
+  matSel.innerHTML =
+    '<option value="">All</option>' +
+    mats.map(m => `<option value="${m}">${m}</option>`).join("");
 
   buildColourDropdown(cols, true);
 
-  const maxP = Math.ceil(Math.max(0, ...allProducts.map(p=>parseFloat(p.price)||0))/50)*50 || 2000;
+  // Price slider: auto-set min/max
+  const maxP = Math.ceil(
+    Math.max(0, ...allProducts.map(p => parseFloat(p.price) || 0)) / 50
+  ) * 50 || 2000;
+
   const pr = document.getElementById("priceRange");
-  pr.max = maxP; pr.value = maxP;
+  pr.max = maxP;
+  pr.value = maxP;
+
   document.getElementById("priceValue").textContent = `£${maxP}`;
 
   renderProducts(allProducts);
 }
+
 
 // --------- TOP BAR FILTER CONTROLS ----------
 document.getElementById("toggleFavourites").addEventListener("click", ()=>{
@@ -1187,6 +1200,28 @@ FORMAT EXAMPLE:
     .replace(/[^a-zA-Z0-9 ]/g, " ")
     .toLowerCase();
 
+// Identify the main furniture category the user actually wants
+function extractRequestedCategory(t) {
+  const categories = [
+    "sideboard",
+    "tv stand",
+    "tv unit",
+    "sofa",
+    "armchair",
+    "coffee table",
+    "console table",
+    "storage cabinet",
+    "cabinet"
+  ];
+
+  for (const cat of categories) {
+    if (t.includes(cat)) return cat;
+  }
+  return null;
+}
+
+const requestedCategory = extractRequestedCategory(lower);
+
 function scoreProduct(p, t) {
   let score = 0;
 // Title keyword boost
@@ -1248,18 +1283,34 @@ for (const [colour, aliases] of Object.entries(colourAliases)) {
 
   // Material is lowest priority
   if (p.material && t.includes(p.material.toLowerCase())) score += 2;
+// HARD PENALTY for wrong category
+if (requestedCategory && p.category !== requestedCategory) {
+  score -= 40;   // <- stops sofas ranking above sideboards
+}
 
   return score;
+}
+// Extract budget if user says: under £500 / below 300 / max 1200 etc
+const budgetMatch = input.match(/(?:under|below|max|budget)\s*£?(\d+)/i);
+let maxBudget = null;
+if (budgetMatch) maxBudget = parseFloat(budgetMatch[1]);
+
+function priceOk(p) {
+  if (!maxBudget) return true;
+  const price = parseFloat(p.price) || 0;
+  return price <= maxBudget;
 }
 
 
 
-  let matches = allProducts
-    .map((p) => ({ p, score: scoreProduct(p, lower) }))
-    .filter((x) => x.score > 0)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 6)
-    .map((x) => x.p);
+let matches = allProducts
+  .filter(p => priceOk(p))        // ← NEW: enforce budget
+  .map((p) => ({ p, score: scoreProduct(p, lower) }))
+  .filter((x) => x.score > 0)
+  .sort((a, b) => b.score - a.score)
+  .slice(0, 6)
+  .map((x) => x.p);
+
 
   if (matches.length === 0) {
     alert("AI understood your request but couldn't match items from the catalogue.");
@@ -1283,54 +1334,54 @@ for (const [colour, aliases] of Object.entries(colourAliases)) {
 
 }     // ← CLOSES setupAISuggestions()
 
+/* -------------------------------------------------------
+   CATEGORY NORMALISATION + ROOM DERIVATION (FULL FIXED BLOCK)
+------------------------------------------------------- */
+
+// Normalise product categories into clean, consistent types
 function normalizeCategory(raw = "") {
   const t = raw.toLowerCase().trim();
 
-  // --- BEDROOM ---
-  if (t.includes("bed frame") || t.includes("ottoman bed") || t.includes("divan") || t.includes("upholstered bed") || t === "beds")
-    return "bed";
-  if (t.includes("bed")) return "bed";
+  // BEDROOM
+  if (t.includes("bed frame") || t.includes("ottoman") || t.includes("divan") || t.includes("upholstered bed")) return "bed";
+  if (t === "bed" || t === "beds") return "bed";
   if (t.includes("headboard")) return "headboard";
   if (t.includes("bedside")) return "bedside table";
-  if (t.includes("drawer")) return "drawers";
+  if (t.includes("drawer") || t.includes("chest")) return "drawers";
   if (t.includes("wardrobe")) return "wardrobe";
   if (t.includes("dressing")) return "dressing table";
   if (t.includes("furniture set")) return "furniture set";
 
-  // --- LIVING ROOM ---
+  // LIVING
   if (t.includes("sofa")) return "sofa";
-  if (t.includes("armchair") || t.includes("accent chair") || t.includes("recliner"))
-    return "armchair";
+  if (t.includes("armchair") || t.includes("accent chair") || t.includes("recliner")) return "armchair";
   if (t.includes("coffee")) return "coffee table";
   if (t.includes("console")) return "console table";
-  if (t.includes("media") || t.includes("tv") || t.includes("entertainment"))
-    return "tv unit";
-  if (t.includes("display")) return "cabinet";
-  if (t.includes("storage")) return "cabinet";
+  if (t.includes("tv") || t.includes("media") || t.includes("entertainment")) return "tv unit";
   if (t.includes("bookcase")) return "bookcase";
+  if (t.includes("cabinet") || t.includes("cupboard") || t.includes("storage")) return "cabinet";
 
-  // --- DINING ROOM ---
+  // DINING
   if (t.includes("dining table")) return "dining table";
   if (t.includes("dining chair")) return "dining chair";
   if (t.includes("bench")) return "bench";
   if (t.includes("sideboard") || t.includes("buffet")) return "sideboard";
   if (t.includes("nest")) return "side table";
 
-  // --- OFFICE ---
+  // OFFICE
   if (t.includes("desk")) return "desk";
   if (t.includes("office chair")) return "office chair";
 
-  // --- GENERIC ---
-  if (t.includes("cupboard")) return "cabinet";
-  if (t.includes("shoe")) return "cabinet";
+  // GENERIC FALLBACKS
   if (t.includes("table")) return "table";
-  if (t.includes("box")) return "storage";
 
-  return t || "misc";
+  return "misc";
 }
 
-function deriveRoom(category) {
-  switch (category) {
+// Assign each category to a room type
+function deriveRoom(cat = "") {
+  switch (cat) {
+    // BEDROOM
     case "bed":
     case "headboard":
     case "bedside table":
@@ -1340,6 +1391,7 @@ function deriveRoom(category) {
     case "furniture set":
       return "bedroom";
 
+    // LIVING
     case "sofa":
     case "armchair":
     case "coffee table":
@@ -1349,6 +1401,7 @@ function deriveRoom(category) {
     case "bookcase":
       return "living";
 
+    // DINING
     case "dining table":
     case "dining chair":
     case "sideboard":
@@ -1356,6 +1409,7 @@ function deriveRoom(category) {
     case "side table":
       return "dining";
 
+    // OFFICE
     case "desk":
     case "office chair":
       return "office";
@@ -1364,8 +1418,6 @@ function deriveRoom(category) {
       return "";
   }
 }
-
-
 
 
 // finally load products
