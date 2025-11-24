@@ -1140,20 +1140,35 @@ try {
     messages: [
       {
         role: "system",
-        content: `
+content: `
 You are an interior design expert for the website HomeInOn.
 
-RULES:
-- ONLY recommend furniture that could logically exist inside the user's room description.
-- DO NOT recommend external brands, stores, URLs, or product names such as IKEA, Wayfair, West Elm, etc.
-- DO NOT invent product names.
-- DO NOT output URLs.
-- Your job is ONLY to describe the TYPE of furniture (e.g. “charcoal fabric sofa”, “oak dining table”, “blue velvet armchair”).
-- Focus on style, colour, room type, materials, and budget.
+OUTPUT RULES:
+- ALWAYS return EXACTLY **6 bullet points**.
+- EACH bullet point MUST be ONE of these categories:
+  * TV stand
+  * TV unit
+  * Sideboard
+  * Coffee table
+  * Sofa
+  * Armchair
+  * Storage cabinet
+  * Console table
+- Bullet points MUST be **full, complete sentences**.
+- NO brand names, NO store names, NO URLs.
+- NO invented product names.
+- ONLY describe the TYPE of furniture (e.g. “grey oak TV stand”, “charcoal fabric sofa”).
+- Follow the user's colour scheme, room type, style, and budget.
 
-GOAL:
-Generate a clean descriptive shopping list based entirely on the user’s room style, colour scheme, budget, and needs.
-        `
+FORMAT EXAMPLE:
+1. Grey oak TV stand with clean lines.
+2. Matching grey sideboard with extra storage.
+3. Charcoal fabric sofa suitable for a modern living room.
+4. Grey accent armchair with wooden legs.
+5. Grey coffee table with a minimalist design.
+6. Grey storage cabinet with shelving.
+`
+
       },
       {
         role: "user",
@@ -1175,23 +1190,43 @@ Generate a clean descriptive shopping list based entirely on the user’s room s
     .replace(/[^a-zA-Z0-9 ]/g, " ")
     .toLowerCase();
 
-  function scoreProduct(p, t) {
-    let score = 0;
+function scoreProduct(p, t) {
+  let score = 0;
 
-    const add = (val, weight) => {
-      if (!val) return;
-      const v = val.toLowerCase();
-      if (t.includes(v)) score += weight;
-    };
+  const mustMatch = [
+    ["tv", ["tv", "entertainment", "media"]],
+    ["sideboard", ["sideboard", "buffet"]],
+    ["sofa", ["sofa", "couch"]],
+    ["armchair", ["armchair", "chair"]],
+    ["coffee table", ["coffee", "table"]],
+    ["console table", ["console", "hall table"]],
+    ["cabinet", ["cabinet", "storage"]],
+  ];
 
-    add(p.room, 5);
-    add(p.style, 4);
-    add(p.category, 3);
-    add(p.material, 2);
-    add(p.colour, 6);
-
-    return score;
+  // Category BOOST if AI mentions the category
+  for (const [keyword, aliases] of mustMatch) {
+    for (const alias of aliases) {
+      if (t.includes(alias)) {
+        if (p.category?.toLowerCase().includes(keyword)) score += 20;
+      }
+    }
   }
+
+  // Colour is important but NOT dominant
+  if (p.colour && t.includes(p.colour.toLowerCase())) score += 6;
+
+  // Style is somewhat important
+  if (p.style && t.includes(p.style.toLowerCase())) score += 4;
+
+  // Room relevance
+  if (p.room && t.includes(p.room.toLowerCase())) score += 5;
+
+  // Material
+  if (p.material && t.includes(p.material.toLowerCase())) score += 2;
+
+  return score;
+}
+
 
   let matches = allProducts
     .map((p) => ({ p, score: scoreProduct(p, lower) }))
