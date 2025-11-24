@@ -1275,6 +1275,14 @@ FORMAT EXAMPLE:
       })
       .slice(0, 6);
   }
+// Add final matches to the roomset
+matches.forEach(p => addToRoomset(p));
+saveRoomset();
+renderRoomset();
+renderRoomsetCanvas();
+
+alert(`✨ AI added ${matches.length} items to your roomset!`);
+statusEl.textContent = "Done! You can tweak your description and try again.";
 
 
 } catch (err) {
