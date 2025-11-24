@@ -1148,38 +1148,35 @@ try {
 
   const response = await ai.chat.completions.create({
     messages: [
-      {
-        role: "system",
-content: `
-You are an interior design expert for the website HomeInOn.
+{
+  role: "system",
+  content: `
+You MUST follow these rules exactly:
 
-OUTPUT RULES:
-- ALWAYS return EXACTLY **6 bullet points**.
-- EACH bullet point MUST be ONE of these categories:
-  * TV stand
-  * TV unit
-  * Sideboard
-  * Coffee table
-  * Sofa
-  * Armchair
-  * Storage cabinet
-  * Console table
-- Bullet points MUST be **full, complete sentences**.
-- NO brand names, NO store names, NO URLs.
-- NO invented product names.
-- ONLY describe the TYPE of furniture (e.g. “grey oak TV stand”, “charcoal fabric sofa”).
-- Follow the user's colour scheme, room type, style, and budget.
-
-FORMAT EXAMPLE:
-1. Grey oak TV stand with clean lines.
-2. Matching grey sideboard with extra storage.
-3. Charcoal fabric sofa suitable for a modern living room.
-4. Grey accent armchair with wooden legs.
-5. Grey coffee table with a minimalist design.
-6. Grey storage cabinet with shelving.
-`
-
-      },
+1. Output EXACTLY 6 bullet points.
+2. EACH bullet point MUST start with one of the following categories (NO EXCEPTIONS):
+   - TV stand
+   - TV unit
+   - Sideboard
+   - Coffee table
+   - Sofa
+   - Armchair
+   - Storage cabinet
+   - Console table
+3. The first two words MUST be the category EXACTLY.
+   Example: "TV unit in light oak with clean lines."
+4. NEVER output any other furniture type. NEVER output:
+   - Stools
+   - Footstools
+   - Benches
+   - Beds
+   - Wardrobes
+   - Dining chairs
+   - Bookcases
+   - Anything not in the allowed 8 categories.
+5. Follow user budget, colour and room style.
+6. No URLs, product names or brands.`
+},
       {
         role: "user",
         content: input
@@ -1198,27 +1195,26 @@ outputEl.textContent = "";
 
 // 🔍 Extract dominant category from AI bullet list
 const categoryKeywords = [
-  "sofa", 
-  "armchair", 
-  "sideboard", 
+  "tv unit",
+  "tv stand",
+  "sideboard",
+  "sofa",
+  "armchair",
   "coffee table",
-  "tv stand", 
-  "tv unit", 
-  "storage cabinet", 
+  "storage cabinet",
   "console table"
 ];
 
 let requestedCat = null;
+const lowerText = text.toLowerCase();
 
 for (const cat of categoryKeywords) {
-  if (text.toLowerCase().includes(cat)) {
-    // Normalise TV stand / TV unit into "tv unit"
-    requestedCat = (cat.includes("tv stand") || cat.includes("tv unit"))
-      ? "tv unit"
-      : cat;
+  if (lowerText.includes(cat)) {
+    requestedCat = cat === "tv stand" ? "tv unit" : cat;
     break;
   }
 }
+
 
 
 
@@ -1238,11 +1234,9 @@ const scoreProduct = p => {
   const col = (p.colour || "").toLowerCase();
   const title = (p.title || "").toLowerCase();
 
-  // 1️⃣ STRICT CATEGORY ENFORCEMENT
-  if (requestedCat) {
-    if (cat !== requestedCat) return -99999;   // instant rejection
-    score += 500;
-  }
+ // Hard category filtering BEFORE scoring
+if (requestedCat && cat !== requestedCat) return -99999;
+
 
   // 2️⃣ Colour matching
   if (userQuery.includes("grey") || userQuery.includes("gray")) {
@@ -1253,7 +1247,8 @@ const scoreProduct = p => {
   }
 
   // 3️⃣ Title keyword (optional)
-if (requestedCat && title.includes(requestedCat)) score += 50;
+if (requestedCat && title.includes(requestedCat.replace(" ", ""))) score += 50;
+
 
   return score;
 };
