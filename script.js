@@ -1130,63 +1130,98 @@ function setupAISuggestions() {
       }
     }
 
-    // Generate suggestions
-    statusEl.textContent = "Thinking… 🤔";
-    outputEl.textContent = "";
+// Generate suggestions
+statusEl.textContent = "Thinking… 🤔";
+outputEl.textContent = "";
 
-    try {
-      const response = await ai.chat.completions.create({
-        messages: [
-          {
-            role: "system",
-            content: "You are a helpful interior design assistant. Suggest furniture items based on room descriptions. Be concise."
-          },
-          {
-            role: "user",
-            content: input
-          }
-        ],
-        max_tokens: 200,
-        temperature: 0.4
-      });
+try {
 
-      const text =
-        response?.choices?.[0]?.message?.content ||
-        "No suggestion generated.";
+  const response = await ai.chat.completions.create({
+    messages: [
+      {
+        role: "system",
+        content: `
+You are an interior design expert for the website HomeInOn.
 
-      outputEl.textContent = text;
+RULES:
+- ONLY recommend furniture that could logically exist inside the user's room description.
+- DO NOT recommend external brands, stores, URLs, or product names such as IKEA, Wayfair, West Elm, etc.
+- DO NOT invent product names.
+- DO NOT output URLs.
+- Your job is ONLY to describe the TYPE of furniture (e.g. “charcoal fabric sofa”, “oak dining table”, “blue velvet armchair”).
+- Focus on style, colour, room type, materials, and budget.
 
-      const lower = text.toLowerCase();
-
-      let matches = allProducts.filter((p) => {
-        return (
-          lower.includes((p.room || "").toLowerCase()) ||
-          lower.includes((p.style || "").toLowerCase()) ||
-          lower.includes((p.category || "").toLowerCase()) ||
-          lower.includes((p.colour || "").toLowerCase())
-        );
-      });
-
-      if (matches.length === 0) {
-        alert("AI understood your request, but couldn't match items from the catalogue.");
-        return;
+GOAL:
+Generate a clean descriptive shopping list based entirely on the user’s room style, colour scheme, budget, and needs.
+        `
+      },
+      {
+        role: "user",
+        content: input
       }
-
-      matches = matches.slice(0, 6);
-      matches.forEach((p) => addToRoomset(p));
-      saveRoomset();
-      renderRoomset();
-      renderRoomsetCanvas();
-
-      alert(`✨ AI added ${matches.length} items to your roomset!`);
-      statusEl.textContent = "Done! You can tweak your description and try again.";
-
-    } catch (err) {
-      console.error("AI Generate Error:", err);
-      statusEl.textContent = "❌ Error while generating suggestions.";
-    }
+    ],
+    max_tokens: 200,
+    temperature: 0.4
   });
+
+  const text =
+    response?.choices?.[0]?.message?.content ||
+    "No suggestion generated.";
+
+  outputEl.textContent = text;
+
+  const lower = text
+    .replace(/•|\*|-/g, " ")
+    .replace(/[^a-zA-Z0-9 ]/g, " ")
+    .toLowerCase();
+
+  function scoreProduct(p, t) {
+    let score = 0;
+
+    const add = (val, weight) => {
+      if (!val) return;
+      const v = val.toLowerCase();
+      if (t.includes(v)) score += weight;
+    };
+
+    add(p.room, 5);
+    add(p.style, 4);
+    add(p.category, 3);
+    add(p.material, 2);
+    add(p.colour, 6);
+
+    return score;
+  }
+
+  let matches = allProducts
+    .map((p) => ({ p, score: scoreProduct(p, lower) }))
+    .filter((x) => x.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 6)
+    .map((x) => x.p);
+
+  if (matches.length === 0) {
+    alert("AI understood your request but couldn't match items from the catalogue.");
+    return;
+  }
+
+  matches.forEach((p) => addToRoomset(p));
+  saveRoomset();
+  renderRoomset();
+  renderRoomsetCanvas();
+
+  alert(`✨ AI added ${matches.length} items to your roomset!`);
+  statusEl.textContent = "Done! You can tweak your description and try again.";
+
+} catch (err) {
+  console.error("AI Generate Error:", err);
+  statusEl.textContent = "❌ Error while generating suggestions.";
 }
+
+});   // ← CLOSES click handler
+
+}     // ← CLOSES setupAISuggestions()
+
 
 // finally load products
 loadProducts();
