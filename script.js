@@ -1264,25 +1264,43 @@ function scoreProduct(p, t) {
 }     // ← CLOSES setupAISuggestions()
 
 function normalizeCategory(raw = "") {
-  const t = raw.toLowerCase();
+  const t = raw.toLowerCase().trim();
 
-  if (t.includes("side") && t.includes("board")) return "sideboard";
+  // SIDEBOARD
+  if (t.includes("sideboard")) return "sideboard";
   if (t.includes("buffet")) return "sideboard";
+  if (t.includes("credenza")) return "sideboard";
 
-  if (t.includes("media") || t.includes("tv")) return "tv unit";
+  // TV UNITS
+  if (t.includes("tv")) return "tv unit";
+  if (t.includes("media")) return "tv unit";
   if (t.includes("entertainment")) return "tv unit";
 
-  if (t.includes("coffee") && t.includes("table")) return "coffee table";
+  // COFFEE TABLE
+  if (t.includes("coffee table")) return "coffee table";
+  if (t.includes("coffee")) return "coffee table";
+
+  // CONSOLE TABLE
   if (t.includes("console")) return "console table";
+  if (t.includes("hall table")) return "console table";
+  if (t.includes("entryway")) return "console table";
 
+  // SOFAS
   if (t.includes("sofa") || t.includes("couch")) return "sofa";
-  if (t.includes("armchair") || t.includes("accent chair")) return "armchair";
 
-  if (t.includes("cabinet")) return "cabinet";
-  if (t.includes("storage")) return "storage";
+  // ARMCHAIR
+  if (t.includes("armchair")) return "armchair";
+  if (t.includes("accent chair")) return "armchair";
+  if (t.includes("lounge chair")) return "armchair";
 
-  return raw.toLowerCase().trim() || "misc";
+  // STORAGE CABINET
+  if (t.includes("cabinet")) return "storage cabinet";
+  if (t.includes("storage")) return "storage cabinet";
+
+  // If nothing matched
+  return "misc";
 }
+
 
 // finally load products
 loadProducts();
