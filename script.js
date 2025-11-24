@@ -1200,12 +1200,16 @@ FORMAT EXAMPLE:
     .replace(/[^a-zA-Z0-9 ]/g, " ")
     .toLowerCase();
 
-// Identify the main furniture category the user actually wants
+/* ---------------------------------------------------------
+   AI CATEGORY EXTRACTION + VAGUE QUERY DETECTION + SCORING
+--------------------------------------------------------- */
+
+// 1️⃣ Extract the category the user is asking for
 function extractRequestedCategory(t) {
   const categories = [
     "sideboard",
-    "tv stand",
     "tv unit",
+    "tv stand",
     "sofa",
     "armchair",
     "coffee table",
@@ -1214,83 +1218,103 @@ function extractRequestedCategory(t) {
     "cabinet"
   ];
 
-  for (const cat of categories) {
-    if (t.includes(cat)) return cat;
+  for (const c of categories) {
+    if (t.includes(c)) return c;
   }
   return null;
 }
 
-const requestedCategory = extractRequestedCategory(lower);
+// 2️⃣ Detect vague roomset-style requests
+function detectVagueQuery(text) {
+  const vagueTerms = [
+    "decorate",
+    "matching set",
+    "style my room",
+    "budget",
+    "ideas",
+    "design my room",
+    "upgrade my room",
+    "suggest items",
+    "furnish"
+  ];
+  return vagueTerms.some(v => text.includes(v));
+}
 
+const requestedCategory = extractRequestedCategory(lower);
+const isVagueQuery = detectVagueQuery(input.toLowerCase());
+
+// 3️⃣ Scoring function — rewritten cleanly & correctly
 function scoreProduct(p, t) {
   let score = 0;
-// Title keyword boost
-if (p.title) {
-  const titleLower = p.title.toLowerCase();
 
-  if (t.includes("sideboard") && titleLower.includes("sideboard")) score += 40;
-  if (t.includes("sofa") && titleLower.includes("sofa")) score += 40;
-  if (t.includes("tv") && titleLower.includes("tv")) score += 40;
-  if (t.includes("armchair") && titleLower.includes("armchair")) score += 40;
-  if (t.includes("coffee table") && titleLower.includes("coffee table")) score += 40;
-  if (t.includes("console") && titleLower.includes("console")) score += 40;
-}
-// Colour synonyms
-const colourAliases = {
-  "charcoal": ["charcoal", "dark grey", "dark gray"],
-  "grey": ["grey", "gray", "light grey", "light gray", "graphite", "stone"],
-  "oak": ["oak", "light oak"],
-  "walnut": ["walnut", "dark walnut"],
-};
-for (const [colour, aliases] of Object.entries(colourAliases)) {
-  if (aliases.some(a => t.includes(a))) {
-    if (p.colour?.toLowerCase().includes(colour)) score += 15;
-  }
-}
+  // Slight boost when it's a vague "whole room" query
+  if (isVagueQuery) score += 5;
 
-  // CATEGORY KEYWORDS — STRONG MATCHING
-  const mustMatch = [
-    ["sideboard", ["sideboard", "buffet", "storage sideboard"]],
-    ["tv unit", ["tv", "media", "entertainment"]],
-    ["sofa", ["sofa", "couch"]],
-    ["armchair", ["armchair", "chair"]],
-    ["coffee table", ["coffee table"]],
-    ["console table", ["console table", "hall table"]],
-    ["cabinet", ["cabinet", "storage"]],
-    ["storage", ["storage", "cupboard"]],
-  ];
+  // Title-based boosts for exact category matches
+  if (p.title) {
+    const name = p.title.toLowerCase();
 
-  // Category → BIG boost
-  for (const [keyword, aliases] of mustMatch) {
-    // AI mentions category
-    if (aliases.some(a => t.includes(a))) {
-      // Exact category match: strongest signal
-      if (p.category === keyword) score += 50;
+    const titleBoosts = [
+      ["sideboard", 40],
+      ["sofa", 40],
+      ["tv", 40],
+      ["armchair", 40],
+      ["coffee table", 40],
+      ["console", 40]
+    ];
 
-      // Partial category match: secondary boost
-      if (p.category?.includes(keyword)) score += 25;
+    for (const [word, boost] of titleBoosts) {
+      if (t.includes(word) && name.includes(word)) score += boost;
     }
   }
 
-  // Colour match
+  // Colour synonyms (very important!)
+  const colourAliases = {
+    "charcoal": ["charcoal", "dark grey", "dark gray"],
+    "grey": ["grey", "gray", "light grey", "light gray", "graphite", "stone"],
+    "oak": ["oak", "light oak"],
+    "walnut": ["walnut", "dark walnut"]
+  };
+
+  for (const [colour, aliases] of Object.entries(colourAliases)) {
+    if (aliases.some(a => t.includes(a))) {
+      if (p.colour?.toLowerCase().includes(colour)) score += 15;
+    }
+  }
+
+  // Category matching (most important logic)
+  const categoryAliases = {
+    "sideboard": ["sideboard", "buffet"],
+    "tv unit": ["tv", "media", "entertainment"],
+    "sofa": ["sofa", "couch"],
+    "armchair": ["armchair", "chair"],
+    "coffee table": ["coffee table"],
+    "console table": ["console table", "hall table"],
+    "cabinet": ["cabinet", "storage"]
+  };
+
+  for (const [cat, aliases] of Object.entries(categoryAliases)) {
+    if (aliases.some(a => t.includes(a))) {
+      if (p.category === cat) score += 50;       // strongest match
+      else if (p.category?.includes(cat)) score += 25;
+    }
+  }
+
+  // softer matches
   if (p.colour && t.includes(p.colour.toLowerCase())) score += 8;
-
-  // Style match
   if (p.style && t.includes(p.style.toLowerCase())) score += 5;
-
-  // Room match
   if (p.room && t.includes(p.room.toLowerCase())) score += 6;
-
-  // Material is lowest priority
   if (p.material && t.includes(p.material.toLowerCase())) score += 2;
-// HARD PENALTY for wrong category
-if (requestedCategory && p.category !== requestedCategory) {
-  score -= 40;   // <- stops sofas ranking above sideboards
-}
+
+  // HARD PENALTY for wrong category (this is what stops "sofa" from replacing a "sideboard" request)
+  if (!isVagueQuery && requestedCategory && p.category !== requestedCategory) {
+    score -= 60;
+  }
 
   return score;
 }
-// Extract budget if user says: under £500 / below 300 / max 1200 etc
+
+// Enforce budget if user says: under £500 / max 300 / budget 2000 etc
 const budgetMatch = input.match(/(?:under|below|max|budget)\s*£?(\d+)/i);
 let maxBudget = null;
 if (budgetMatch) maxBudget = parseFloat(budgetMatch[1]);
@@ -1300,8 +1324,6 @@ function priceOk(p) {
   const price = parseFloat(p.price) || 0;
   return price <= maxBudget;
 }
-
-
 
 let matches = allProducts
   .filter(p => priceOk(p))        // ← NEW: enforce budget
