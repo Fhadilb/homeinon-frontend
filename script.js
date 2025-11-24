@@ -1234,8 +1234,25 @@ const scoreProduct = p => {
   const col = (p.colour || "").toLowerCase();
   const title = (p.title || "").toLowerCase();
 
- // Hard category filtering BEFORE scoring
-if (requestedCat && cat !== requestedCat) return -99999;
+// CATEGORY LOGIC — STRICT ONLY WHEN CAT WAS EXTRACTED
+if (requestedCat) {
+    // If AI picked a category → enforce strict filtering
+    if (cat !== requestedCat) return -99999;
+    score += 400;
+} else {
+    // NO category extracted → VAGUE QUERY MODE
+    // Score based on room type relevance instead of category
+    if (userQuery.includes("living") && p.room === "living") score += 120;
+    if (userQuery.includes("dining") && p.room === "dining") score += 120;
+    if (userQuery.includes("bedroom") && p.room === "bedroom") score += 120;
+
+    // General furniture match boost
+    if (["sofa","armchair","coffee table","sideboard","console table","storage cabinet","tv unit"]
+          .includes(cat)) {
+        score += 80;
+    }
+}
+
 
 
   // 2️⃣ Colour matching
