@@ -1243,73 +1243,77 @@ function detectVagueQuery(text) {
 const requestedCategory = extractRequestedCategory(lower);
 const isVagueQuery = detectVagueQuery(input.toLowerCase());
 
-// 3️⃣ Scoring function — rewritten cleanly & correctly
-function scoreProduct(p, t) {
+/* ———————————————————————————————————————
+   NEW & IMPROVED SCORING (fixes all your examples)
+   ——————————————————————————————————————— */
+function scoreProduct(p, queryTextLower) {
   let score = 0;
+  const title = (p.title || "").toLowerCase();
+  const category = (p.category || "").toLowerCase();
+  const colour = (p.colour || "").toLowerCase();
+  const style = (p.style || "").toLowerCase();
 
-  // Slight boost when it's a vague "whole room" query
-  if (isVagueQuery) score += 5;
-
-  // Title-based boosts for exact category matches
-  if (p.title) {
-    const name = p.title.toLowerCase();
-
-    const titleBoosts = [
-      ["sideboard", 40],
-      ["sofa", 40],
-      ["tv", 40],
-      ["armchair", 40],
-      ["coffee table", 40],
-      ["console", 40]
-    ];
-
-    for (const [word, boost] of titleBoosts) {
-      if (t.includes(word) && name.includes(word)) score += boost;
-    }
-  }
-
-  // Colour synonyms (very important!)
-  const colourAliases = {
-    "charcoal": ["charcoal", "dark grey", "dark gray"],
-    "grey": ["grey", "gray", "light grey", "light gray", "graphite", "stone"],
-    "oak": ["oak", "light oak"],
-    "walnut": ["walnut", "dark walnut"]
+  // ── 1. HARD CATEGORY MATCH (this is the most important) ─────────────────
+  const categoryMap = {
+    sofa:          ["sofa", "couch"],
+    armchair:      ["armchair", "accent chair", "chair"],
+    "tv unit":     ["tv", "media", "entertainment", "tv stand", "tv unit"],
+    sideboard:     ["sideboard", "buffet", "credence"],
+    "coffee table":["coffee table", "coffee table"],
+    "console table":["console table", "console", "hall table"],
+    "storage cabinet": ["cabinet", "storage cabinet", "cupboard"]
   };
 
-  for (const [colour, aliases] of Object.entries(colourAliases)) {
-    if (aliases.some(a => t.includes(a))) {
-      if (p.colour?.toLowerCase().includes(colour)) score += 15;
+  let matchedCategory = null;
+  let requestedCategoryStrength = 0;
+
+  for (const [canonical, keywords] of Object.entries(categoryMap)) {
+    const keywordHits = keywords.filter(k => queryTextLower.includes(k)).length;
+    if (keywordHits > 0) {
+      matchedCategory = canonical;
+      requestedCategoryStrength = keywordHits * 60; // stronger if multiple words
     }
   }
 
-  // Category matching (most important logic)
-  const categoryAliases = {
-    "sideboard": ["sideboard", "buffet"],
-    "tv unit": ["tv", "media", "entertainment"],
-    "sofa": ["sofa", "couch"],
-    "armchair": ["armchair", "chair"],
-    "coffee table": ["coffee table"],
-    "console table": ["console table", "hall table"],
-    "cabinet": ["cabinet", "storage"]
+  // If the AI/user clearly asked for one type X → huge boost only for that type
+  if (matchedCategory) {
+    if (category === matchedCategory) {
+      score += 200 + requestedCategoryStrength;       // almost impossible to beat
+    } else {
+      score -= 150; // huge penalty for wrong category
+    }
+  }
+
+  // ── 2. COLOUR MATCH (much stricter now) ─────────────────────────────────
+  const colourSynonyms = {
+    charcoal: ["charcoal", "dark grey", "dark gray", "anthracite"],
+    grey:     ["grey", "gray", "light grey", "light gray", "stone", "graphite"],
+    oak:      ["oak", "light oak", "natural oak"],
+    walnut:   ["walnut", "dark wood"],
+    white:    ["white", "cream", "ivory"],
+    black:    ["black", "ebony"],
+    green:    ["green", "sage", "olive"],
   };
 
-  for (const [cat, aliases] of Object.entries(categoryAliases)) {
-    if (aliases.some(a => t.includes(a))) {
-      if (p.category === cat) score += 50;       // strongest match
-      else if (p.category?.includes(cat)) score += 25;
+  for (const [baseColour, synonyms] of Object.entries(colourSynonyms)) {
+    if (synonyms.some(s => queryTextLower.includes(s))) {
+      if (colour.includes(baseColour)) score += 80;
+      else score -= 40; // penalise wrong colour
     }
   }
 
-  // softer matches
-  if (p.colour && t.includes(p.colour.toLowerCase())) score += 8;
-  if (p.style && t.includes(p.style.toLowerCase())) score += 5;
-  if (p.room && t.includes(p.room.toLowerCase())) score += 6;
-  if (p.material && t.includes(p.material.toLowerCase())) score += 2;
+  // ── 3. STYLE MATCH ───────────────────────────────────────────────────────
+  if (queryTextLower.includes("modern") && style.includes("modern")) score += 30;
+ if (queryTextLower.includes("scandi") && style.includes("scandi")) score += 30;
+  if (queryTextLower.includes("mid-century") && style.includes("mid-century")) score += 30;
+  // add more if you have other styles
 
-  // HARD PENALTY for wrong category (this is what stops "sofa" from replacing a "sideboard" request)
-  if (!isVagueQuery && requestedCategory && p.category !== requestedCategory) {
-    score -= 60;
-  }
+  // ── 4. ROOM MATCH (living / bedroom etc.) ───────────────────────────────
+  if (queryTextLower.includes("living") && p.room === "living") score += 20;
+  if (queryTextLower.includes("bedroom") && p.room === "bedroom") score += 20;
+
+  // ── 5. TITLE contains the main keyword (fallback) ───────────────────────
+  if (title.includes(queryTextLower.split(" ").slice(0,3).join(" "))) score += 25;
 
   return score;
 }
@@ -1326,13 +1330,15 @@ function priceOk(p) {
 }
 
 let matches = allProducts
-  .filter(p => priceOk(p))        // ← NEW: enforce budget
-  .map((p) => ({ p, score: scoreProduct(p, lower) }))
-  .filter((x) => x.score > 0)
+  .filter(p => priceOk(p))                          // respects budget
+  .map(p => ({
+    p,
+    score: scoreProduct(p, lower)
+  }))
+  .filter(x => x.score > 30)                        // kill everything weak
   .sort((a, b) => b.score - a.score)
-  .slice(0, 6)
-  .map((x) => x.p);
-
+  .slice(0, 6)                                      // take best 6
+  .map(x => x.p);
 
   if (matches.length === 0) {
     alert("AI understood your request but couldn't match items from the catalogue.");
