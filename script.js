@@ -530,7 +530,7 @@ allProducts = raw.map(p => {
 
     return {
       ...p,
-      category: p.category || "Misc",
+      category: normalizeCategory(p.category || ""),
       material: p.material || "Unknown",
       colour: p.colour || "",
       cutout_local_path: normalizeCutoutPath(p.cutout_local_path),
@@ -1193,39 +1193,45 @@ FORMAT EXAMPLE:
 function scoreProduct(p, t) {
   let score = 0;
 
+  // CATEGORY KEYWORDS — STRONG MATCHING
   const mustMatch = [
-    ["tv", ["tv", "entertainment", "media"]],
-    ["sideboard", ["sideboard", "buffet"]],
+    ["sideboard", ["sideboard", "buffet", "storage sideboard"]],
+    ["tv unit", ["tv", "media", "entertainment"]],
     ["sofa", ["sofa", "couch"]],
     ["armchair", ["armchair", "chair"]],
-    ["coffee table", ["coffee", "table"]],
-    ["console table", ["console", "hall table"]],
+    ["coffee table", ["coffee table"]],
+    ["console table", ["console table", "hall table"]],
     ["cabinet", ["cabinet", "storage"]],
+    ["storage", ["storage", "cupboard"]],
   ];
 
-  // Category BOOST if AI mentions the category
+  // Category → BIG boost
   for (const [keyword, aliases] of mustMatch) {
-    for (const alias of aliases) {
-      if (t.includes(alias)) {
-        if (p.category?.toLowerCase().includes(keyword)) score += 20;
-      }
+    // AI mentions category
+    if (aliases.some(a => t.includes(a))) {
+      // Exact category match: strongest signal
+      if (p.category === keyword) score += 50;
+
+      // Partial category match: secondary boost
+      if (p.category?.includes(keyword)) score += 25;
     }
   }
 
-  // Colour is important but NOT dominant
-  if (p.colour && t.includes(p.colour.toLowerCase())) score += 6;
+  // Colour match
+  if (p.colour && t.includes(p.colour.toLowerCase())) score += 8;
 
-  // Style is somewhat important
-  if (p.style && t.includes(p.style.toLowerCase())) score += 4;
+  // Style match
+  if (p.style && t.includes(p.style.toLowerCase())) score += 5;
 
-  // Room relevance
-  if (p.room && t.includes(p.room.toLowerCase())) score += 5;
+  // Room match
+  if (p.room && t.includes(p.room.toLowerCase())) score += 6;
 
-  // Material
+  // Material is lowest priority
   if (p.material && t.includes(p.material.toLowerCase())) score += 2;
 
   return score;
 }
+
 
 
   let matches = allProducts
@@ -1257,6 +1263,26 @@ function scoreProduct(p, t) {
 
 }     // ← CLOSES setupAISuggestions()
 
+function normalizeCategory(raw = "") {
+  const t = raw.toLowerCase();
+
+  if (t.includes("side") && t.includes("board")) return "sideboard";
+  if (t.includes("buffet")) return "sideboard";
+
+  if (t.includes("media") || t.includes("tv")) return "tv unit";
+  if (t.includes("entertainment")) return "tv unit";
+
+  if (t.includes("coffee") && t.includes("table")) return "coffee table";
+  if (t.includes("console")) return "console table";
+
+  if (t.includes("sofa") || t.includes("couch")) return "sofa";
+  if (t.includes("armchair") || t.includes("accent chair")) return "armchair";
+
+  if (t.includes("cabinet")) return "cabinet";
+  if (t.includes("storage")) return "storage";
+
+  return raw.toLowerCase().trim() || "misc";
+}
 
 // finally load products
 loadProducts();
