@@ -1189,11 +1189,38 @@ FORMAT EXAMPLE:
     temperature: 0.4
   });
 
-  const text =
-    response?.choices?.[0]?.message?.content ||
-    "No suggestion generated.";
+const text =
+  response?.choices?.[0]?.message?.content ||
+  "No suggestion generated.";
 
-  outputEl.textContent = text;
+// ❗ Hide AI output (do not show bullet list to the user)
+outputEl.textContent = "";
+
+// 🔍 Extract dominant category from AI bullet list
+const categoryKeywords = [
+  "sofa", 
+  "armchair", 
+  "sideboard", 
+  "coffee table",
+  "tv stand", 
+  "tv unit", 
+  "storage cabinet", 
+  "console table"
+];
+
+let requestedCat = null;
+
+for (const cat of categoryKeywords) {
+  if (text.toLowerCase().includes(cat)) {
+    // Normalise TV stand / TV unit into "tv unit"
+    requestedCat = (cat.includes("tv stand") || cat.includes("tv unit"))
+      ? "tv unit"
+      : cat;
+    break;
+  }
+}
+
+
 
        // ─────────────────────── FINAL 100% WORKING SCORING (NO ERRORS) ───────────────────────
       const userQuery = input.toLowerCase();
@@ -1204,54 +1231,33 @@ FORMAT EXAMPLE:
 
       const priceOk = p => !maxBudget || (parseFloat(p.price || 0) <= maxBudget);
 
-      const scoreProduct = p => {
-        let score = 0;
-        const cat = (p.category || "").toLowerCase().trim();
-        const col = (p.colour || "").toLowerCase().trim();
-        const title = (p.title || "").toLowerCase();
+const scoreProduct = p => {
+  let score = 0;
 
-        // CATEGORY — strongest possible signal
-        const catMap = {
-          "sofa":          ["sofa", "couch", "settee"],
-          "armchair":      ["armchair", "accent chair", "chair"],
-          "tv unit":       ["tv unit", "tv stand", "tv cabinet", "media unit", "entertainment unit", "tv console"],
-          "sideboard":     ["sideboard", "buffet", "credenza"],
-          "coffee table":  ["coffee table", "coffee-table"],
-          "console table": ["console table", "console", "hall table", "entry table"],
-          "cabinet":       ["cabinet", "storage cabinet", "cupboard", "display cabinet"]
-        };
+  const cat = (p.category || "").toLowerCase();
+  const col = (p.colour || "").toLowerCase();
+  const title = (p.title || "").toLowerCase();
 
-        let requestedCat = null;
-        for (const [target, keywords] of Object.entries(catMap)) {
-          if (keywords.some(k => userQuery.includes(k))) {
-            requestedCat = target;
-            break;
-          }
-        }
+  // 1️⃣ STRICT CATEGORY ENFORCEMENT
+  if (requestedCat) {
+    if (cat !== requestedCat) return -99999;   // instant rejection
+    score += 500;
+  }
 
-        if (requestedCat) {
-          if (cat === requestedCat) score += 700;        // huge reward
-          else score -= 600;                             // brutal penalty
-        }
+  // 2️⃣ Colour matching
+  if (userQuery.includes("grey") || userQuery.includes("gray")) {
+    if (col.includes("grey") || col.includes("gray")) score += 200;
+  }
+  if (userQuery.includes("charcoal")) {
+    if (col.includes("charcoal") || col.includes("dark grey")) score += 250;
+  }
 
-        // COLOUR
-        if ((userQuery.includes("grey") || userQuery.includes("gray")) && 
-            (col.includes("grey") || col.includes("gray"))) {
-          score += 200;
-        }
-        if (userQuery.includes("charcoal") && 
-            (col.includes("charcoal") || col.includes("dark grey") || col.includes("dark gray"))) {
-          score += 250;
-        }
-        if (userQuery.includes("oak") && col.includes("oak")) score += 180;
+  // 3️⃣ Title keyword (optional)
+if (requestedCat && title.includes(requestedCat)) score += 50;
 
-        // MATERIAL hints
-        if (userQuery.includes("fabric") && (title.includes("fabric") || col.includes("fabric"))) {
-          score += 120;
-        }
+  return score;
+};
 
-        return score;
-      };
       // ─────────────────────────────────────────────────────────────────────────────────────
   // FINAL MATCHES
   let matches = allProducts
