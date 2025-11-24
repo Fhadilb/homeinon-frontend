@@ -1227,6 +1227,25 @@ for (const cat of categoryKeywords) {
 
       const priceOk = p => !maxBudget || (parseFloat(p.price || 0) <= maxBudget);
 
+      // Detect vague decorating queries
+const isVague =
+  userQuery.includes("decorate") ||
+  userQuery.includes("decorating") ||
+  userQuery.includes("design") ||
+  userQuery.includes("styling") ||
+  userQuery.includes("style") ||
+  userQuery.includes("room") ||
+  userQuery.includes("living room") ||
+  userQuery.includes("bedroom") ||
+  userQuery.includes("dining") ||
+  userQuery.includes("modern living room") ||
+  userQuery.includes("scandi living room");
+
+// Disable category lock for vague multi-item queries
+if (isVague) {
+  requestedCat = null;   // allow sofas + coffee tables + tv units etc
+}
+
 const scoreProduct = p => {
   let score = 0;
 
@@ -1234,12 +1253,12 @@ const scoreProduct = p => {
   const col = (p.colour || "").toLowerCase();
   const title = (p.title || "").toLowerCase();
 
-// CATEGORY LOGIC — STRICT ONLY WHEN CAT WAS EXTRACTED
-if (requestedCat) {
-    // If AI picked a category → enforce strict filtering
+
+// CATEGORY LOGIC — STRICT ONLY WHEN CAT WAS EXTRACTED AND QUERY IS NOT VAGUE
+if (requestedCat && !isVague) {
     if (cat !== requestedCat) return -99999;
-    score += 400;
-} else {
+}
+ else {
     // NO category extracted → VAGUE QUERY MODE
     // Score based on room type relevance instead of category
     if (userQuery.includes("living") && p.room === "living") score += 120;
