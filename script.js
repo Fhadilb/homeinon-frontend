@@ -1151,32 +1151,29 @@ try {
 {
   role: "system",
   content: `
-You MUST follow these rules exactly:
+You are a furniture recommendation engine.
 
-1. Output EXACTLY 6 bullet points.
-2. EACH bullet point MUST start with one of the following categories (NO EXCEPTIONS):
-   - TV stand
-   - TV unit
-   - Sideboard
-   - Coffee table
-   - Sofa
-   - Armchair
-   - Storage cabinet
-   - Console table
-3. The first two words MUST be the category EXACTLY.
-   Example: "TV unit in light oak with clean lines."
-4. NEVER output any other furniture type. NEVER output:
-   - Stools
-   - Footstools
-   - Benches
-   - Beds
-   - Wardrobes
-   - Dining chairs
-   - Bookcases
-   - Anything not in the allowed 8 categories.
-5. Follow user budget, colour and room style.
-6. No URLs, product names or brands.`
-},
+Your job:
+- Analyse the user's room description.
+- Choose a mix of furniture categories that logically fit the room.
+- Keep categories diverse (sofa + coffee table + sideboard + armchair, etc.)
+- Follow budget, colour palette and style if provided.
+
+Return ONLY valid JSON in this exact structure:
+
+{
+  "categories": ["sofa", "coffee table", "sideboard", "armchair"]
+}
+
+Rules:
+1. Choose 4–8 categories.
+2. Categories MUST exist in the product dataset (sofa, armchair, coffee table, tv unit, sideboard, cabinet, console table, bench, bookcase, rug, lamp, dining table, etc.).
+3. Only include categories relevant to the room type.
+4. If the query is vague, choose a typical bundle (e.g. for “living room” choose sofa, coffee table, armchair, tv unit, sideboard, rug).
+5. DO NOT include any natural language or bullet points — ONLY JSON.
+`
+}
+,
       {
         role: "user",
         content: input
@@ -1193,30 +1190,90 @@ const text =
 // ❗ Hide AI output (do not show bullet list to the user)
 outputEl.textContent = "";
 
-// 🔍 Extract dominant category from AI bullet list
-const categoryKeywords = [
-  "tv unit",
-  "tv stand",
-  "sideboard",
-  "sofa",
-  "armchair",
-  "coffee table",
-  "storage cabinet",
-  "console table"
-];
+// 🆕 Extract categories from AI JSON output
+let requestedCats = [];
 
-let requestedCat = null;
-const lowerText = text.toLowerCase();
-
-for (const cat of categoryKeywords) {
-  if (lowerText.includes(cat)) {
-    requestedCat = cat === "tv stand" ? "tv unit" : cat;
-    break;
+try {
+  const parsed = JSON.parse(text);
+  if (Array.isArray(parsed.categories)) {
+    requestedCats = parsed.categories.map(c => c.toLowerCase());
   }
+} catch (e) {
+  console.warn("AI did not return valid JSON:", text);
+}
+
+/* ---------------------------------------------------------
+   🧠 DEFINE aiUserQuery + aiIsVague FIRST (must be here!)
+---------------------------------------------------------- */
+
+const aiUserQuery = input.toLowerCase();
+const aiIsVague =
+  aiUserQuery.includes("decorate") ||
+  aiUserQuery.includes("decorating") ||
+  aiUserQuery.includes("design") ||
+  aiUserQuery.includes("styling") ||
+  aiUserQuery.includes("style") ||
+  aiUserQuery.includes("room") ||
+  aiUserQuery.includes("new place") ||
+  aiUserQuery.includes("new home") ||
+  aiUserQuery.includes("moved in") ||
+  aiUserQuery.includes("living room") ||
+  aiUserQuery.includes("lounge") ||
+  aiUserQuery.includes("family room");
+
+/* ----------------------------------------------------------
+   STEP 6.1 — HANDLE EMPTY AI OUTPUT SAFELY
+----------------------------------------------------------- */
+
+if (!requestedCats || !Array.isArray(requestedCats)) {
+  requestedCats = [];
+}
+
+if (requestedCats.length === 0 && !aiIsVague) {
+  requestedCats = ["sofa", "coffee table", "armchair", "tv unit"];
 }
 
 
 
+// Default bundles by room type
+const defaultLivingBundle = [
+  "sofa",
+  "coffee table",
+  "armchair",
+  "tv unit",
+  "sideboard",
+  "rug"
+];
+
+const defaultBedroomBundle = [
+  "bed",
+  "bedside table",
+  "wardrobe",
+  "drawers",
+  "bench",
+  "rug"
+];
+
+const defaultDiningBundle = [
+  "dining table",
+  "dining chair",
+  "sideboard",
+  "bench",
+  "console table"
+];
+
+// If the AI returned nothing OR user was vague, decide bundle logically
+if (requestedCats.length === 0 && aiIsVague) {
+  if (aiUserQuery.includes("living") || aiUserQuery.includes("lounge")) {
+    requestedCats = defaultLivingBundle;
+  } else if (aiUserQuery.includes("bedroom")) {
+    requestedCats = defaultBedroomBundle;
+  } else if (aiUserQuery.includes("dining")) {
+    requestedCats = defaultDiningBundle;
+  } else {
+    requestedCats = defaultLivingBundle; // absolute fallback
+  }
+}
 
        // ─────────────────────── FINAL 100% WORKING SCORING (NO ERRORS) ───────────────────────
       const userQuery = input.toLowerCase();
@@ -1246,90 +1303,149 @@ if (isVague) {
   requestedCat = null;   // allow sofas + coffee tables + tv units etc
 }
 
-const scoreProduct = p => {
+function scoreProduct(p, requestedCats, aiUserQuery, maxBudget) {
   let score = 0;
 
   const cat = (p.category || "").toLowerCase();
   const col = (p.colour || "").toLowerCase();
+  const style = (p.style || "").toLowerCase();
+  const room = (p.room || "").toLowerCase();
   const title = (p.title || "").toLowerCase();
+  const price = parseFloat(p.price || 0);
 
-
-// CATEGORY LOGIC — STRICT ONLY WHEN CAT WAS EXTRACTED AND QUERY IS NOT VAGUE
-if (requestedCat && !isVague) {
-    if (cat !== requestedCat) return -99999;
-}
- else {
-    // NO category extracted → VAGUE QUERY MODE
-    // Score based on room type relevance instead of category
-    if (userQuery.includes("living") && p.room === "living") score += 120;
-    if (userQuery.includes("dining") && p.room === "dining") score += 120;
-    if (userQuery.includes("bedroom") && p.room === "bedroom") score += 120;
-
-    // General furniture match boost
-    if (["sofa","armchair","coffee table","sideboard","console table","storage cabinet","tv unit"]
-          .includes(cat)) {
-        score += 80;
-    }
-}
-
-
-
-// 2️⃣ Colour matching (much stronger + oak/white support)
-const colourMap = {
-  "oak": ["oak", "light oak", "oak veneer", "natural oak"],
-  "white": ["white", "soft white", "painted white"],
-  "grey": ["grey", "gray", "light grey", "dark grey"],
-  "charcoal": ["charcoal", "dark grey"],
-  "black": ["black", "ebony"],
-  "green": ["green", "sage", "olive"],
-  "blue": ["blue", "navy", "teal"],
+  // Colour families with synonyms
+const colourFamilies = {
+  grey: ["grey", "gray", "charcoal", "slate", "stone", "graphite"],
+  white: ["white", "ivory", "cream", "off white"],
+  black: ["black", "ebony", "onyx"],
+  brown: ["brown", "walnut", "oak", "chestnut"],
+  wood: ["oak", "walnut", "pine", "beech", "natural", "wood"],
+  green: ["green", "sage", "olive", "forest"],
+  blue: ["blue", "navy", "teal"],
+  beige: ["beige", "tan", "sand"],
+  gold: ["gold", "brass", "champagne"],
+  silver: ["silver", "chrome", "metal"],
 };
 
-// For each known colour family
-for (const [key, aliases] of Object.entries(colourMap)) {
-  if (userQuery.includes(key)) {
-    if (aliases.some(a => col.includes(a))) {
-      score += 240;   // strong match to force top ranking
+  // 1️⃣ Budget filter: if it's over budget, we don't want it
+  if (maxBudget && price > maxBudget) {
+    return -99999;
+  }
+
+  // 2️⃣ Category relevance (strong)
+  if (requestedCats.includes(cat)) {
+    score += 600;
+  } else {
+    score -= 300;
+  }
+
+  // 3️⃣ Room relevance
+  if (aiUserQuery.includes("living") && room === "living") score += 300;
+  if (aiUserQuery.includes("bedroom") && room === "bedroom") score += 300;
+  if (aiUserQuery.includes("dining") && room === "dining") score += 300;
+
+ // 4️⃣ Improved colour matching
+for (const [family, synonyms] of Object.entries(colourFamilies)) {
+  if (aiUserQuery.includes(family)) {
+    // If product colour matches any synonym in the family
+    if (synonyms.some(s => col.includes(s))) {
+      score += 450; // very strong match
+    }
+  }
+}
+// 5️⃣ Bonus: style keyword matching
+const styleFamilies = {
+  modern: ["modern", "contemporary", "sleek"],
+  scandi: ["scandi", "scandinavian", "nordic"],
+  rustic: ["rustic", "farmhouse", "country"],
+  minimalist: ["minimalist", "minimal", "clean"],
+  traditional: ["traditional", "classic"],
+  industrial: ["industrial", "metal", "factory"],
+};
+
+for (const [family, synonyms] of Object.entries(styleFamilies)) {
+  if (aiUserQuery.includes(family)) {
+    if (synonyms.some(s => style.includes(s))) {
+      score += 250;
     }
   }
 }
 
 
-  // 3️⃣ Title keyword (optional)
-if (requestedCat && title.includes(requestedCat.replace(" ", ""))) score += 50;
+  // 5️⃣ Style match
+  if (style && aiUserQuery.includes(style)) {
+    score += 200;
+  }
 
+  // 6️⃣ Prefer cheaper items when there's a budget
+  if (maxBudget) {
+    score += (maxBudget - price) / 10;
+  }
 
   return score;
-};
+}
 
-      // ─────────────────────────────────────────────────────────────────────────────────────
-  // FINAL MATCHES
-  let matches = allProducts
-    .filter(priceOk)
-    .map(p => ({ p, score: scoreProduct(p) }))
-    .filter(x => x.score > 30)           // kill junk
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 6)
-    .map(x => x.p);
+// ------------------------------------------------------
+// STEP 5.2 — NEW MATCH SCORING + SELECTION
+// ------------------------------------------------------
 
-  // Fallback: if nothing scored high enough, just give user something reasonable
-  if (matches.length === 0) {
-    // very loose fallback – just match category loosely
-    matches = allProducts
-      .filter(priceOk)
-      .filter(p => {
-        const cat = (p.category || "").toLowerCase();
-        return userQuery.includes("sofa") && cat === "sofa" ||
-               userQuery.includes("sideboard") && cat === "sideboard" ||
-               userQuery.includes("tv") && cat === "tv unit";
-      })
-      .slice(0, 6);
-  }
-// Add final matches to the roomset
+// Extract budget from user input
+const aiBudgetMatch = input.match(/(?:under|below|max|budget)\s*£?(\d+)/i);
+const aiMaxBudget = aiBudgetMatch ? parseFloat(aiBudgetMatch[1]) : null;
+
+// Score all products using the new scoring engine
+let scored = allProducts.map(p => ({
+  p,
+  score: scoreProduct(p, requestedCats, aiUserQuery, aiMaxBudget)
+}));
+
+// Sort and keep high-score products
+let matches = scored
+  .filter(x => x.score > 0)     // remove irrelevant
+  .sort((a, b) => b.score - a.score)
+  .slice(0, 20)                 // take top 20 first
+  .map(x => x.p);
+
+// ------------------------------------------------------
+// STEP 5.3 — CATEGORY DIVERSITY FILTER (no duplicates)
+// ------------------------------------------------------
+const seen = new Set();
+matches = matches.filter(p => {
+  const cat = (p.category || "").toLowerCase();
+  if (seen.has(cat)) return false;
+  seen.add(cat);
+  return true;
+});
+
+// ------------------------------------------------------
+// STEP 5.4 — MINIMUM FALLBACK (ensure at least 4 matches)
+// ------------------------------------------------------
+if (matches.length < 4) {
+  matches = allProducts
+    .filter(p =>
+      requestedCats.includes((p.category || "").toLowerCase())
+    )
+    .slice(0, 6);
+}
+// ------------------------------------------------------
+// STEP 6.3 — Prevent duplicate items in final matches
+// ------------------------------------------------------
+const uniqueKeys = new Set();
+matches = matches.filter(p => {
+  const key = productKey(p);
+  if (!key || uniqueKeys.has(key)) return false;
+  uniqueKeys.add(key);
+  return true;
+});
+
+// ------------------------------------------------------
+// ADD FINAL MATCHES TO ROOMSET (your original code)
+// ------------------------------------------------------
 matches.forEach(p => addToRoomset(p));
 saveRoomset();
 renderRoomset();
 renderRoomsetCanvas();
+
 
 alert(`✨ AI added ${matches.length} items to your roomset!`);
 statusEl.textContent = "Done! You can tweak your description and try again.";
