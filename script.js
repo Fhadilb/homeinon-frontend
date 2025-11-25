@@ -1110,9 +1110,11 @@ function setupAISuggestions() {
 
 suggestBtn.addEventListener("click", async () => {
 
-    console.log("🔥 AI BUTTON CLICKED");  // <– ADD THIS
+    console.log("HANDLER INSTANCE:", Date.now());  // ← ADD THIS HERE
+    console.log("🔥 AI BUTTON CLICKED");
 
     const input = promptEl.value.trim();
+
 
     if (!input) {
       alert("Please describe your room first 🙂");
