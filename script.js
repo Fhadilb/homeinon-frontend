@@ -1004,12 +1004,29 @@ function setupAISuggestions() {
     try {
       const response = await ai.chat.completions.create({
         messages: [
-          {
-            role: "system",
-            content: `You are a furniture recommendation engine. Pick 4–8 relevant furniture categories. Return ONLY JSON like: {
-  "categories": ["sofa", "coffee table", "sideboard"]
-}`
-          },
+{
+  role: "system",
+  content: `
+You are a furniture recommendation engine.
+
+RULES:
+- You MUST extract style, colour, material and room-type keywords from the user's query.
+- You MUST only output product categories that exist in the dataset (examples: bed, bedside table, drawers, wardrobe, bench, sofa, armchair, coffee table, sideboard, etc).
+- NEVER invent new categories.
+- NEVER include style or colour inside a category name.
+- If the user mentions a colour or material (e.g., "oak", "walnut", "grey", "natural wood"):
+     → Include categories that typically come in that material.
+- If the user mentions a room type (bedroom, dining, living, office):
+     → Only choose categories from that room.
+
+RETURN ONLY PURE JSON, EXACTLY LIKE THIS:
+
+{
+  "categories": ["bed", "bedside table", "wardrobe", "drawers"]
+}
+`
+}
+,
           {
             role: "user",
             content: input
@@ -1126,6 +1143,37 @@ function setupAISuggestions() {
       const room = (p.room || "").toLowerCase();
       const title = (p.title || "").toLowerCase();
       const price = parseFloat(p.price || 0);
+
+  // MATERIAL MATCH BOOST — improved for oak variations
+  const material = (p.material || "").toLowerCase();
+
+  const oakKeywords = [
+    "oak",
+    "oak veneer",
+    "light oak",
+    "natural oak",
+    "oak effect",
+    "solid oak"
+  ];
+
+  if (aiUserQuery.includes("oak")) {
+    if (oakKeywords.some(k => material.includes(k))) {
+      score += 1000; // stronger boost
+    }
+  }
+
+  if (aiUserQuery.includes("natural")) {
+    if (material.includes("natural") || material.includes("oak")) {
+      score += 700;
+    }
+  }
+
+  if (aiUserQuery.includes("wood")) {
+    if (material.includes("wood") || oakKeywords.some(k => material.includes(k))) {
+      score += 500;
+    }
+  }
+
 
       const colourFamilies = {
         grey: ["grey", "gray", "charcoal", "slate", "stone", "graphite"],
