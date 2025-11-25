@@ -1327,10 +1327,20 @@ const colourFamilies = {
   silver: ["silver", "chrome", "metal"],
 };
 
-  // 1️⃣ Budget filter: if it's over budget, we don't want it
-  if (maxBudget && price > maxBudget) {
+// FLEXIBLE BUDGET SYSTEM
+if (maxBudget) {
+  if (price <= maxBudget) {
+    // Strong reward for being within budget
+    score += 300 + (maxBudget - price) * 0.4;  // cheaper = better
+  } else if (price <= maxBudget * 1.10) {
+    // Within 10% above budget allowed but penalised
+    score -= (price - maxBudget) * 1.5;
+  } else {
+    // More than 10% over budget = reject
     return -99999;
   }
+}
+
 
   // 2️⃣ Category relevance (strong)
   if (requestedCats.includes(cat)) {
@@ -1339,17 +1349,19 @@ const colourFamilies = {
     score -= 300;
   }
 
-  // 3️⃣ Room relevance
-  if (aiUserQuery.includes("living") && room === "living") score += 300;
-  if (aiUserQuery.includes("bedroom") && room === "bedroom") score += 300;
-  if (aiUserQuery.includes("dining") && room === "dining") score += 300;
+// ROOM RELEVANCE BOOST
+if (aiUserQuery.includes("living") && room === "living") score += 500;
+if (aiUserQuery.includes("bedroom") && room === "bedroom") score += 500;
+if (aiUserQuery.includes("dining") && room === "dining") score += 500;
+if (aiUserQuery.includes("office") && room === "office") score += 500;
+
 
  // 4️⃣ Improved colour matching
 for (const [family, synonyms] of Object.entries(colourFamilies)) {
   if (aiUserQuery.includes(family)) {
     // If product colour matches any synonym in the family
     if (synonyms.some(s => col.includes(s))) {
-      score += 450; // very strong match
+  score += 600; // colour match is king
     }
   }
 }
@@ -1365,8 +1377,16 @@ const styleFamilies = {
 
 for (const [family, synonyms] of Object.entries(styleFamilies)) {
   if (aiUserQuery.includes(family)) {
-    if (synonyms.some(s => style.includes(s))) {
-      score += 250;
+if (synonyms.some(s => style.includes(s))) {
+  score += 450; // style should strongly matter
+}
+  }
+}
+// PENALISE CLEARLY WRONG COLOURS
+for (const [family, synonyms] of Object.entries(colourFamilies)) {
+  if (aiUserQuery.includes(family)) {
+    if (!synonyms.some(s => col.includes(s))) {
+      score -= 150;   // light penalty
     }
   }
 }
