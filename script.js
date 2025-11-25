@@ -1047,13 +1047,21 @@ RETURN ONLY PURE JSON, EXACTLY LIKE THIS:
       safeJson = jsonMatch ? jsonMatch[0] : "{}";
       outputEl.textContent = safeJson;
 
-      try {
-        const parsed = JSON.parse(safeJson);
-        requestedCats = parsed.categories || [];
-      } catch (err) {
-        console.error("Failed to parse AI JSON:", err);
-        requestedCats = [];
-      }
+try {
+  const parsed = JSON.parse(safeJson);
+
+  // 🔥 Normalize AI category responses
+  requestedCats = (parsed.categories || []).map(c =>
+    normalizeCategory(c.toLowerCase().trim())
+  );
+
+  console.log("NORMALIZED CATEGORIES:", requestedCats);
+
+} catch (err) {
+  console.error("Failed to parse AI JSON:", err);
+  requestedCats = [];
+}
+
     } catch (err) {
       console.error("❌ AI Suggestion Error:", err);
       outputEl.textContent = "❌ AI failed to generate suggestions.";
@@ -1198,11 +1206,20 @@ RETURN ONLY PURE JSON, EXACTLY LIKE THIS:
         }
       }
 
-      if (requestedCats.includes(cat)) {
-        score += 600;
-      } else {
-        score -= 300;
-      }
+  let inCats = requestedCats.includes(cat);
+
+if (inCats) {
+  score += 600;
+} else {
+  // softer penalty (not -300)
+  score -= 80;
+
+  // oak override → allow ANY oak item regardless of category
+  if (aiUserQuery.includes("oak") && material.includes("oak")) {
+    score += 500;
+  }
+}
+
 
       if (aiUserQuery.includes("living") && room === "living") score += 500;
       if (aiUserQuery.includes("bedroom") && room === "bedroom") score += 500;
