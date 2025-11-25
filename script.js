@@ -1119,36 +1119,43 @@ suggestBtn.addEventListener("click", async () => {
       return;
     }
 
-    // First-time load
-    if (!aiReady && !aiLoading) {
-      aiLoading = true;
-      statusEl.textContent = "Loading local AI model…";
+// First-time load
+if (!aiReady && !aiLoading) {
+    aiLoading = true;
+    statusEl.textContent = "Loading local AI model…";
 
-      try {
+    try {
+        console.log("🔥 Starting WebLLM load…", WEBLLM_MODEL_URL);
+
         ai = await window.webllm.CreateMLCEngine(WEBLLM_MODEL_URL, {
-          initProgressCallback: (p) => {
-            statusEl.textContent =
-              "Loading AI model… " + Math.round(p.progress * 100) + "%";
-          }
+            initProgressCallback: (p) => {
+                console.log("📦 AI Load Progress:", p);
+                statusEl.textContent =
+                  "Loading AI model… " + Math.round(p.progress * 100) + "%";
+            }
         });
+
+        console.log("✅ AI Loaded OK:", ai);
 
         aiReady = true;
         statusEl.textContent =
           "AI ready! 🎉 Type a room description and press 'Suggest items'.";
+    } catch (err) {
+        console.error("❌ AI Load Error:", err);
+        console.log("❌ ERROR DETAILS:", JSON.stringify(err, null, 2));
 
-      } catch (err) {
-        console.error("AI Load Error:", err);
-        statusEl.textContent = "❌ AI failed to load: " + err.message;
+        statusEl.textContent = "❌ AI failed to load.";
         aiLoading = false;
         return;
-      }
     }
+} // ← ← ← THIS BRACE WAS MISSING
 
 // Generate suggestions
 statusEl.textContent = "Thinking… 🤔";
 outputEl.textContent = "";
 
 try {
+
 
   const response = await ai.chat.completions.create({
     messages: [
