@@ -1274,13 +1274,26 @@ if (requestedCat && !isVague) {
 
 
 
-  // 2️⃣ Colour matching
-  if (userQuery.includes("grey") || userQuery.includes("gray")) {
-    if (col.includes("grey") || col.includes("gray")) score += 200;
+// 2️⃣ Colour matching (much stronger + oak/white support)
+const colourMap = {
+  "oak": ["oak", "light oak", "oak veneer", "natural oak"],
+  "white": ["white", "soft white", "painted white"],
+  "grey": ["grey", "gray", "light grey", "dark grey"],
+  "charcoal": ["charcoal", "dark grey"],
+  "black": ["black", "ebony"],
+  "green": ["green", "sage", "olive"],
+  "blue": ["blue", "navy", "teal"],
+};
+
+// For each known colour family
+for (const [key, aliases] of Object.entries(colourMap)) {
+  if (userQuery.includes(key)) {
+    if (aliases.some(a => col.includes(a))) {
+      score += 240;   // strong match to force top ranking
+    }
   }
-  if (userQuery.includes("charcoal")) {
-    if (col.includes("charcoal") || col.includes("dark grey")) score += 250;
-  }
+}
+
 
   // 3️⃣ Title keyword (optional)
 if (requestedCat && title.includes(requestedCat.replace(" ", ""))) score += 50;
