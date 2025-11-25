@@ -1186,6 +1186,7 @@ Rules:
 const text =
   response?.choices?.[0]?.message?.content ||
   "No suggestion generated.";
+console.log("RAW AI JSON OUTPUT:", text);
 
 // ❗ Hide AI output (do not show bullet list to the user)
 outputEl.textContent = "";
