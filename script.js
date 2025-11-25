@@ -1,5 +1,4 @@
 const API_URL = "https://homeinon-backend.onrender.com/products";
-
 const STYLE_IMAGES = {
   "contemporary": "assets/style-contemporary.jpg",
   "scandinavian": "assets/style-scandinavian.jpg",
@@ -15,14 +14,12 @@ const STYLE_IMAGES = {
   "maximalism": "assets/style-maximalism.jpg",
   "regency": "assets/style-regency.jpg"
 };
-
 const ROOM_IMAGES = {
   "bedroom": "assets/room-bedroom.jpg",
   "dining": "assets/room-dining.jpg",
   "living": "assets/room-living.jpg",
   "office": "assets/room-office.jpg"
 };
-
 const colourMap = {
   white:"#ffffff", black:"#000000", grey:"#9e9e9e", gray:"#9e9e9e",
   oak:"#c49a6c", walnut:"#7a5734", pine:"#d5b887", beige:"#d9c7a2",
@@ -34,10 +31,9 @@ const colourMap = {
   lilac:"#c8a2c8", sage:"#a9bfa5", mustard:"#e1ad01", terracotta:"#e2725b",
   pewter:"#8e9292"
 };
-
 const colourHex = n => colourMap[String(n||"").toLowerCase()] || "#ccc";
+
 function getImage(p) {
-  // Accept ANY possible backend field name
   const candidates = [
     p.image_url,
     p.imageUrl,
@@ -52,13 +48,11 @@ function getImage(p) {
     p.photo,
     p.images && p.images[0]
   ];
-
   for (let c of candidates) {
     if (c && typeof c === "string" && c.trim() !== "") {
       return c.trim();
     }
   }
-
   return "https://placehold.co/340x240?text=No+Image";
 }
 
@@ -78,7 +72,6 @@ function formatDims(p) {
   const rawW = p.width_cm ?? p.width ?? "";
   const rawD = p.depth_cm ?? p.depth ?? "";
   const rawH = p.height_cm ?? p.height ?? "";
-
   const normalize = (val) => {
     const s = (val || "").toString().trim();
     if (!s) return "";
@@ -86,16 +79,13 @@ function formatDims(p) {
     if (!num) return "";
     return `${num}cm`;
   };
-
   const w = normalize(rawW);
   const d = normalize(rawD);
   const h = normalize(rawH);
-
   const parts = [];
   if (w) parts.push(`W${w}`);
   if (d) parts.push(`D${d}`);
   if (h) parts.push(`H${h}`);
-
   let out = parts.join(" x ");
   out = out.replace(/cm\s*cm/gi, "cm");
   return out;
@@ -104,8 +94,8 @@ function formatDims(p) {
 function normalizeCutoutPath(p) {
   if (!p) return "";
   const s = String(p).trim();
-  const m = s.match(/([^\\\/]+\.png)$/i);
-  const file = m ? m[1] : s.replace(/^.*[\\\/]/, "");
+  const m = s.match(/([^\/]+\.png)$/i);
+  const file = m ? m[1] : s.replace(/^.*[\/]/, "");
   return file ? `assets/Cutouts/${file}` : "";
 }
 
@@ -134,7 +124,6 @@ function addToRoomset(p){
   const key = productKey(p);
   if(!key) return;
   if(inRoomset(key)) return;
-
   const item = {
     key,
     title: p.title || "",
@@ -153,7 +142,6 @@ function addToRoomset(p){
     x: 50,
     y: 50
   };
-
   roomset.push(item);
   saveRoomset();
 }
@@ -190,28 +178,20 @@ function filterProducts(state, ignoreField){
     const t = (p.title||"").toLowerCase();
     const d = (p.description||"").toLowerCase();
     const price = parseFloat(p.price)||0;
-
-const checks = {
-  q: (!state.q) || t.includes(state.q) || d.includes(state.q),
-
-  category: (!state.category) ||
-    (p.category && p.category.toLowerCase() === state.category.toLowerCase()),
-
-  material: (!state.material) ||
-    (p.material && p.material.toLowerCase() === state.material.toLowerCase()),
-
-  colour: (!state.colour) ||
-    (p.colour && p.colour.toLowerCase().includes(state.colour.toLowerCase())),
-
-  style: (!state.style) ||
-    (p.style && p.style.toLowerCase() === state.style.toLowerCase()),
-
-  room: (!state.room) ||
-    (p.room && p.room.toLowerCase() === state.room.toLowerCase()),
-
-  max: price <= state.max
-};
-
+    const checks = {
+      q: (!state.q) || t.includes(state.q) || d.includes(state.q),
+      category: (!state.category) ||
+        (p.category && p.category.toLowerCase() === state.category.toLowerCase()),
+      material: (!state.material) ||
+        (p.material && p.material.toLowerCase() === state.material.toLowerCase()),
+      colour: (!state.colour) ||
+        (p.colour && p.colour.toLowerCase().includes(state.colour.toLowerCase())),
+      style: (!state.style) ||
+        (p.style && p.style.toLowerCase() === state.style.toLowerCase()),
+      room: (!state.room) ||
+        (p.room && p.room.toLowerCase() === state.room.toLowerCase()),
+      max: price <= state.max
+    };
     if(ignoreField){ checks[ignoreField] = true; }
     if(showFavourites){
       checks.fav = favourites.includes(p.title || p.sku || "");
@@ -278,7 +258,6 @@ function buildColourDropdown(colours, keepSelection=true){
   const select = document.getElementById("colourSelect");
   const list = document.getElementById("colourList");
   const prev = keepSelection ? selectedColour : "";
-
   list.innerHTML = "";
   const allItem = document.createElement("div");
   allItem.className = "colour-item";
@@ -287,7 +266,6 @@ function buildColourDropdown(colours, keepSelection=true){
     selectedColour = ""; select.textContent = "All"; list.classList.remove("active"); applyFilters();
   });
   list.appendChild(allItem);
-
   colours.forEach(c=>{
     const item = document.createElement("div");
     item.className = "colour-item";
@@ -301,7 +279,6 @@ function buildColourDropdown(colours, keepSelection=true){
     });
     list.appendChild(item);
   });
-
   if(prev){
     selectedColour = colours.includes(prev) ? prev : "";
     if(selectedColour){
@@ -312,7 +289,6 @@ function buildColourDropdown(colours, keepSelection=true){
   }else{
     select.textContent = "All";
   }
-
   select.onclick = ()=> list.classList.toggle("active");
   document.addEventListener("click", e=>{
     if(!e.target.closest(".colour-dropdown")) list.classList.remove("active");
@@ -324,7 +300,6 @@ function renderProducts(products){
   const count = document.getElementById("product-count");
   list.innerHTML = "";
   count.textContent = `${products.length} product${products.length!==1?"s":""} found`;
-
   if(products.length === 0){
     list.innerHTML = `
       <div style="grid-column: 1/-1; text-align:center; padding:80px 20px">
@@ -339,24 +314,21 @@ function renderProducts(products){
     `;
     return;
   }
-
   products.forEach((p, idx)=>{
     const price = parseFloat(p.price) || 0;
     const liked = favourites.includes(p.title || p.sku || "");
     const div = document.createElement("div");
     div.className = "product";
     div.setAttribute("data-index", idx);
-
     div.innerHTML = `
       <div class="style-label">${p.style || ""}</div>
-    <img src="${getImage(p)}" alt="${p.title}" />
+      <img src="${getImage(p)}" alt="${p.title}" />
       <div class="product-info">
         <h3>${p.title}</h3>
         <p class="price">£${price.toFixed(2)}</p>
       </div>
       <button class="heart-btn ${liked ? "liked":""}" title="Favourite" data-key="${p.title || p.sku || ""}">❤</button>
     `;
-
     div.addEventListener("click", (e)=>{
       if(!e.target.classList.contains("heart-btn")) openProductModal(idx);
     });
@@ -364,7 +336,6 @@ function renderProducts(products){
       e.stopPropagation();
       toggleFavourite(e.currentTarget.dataset.key, e.currentTarget);
     });
-
     list.appendChild(div);
   });
 }
@@ -376,34 +347,27 @@ function applyFilters(){
 
 function updateFilterOptions() {
   const state = getState();
-
   const catList = uniqueValues(filterProducts(state, 'category'), 'category').sort();
   const catSel = document.getElementById("category");
   const currentCat = state.category;
   catSel.innerHTML = '<option value="">All</option>' + catList.map(c=>`<option value="${c}">${c}</option>`).join("");
   if (currentCat && catList.includes(currentCat)) catSel.value = currentCat; else catSel.value = "";
-
   const matList = uniqueValues(filterProducts(state, 'material'), 'material').sort();
   const matSel = document.getElementById("material");
   const currentMat = state.material;
   matSel.innerHTML = '<option value="">All</option>' + matList.map(m=>`<option value="${m}">${m}</option>`).join("");
   if (currentMat && matList.includes(currentMat)) matSel.value = currentMat; else matSel.value = "";
-
   const colourList = uniqueValues(filterProducts(state, 'colour'), 'colour').sort();
   buildColourDropdown(colourList, true);
-
   const visibleRooms  = uniqueValues(filterProducts(state, 'room'), 'room').sort();
   const visibleStyles = uniqueValues(filterProducts(state, 'style'), 'style').sort();
-
   buildRoomCards(visibleRooms);
   buildStyleCards(visibleStyles);
-
   if (selectedRoom) {
     document.querySelectorAll("#roomSelector .style-card").forEach(c => {
       if (c.textContent.trim() === selectedRoom) c.classList.add("active");
     });
   }
-
   if (selectedStyle) {
     document.querySelectorAll("#styleSelector .style-card").forEach(c => {
       if (c.textContent.trim() === selectedStyle) c.classList.add("active");
@@ -435,30 +399,25 @@ const modalHeart   = document.getElementById("modalHeart");
 const modalRoom    = document.getElementById("modalRoom");
 const modalDimsText = document.getElementById("modalDimsText");
 const modalRoomsetBtn = document.getElementById("modalRoomsetBtn");
-
 let modalKey = "";
 
 function openProductModal(index){
   const filtered = filterProducts(getState());
   const p = filtered[index];
   if(!p) return;
-
   modalImage.src = getImage(p);
-modalImage.onerror = () => {
-  modalImage.src = "https://placehold.co/640x480?text=No+Image";
-};
+  modalImage.onerror = () => {
+    modalImage.src = "https://placehold.co/640x480?text=No+Image";
+  };
   modalTitle.textContent = p.title || "Untitled";
   modalPrice.textContent = `£${(parseFloat(p.price)||0).toFixed(2)}`;
-
   modalRoom.textContent = p.room || "—";
   modalDimsText.textContent = formatDims(p) || "—";
-
   modalCat.textContent = p.category || "—";
   modalMat.textContent = p.material || "—";
   modalCol.textContent = p.colour || "—";
   modalStyle.textContent = p.style || deriveStyle(p.title || p.description);
   modalDesc.textContent = p.description || "—";
-
   if (inRoomset(productKey(p))) {
     modalRoomsetBtn.textContent = "🗑️ Remove from Roomset";
     modalRoomsetBtn.classList.add("active");
@@ -466,14 +425,10 @@ modalImage.onerror = () => {
     modalRoomsetBtn.textContent = "🪄 Add to Roomset";
     modalRoomsetBtn.classList.remove("active");
   }
-
   modalKey = productKey(p);
-
   if(p.url){ modalLink.style.display="inline-block"; modalLink.href=p.url; }
   else { modalLink.style.display="none"; modalLink.removeAttribute("href"); }
-
   if(favourites.includes(modalKey)) modalHeart.classList.add("liked"); else modalHeart.classList.remove("liked");
-
   modalOverlay.style.display = "flex";
   modalOverlay.setAttribute("aria-hidden","false");
   document.body.style.overflow = "hidden";
@@ -488,7 +443,6 @@ function closeProductModal(){
 modalClose.addEventListener("click", closeProductModal);
 modalOverlay.addEventListener("click", (e)=>{ if(e.target === modalOverlay) closeProductModal(); });
 document.addEventListener("keydown", (e)=>{ if(e.key === "Escape") closeProductModal(); });
-
 modalHeart.addEventListener("click", ()=>{
   toggleFavourite(modalKey, modalHeart);
   applyFilters();
@@ -496,13 +450,9 @@ modalHeart.addEventListener("click", ()=>{
 
 modalRoomsetBtn.addEventListener("click", () => {
   const filtered = filterProducts(getState());
-
-  // Find product by its unique key instead of title text
   const p = filtered.find(prod => productKey(prod) === modalKey);
   if (!p) return;
-
   toggleRoomset(p);
-
   if (inRoomset(productKey(p))) {
     modalRoomsetBtn.textContent = "🗑️ Remove from Roomset";
     modalRoomsetBtn.classList.add("active");
@@ -517,14 +467,9 @@ async function loadProducts() {
   const res = await fetch(API_URL);
   const data = await res.json();
   const raw = Array.isArray(data) ? data : (data.products || []);
-
   allProducts = raw.map(p => {
-    // Normalise category first
     const cleanCategory = normalizeCategory(p.category || "");
-
-    // Derive room from cleaned category
     const cleanRoom = deriveRoom(cleanCategory);
-
     return {
       ...p,
       category: cleanCategory,
@@ -537,44 +482,31 @@ async function loadProducts() {
       price: p.price || 0
     };
   });
-
-  // Build unique lists AFTER normalisation
   const styles = uniqueValues(allProducts, "style").sort();
   const cats   = uniqueValues(allProducts, "category").sort();
   const mats   = uniqueValues(allProducts, "material").sort();
   const cols   = uniqueValues(allProducts, "colour").sort();
   const rooms  = uniqueValues(allProducts, "room").sort();
-
   buildRoomCards(rooms);
   buildStyleCards(styles);
-
   const catSel = document.getElementById("category");
   const matSel = document.getElementById("material");
-
   catSel.innerHTML =
     '<option value="">All</option>' +
     cats.map(c => `<option value="${c}">${c}</option>`).join("");
-
   matSel.innerHTML =
     '<option value="">All</option>' +
     mats.map(m => `<option value="${m}">${m}</option>`).join("");
-
   buildColourDropdown(cols, true);
-
-  // Price slider: auto-set min/max
   const maxP = Math.ceil(
     Math.max(0, ...allProducts.map(p => parseFloat(p.price) || 0)) / 50
   ) * 50 || 2000;
-
   const pr = document.getElementById("priceRange");
   pr.max = maxP;
   pr.value = maxP;
-
   document.getElementById("priceValue").textContent = `£${maxP}`;
-
   renderProducts(allProducts);
 }
-
 
 // --------- TOP BAR FILTER CONTROLS ----------
 document.getElementById("toggleFavourites").addEventListener("click", ()=>{
@@ -592,11 +524,9 @@ document.getElementById("clearFilters").addEventListener("click", ()=>{
   selectedStyle = "";
   selectedRoom = "";
   document.querySelectorAll(".style-card").forEach(c=>c.classList.remove("active"));
-
   const max = document.getElementById("priceRange").max || 2000;
   document.getElementById("priceRange").value = max;
   document.getElementById("priceValue").textContent = `£${max}`;
-
   updateFilterOptions();
   applyFilters();
 });
@@ -615,21 +545,16 @@ document.getElementById("priceRange").addEventListener("input", e=>{
   document.getElementById("priceValue").textContent = `£${e.target.value}`;
   updateFilterOptions(); applyFilters();
 });
-// --------- ROOMSET BACKGROUND SELECTOR ----------
 
-// Paths to your preset canvas backgrounds
+// --------- ROOMSET BACKGROUND SELECTOR ----------
 const ROOMSET_BACKGROUNDS = Array.from({ length: 13 }, (_, i) =>
   `assets/roomset-canvas-image-${i + 1}.jpg`
 );
-
 const roomsetBackgrounds = document.getElementById("roomsetBackgrounds");
 
-// Render thumbnails into selector
 function renderRoomsetBackgrounds() {
   if (!roomsetBackgrounds) return;
-
   roomsetBackgrounds.innerHTML = "";
-
   ROOMSET_BACKGROUNDS.forEach((src, idx) => {
     const div = document.createElement("div");
     div.className = "roomset-bg-thumb";
@@ -645,13 +570,11 @@ function renderRoomsetBackgrounds() {
     div.style.marginBottom = "8px";
 
     div.addEventListener("click", () => {
-      // clear previous backgrounds
       roomsetCanvas.style.backgroundImage = `url('${src}')`;
       roomsetCanvas.style.backgroundSize = "cover";
       roomsetCanvas.style.backgroundPosition = "center";
       roomsetCanvas.style.backgroundRepeat = "no-repeat";
 
-      // highlight selected
       document.querySelectorAll(".roomset-bg-thumb")
         .forEach(el => el.style.border = "3px solid transparent");
 
@@ -662,19 +585,19 @@ function renderRoomsetBackgrounds() {
   });
 }
 
-// run on load
-renderRoomsetBackgrounds();
 
-// --------- ROOMSET MODAL & CANVAS / LIST ----------
+// ⬇️ LATER — after roomsetCanvas exists:
 const roomsetModal = document.getElementById("roomsetModal");
 const roomsetList = document.getElementById("roomsetList");
 const closeRoomset = document.getElementById("roomsetClose");
 const toggleRoomsetBtn = document.getElementById("toggleRoomset");
-const roomsetCanvas = document.getElementById("roomsetCanvas");
+const roomsetCanvas = document.getElementById("roomsetCanvas"); // now safe!
 const viewListBtn = document.getElementById("viewListBtn");
 const viewCanvasBtn = document.getElementById("viewCanvasBtn");
-
 let canvasMode = false;
+
+renderRoomsetBackgrounds(); // safe call 👍
+
 
 function renderRoomset(){
   if (roomset.length === 0) {
@@ -683,12 +606,10 @@ function renderRoomset(){
     `;
     return;
   }
-
   roomsetList.innerHTML = roomset.map(it => {
     const imgSrc = it.cutout_local_path?.trim()
       ? it.cutout_local_path
       : getImage(it);
-
     return `
       <div class="roomset-item-list">
         <img src="${imgSrc}" alt="${it.title}">
@@ -702,13 +623,9 @@ function renderRoomset(){
   }).join("");
 }
 
-
-// floorplan helper - background SVG behind items
 function createFloorplanSvg(width, depth) {
-  // remove old floorplan if exists
   const old = roomsetCanvas.querySelector("svg.floorplan-bg");
   if (old) old.remove();
-
   const svgNS = "http://www.w3.org/2000/svg";
   const svg = document.createElementNS(svgNS, "svg");
   svg.classList.add("floorplan-bg");
@@ -719,10 +636,8 @@ function createFloorplanSvg(width, depth) {
   svg.style.inset = "0";
   svg.style.zIndex = "0";
   svg.style.pointerEvents = "none";
-
   const roomWidthPx = width * 60;
   const roomDepthPx = depth * 60;
-
   const floorRect = document.createElementNS(svgNS, "rect");
   floorRect.setAttribute("x", "50");
   floorRect.setAttribute("y", "200");
@@ -732,7 +647,6 @@ function createFloorplanSvg(width, depth) {
   floorRect.setAttribute("stroke", "#999");
   floorRect.setAttribute("stroke-width", "3");
   svg.appendChild(floorRect);
-
   const widthText = document.createElementNS(svgNS, "text");
   widthText.setAttribute("x", 50 + roomWidthPx / 2);
   widthText.setAttribute("y", 190);
@@ -741,7 +655,6 @@ function createFloorplanSvg(width, depth) {
   widthText.setAttribute("fill", "#555");
   widthText.textContent = `Width: ${width}m`;
   svg.appendChild(widthText);
-
   const depthText = document.createElementNS(svgNS, "text");
   const depthY = 200 + roomDepthPx / 2;
   depthText.setAttribute("x", 30);
@@ -752,15 +665,12 @@ function createFloorplanSvg(width, depth) {
   depthText.setAttribute("transform", `rotate(-90, 30, ${depthY})`);
   depthText.textContent = `Depth: ${depth}m`;
   svg.appendChild(depthText);
-
   roomsetCanvas.appendChild(svg);
 }
 
 function renderRoomsetCanvas(){
-  // remove existing draggable items & empty message ONLY
   roomsetCanvas.querySelectorAll(".roomset-item").forEach(el => el.remove());
   roomsetCanvas.querySelectorAll(".roomset-empty-msg").forEach(el => el.remove());
-
   if (roomset.length === 0) {
     const empty = document.createElement("div");
     empty.className = "roomset-empty-msg";
@@ -775,40 +685,30 @@ function renderRoomsetCanvas(){
     roomsetCanvas.appendChild(empty);
     return;
   }
-
   const stageRect = roomsetCanvas.getBoundingClientRect();
-
   roomset.forEach((it, idx)=>{
     const item = document.createElement("div");
     item.className = "roomset-item";
-
     const x = it.x ?? 60 + (idx*60) % (stageRect.width - 150);
     const y = it.y ?? 60 + Math.floor(idx/4)*160;
     const w = it.w ?? 140;
     const h = it.h ?? 140;
     const rot = it.rot ?? 0;
-
     item.style.left = `${x}px`;
     item.style.top = `${y}px`;
     item.style.width = `${w}px`;
     item.style.height = `${h}px`;
     item.style.transform = `rotate(${rot}deg)`;
     item.style.zIndex = "1";
-
     const imgSrc = it.cutout_local_path?.trim()
-  ? it.cutout_local_path
-  : getImage(it);   // uses the universal image fixer
-
-item.innerHTML = `
-  <img src="${imgSrc}" alt="${it.title || ''}" title="${it.title || ''}">
-  <div class="handle resize-handle"></div>
-`;
-
-
+      ? it.cutout_local_path
+      : getImage(it);
+    item.innerHTML = `
+      <img src="${imgSrc}" alt="${it.title || ''}" title="${it.title || ''}">
+      <div class="handle resize-handle"></div>
+    `;
     roomsetCanvas.appendChild(item);
-
     let dragging = false, offsetX = 0, offsetY = 0;
-
     function startDrag(e) {
       if (e.target.classList.contains("handle")) return;
       dragging = true;
@@ -819,34 +719,26 @@ item.innerHTML = `
       item.style.zIndex = "20";
       e.preventDefault();
     }
-
     function moveDrag(e) {
       if (!dragging) return;
       const point = e.touches ? e.touches[0] : e;
       const rect = roomsetCanvas.getBoundingClientRect();
-
       const x = point.clientX - rect.left - offsetX;
       const y = point.clientY - rect.top - offsetY;
-
       const itemW = item.offsetWidth;
       const itemH = item.offsetHeight;
       const maxX = rect.width - itemW;
       const maxY = rect.height - itemH;
-
       let boundedX = Math.max(0, Math.min(maxX, x));
       let boundedY = Math.max(0, Math.min(maxY, y));
-
       const floorY = rect.height - itemH - 10;
       const snapRange = 25;
-
       if (Math.abs(boundedY - floorY) < snapRange) {
         boundedY = floorY;
       }
-
       item.style.left = boundedX + "px";
       item.style.top = boundedY + "px";
     }
-
     function endDrag() {
       if (dragging) {
         dragging = false;
@@ -858,17 +750,14 @@ item.innerHTML = `
         item.style.zIndex = "1";
       }
     }
-
     item.addEventListener("mousedown", startDrag);
     item.addEventListener("touchstart", startDrag, { passive: false });
     document.addEventListener("mousemove", moveDrag);
     document.addEventListener("touchmove", moveDrag, { passive: false });
     document.addEventListener("mouseup", endDrag);
     document.addEventListener("touchend", endDrag);
-
     const resizeHandle = item.querySelector(".resize-handle");
     let resizing = false, startW=0, startH=0, startX=0, startY=0;
-
     function startResize(e) {
       e.stopPropagation();
       e.preventDefault();
@@ -879,21 +768,17 @@ item.innerHTML = `
       startX = point.clientX;
       startY = point.clientY;
     }
-
     function moveResize(e) {
       if (!resizing) return;
       e.preventDefault();
       const point = e.touches ? e.touches[0] : e;
       const deltaX = point.clientX - startX;
       const deltaY = point.clientY - startY;
-
       const newW = Math.max(60, startW + deltaX);
       const newH = Math.max(60, startH + deltaY);
-
       item.style.width  = newW + "px";
       item.style.height = newH + "px";
     }
-
     function endResize() {
       if (resizing) {
         resizing = false;
@@ -902,7 +787,6 @@ item.innerHTML = `
         saveRoomset();
       }
     }
-
     resizeHandle.addEventListener("mousedown", startResize);
     resizeHandle.addEventListener("touchstart", startResize, { passive: false });
     document.addEventListener("mousemove", moveResize);
@@ -910,7 +794,6 @@ item.innerHTML = `
     document.addEventListener("mouseup", endResize);
     document.addEventListener("touchend", endResize);
   });
-
   const canvasRect = roomsetCanvas.getBoundingClientRect();
   const allItems = roomsetCanvas.querySelectorAll(".roomset-item");
   allItems.forEach(item => {
@@ -929,17 +812,16 @@ toggleRoomsetBtn.addEventListener("click", () => {
   roomsetModal.style.display = "flex";
   roomsetModal.setAttribute("aria-hidden","false");
   document.body.style.overflow = "hidden";
-
   setTimeout(() => {
-      if (canvasMode) {
-          roomsetList.style.display = "none";
-          roomsetCanvas.style.display = "block";
-          renderRoomsetCanvas();
-      } else {
-          roomsetList.style.display = "block";
-          roomsetCanvas.style.display = "none";
-          renderRoomset();
-      }
+    if (canvasMode) {
+      roomsetList.style.display = "none";
+      roomsetCanvas.style.display = "block";
+      renderRoomsetCanvas();
+    } else {
+      roomsetList.style.display = "block";
+      roomsetCanvas.style.display = "none";
+      renderRoomset();
+    }
   }, 20);
 });
 
@@ -971,10 +853,8 @@ let wasDesktop = window.innerWidth > 768;
 window.addEventListener("resize", () => {
   const canvas = roomsetCanvas;
   if (!canvas) return;
-
   const nowDesktop = window.innerWidth > 768;
   const items = canvas.querySelectorAll(".roomset-item");
-
   if (wasDesktop && !nowDesktop) {
     items.forEach((el, i) => {
       el.style.left = 20 + (i * 20) + "px";
@@ -982,15 +862,12 @@ window.addEventListener("resize", () => {
       el.style.transform = "rotate(0deg) scale(0.8)";
     });
   }
-
   if (!wasDesktop && nowDesktop) {
     items.forEach(el => {
       el.style.transform = `rotate(${el.dataset.angle || 0}deg) scale(1)`;
     });
   }
-
   wasDesktop = nowDesktop;
-
   const rect = canvas.getBoundingClientRect();
   items.forEach(el => {
     let left = parseFloat(el.style.left) || 0;
@@ -1018,49 +895,34 @@ const fpTile = document.getElementById("bgFloorplanOption");
 const fpPopup = document.getElementById("floorplanDimPopup");
 const createFloorplanBtn = document.getElementById("createFloorplan");
 const closeFloorplanBtn = document.getElementById("closeFloorplanDims");
-
 if (fpTile && fpPopup) {
   fpTile.addEventListener("click", () => {
     fpPopup.style.display = "flex";
   });
 }
-
 if (closeFloorplanBtn && fpPopup) {
   closeFloorplanBtn.addEventListener("click", () => {
     fpPopup.style.display = "none";
   });
 }
-
 if (createFloorplanBtn && fpPopup) {
   createFloorplanBtn.addEventListener("click", () => {
-    
     const width = parseFloat(document.getElementById("fpWidth").value);
     const depth = parseFloat(document.getElementById("fpDepth").value);
-    const height = parseFloat(document.getElementById("fpHeight").value); // future use
-
+    const height = parseFloat(document.getElementById("fpHeight").value);
     if (!width || !depth || !height) {
       alert("Please enter all dimensions.");
       return;
     }
-
-    // 1️⃣ Create the SVG room background
     createFloorplanSvg(width, depth);
-
-    // 2️⃣ Remove any image background so the floorplan is visible
     roomsetCanvas.style.backgroundImage = "none";
-roomsetCanvas.style.backgroundSize = "";
-roomsetCanvas.style.backgroundPosition = "";
-roomsetCanvas.style.backgroundRepeat = "";
-
-    // 3️⃣ Switch view to canvas mode
+    roomsetCanvas.style.backgroundSize = "";
+    roomsetCanvas.style.backgroundPosition = "";
+    roomsetCanvas.style.backgroundRepeat = "";
     canvasMode = true;
     roomsetList.style.display = "none";
     roomsetCanvas.style.display = "block";
-
-    // 4️⃣ Re-render items on top of new background
     renderRoomsetCanvas();
-
-    // 5️⃣ Close popup
     fpPopup.style.display = "none";
   });
 }
@@ -1068,34 +930,22 @@ roomsetCanvas.style.backgroundRepeat = "";
 /* -----------------------------------------------------------
    AI SUGGESTION ENGINE — WebLLM (LOCAL MODEL)
 ----------------------------------------------------------- */
-
 let ai = null;
 let aiReady = false;
 let aiLoading = false;
-
-// Correct WebLLM model ID
 const WEBLLM_MODEL_URL = "Phi-3-mini-4k-instruct-q4f16_1-MLC";
 
-
-
-
 function setupAISuggestions() {
-
-  if (window.__AI_ALREADY_SETUP__) {
+  if (window.AI_ALREADY_SETUP) {
     console.log("⛔ setupAISuggestions() already ran — skipping.");
     return;
   }
-  window.__AI_ALREADY_SETUP__ = true;
-
+  window.AI_ALREADY_SETUP = true;
   const statusEl   = document.getElementById("roomsetSuggestStatus");
   const promptEl   = document.getElementById("roomsetPrompt");
   const suggestBtn = document.getElementById("roomsetSuggestBtn");
   const outputEl   = document.getElementById("roomsetSuggestOutput");
-
-
   if (!statusEl || !promptEl || !suggestBtn || !outputEl) return;
-
-  // If WebLLM isn't loaded, fail safely
   if (typeof window.webllm === "undefined") {
     statusEl.textContent = "AI unavailable (WebLLM not loaded).";
     suggestBtn.addEventListener("click", () => {
@@ -1107,417 +957,305 @@ function setupAISuggestions() {
     });
     return;
   }
-
   statusEl.textContent =
     "AI is optional. Click 'Suggest items' to load it (first time may take a bit).";
-
-  // Allow Enter key to trigger suggestions
   promptEl.addEventListener("keyup", (e) => {
     if (e.key === "Enter") suggestBtn.click();
   });
 
-suggestBtn.addEventListener("click", async () => {
-
-    console.log("HANDLER INSTANCE:", Date.now());  // ← ADD THIS HERE
+  suggestBtn.addEventListener("click", async () => {
+    console.log("HANDLER INSTANCE:", Date.now());
     console.log("🔥 AI BUTTON CLICKED");
-
     const input = promptEl.value.trim();
-
-
     if (!input) {
       alert("Please describe your room first 🙂");
       return;
     }
 
-// First-time load
-if (!aiReady && !aiLoading) {
-    aiLoading = true;
-    statusEl.textContent = "Loading local AI model…";
-
-    try {
+    if (!aiReady && !aiLoading) {
+      aiLoading = true;
+      statusEl.textContent = "Loading local AI model…";
+      try {
         console.log("🔥 Starting WebLLM load…", WEBLLM_MODEL_URL);
-
         ai = await window.webllm.CreateMLCEngine(WEBLLM_MODEL_URL, {
-            initProgressCallback: (p) => {
-                console.log("📦 AI Load Progress:", p);
-                statusEl.textContent =
-                  "Loading AI model… " + Math.round(p.progress * 100) + "%";
-            }
+          initProgressCallback: (p) => {
+            console.log("📦 AI Load Progress:", p);
+            statusEl.textContent =
+              "Loading AI model… " + Math.round(p.progress * 100) + "%";
+          }
         });
-
         console.log("✅ AI Loaded OK:", ai);
-
         aiReady = true;
         statusEl.textContent =
           "AI ready! 🎉 Type a room description and press 'Suggest items'.";
-    } catch (err) {
+      } catch (err) {
         console.error("❌ AI Load Error:", err);
-        console.log("❌ ERROR DETAILS:", JSON.stringify(err, null, 2));
-
         statusEl.textContent = "❌ AI failed to load.";
         aiLoading = false;
         return;
-    }
-} // ← ← ← THIS BRACE WAS MISSING
-
-// Generate suggestions
-statusEl.textContent = "Thinking… 🤔";
-outputEl.textContent = "";
-
-try {
-
-
-  const response = await ai.chat.completions.create({
-    messages: [
-{
-  role: "system",
-  content: `
-You are a furniture recommendation engine.
-
-Your job:
-- Analyse the user's room description.
-- Choose a mix of furniture categories that logically fit the room.
-- Keep categories diverse (sofa + coffee table + sideboard + armchair, etc.)
-- Follow budget, colour palette and style if provided.
-
-Return ONLY valid JSON in this exact structure:
-
-{
-  "categories": ["sofa", "coffee table", "sideboard", "armchair"]
-}
-
-Rules:
-1. Choose 4–8 categories.
-2. Categories MUST exist in the product dataset (sofa, armchair, coffee table, tv unit, sideboard, cabinet, console table, bench, bookcase, rug, lamp, dining table, etc.).
-3. Only include categories relevant to the room type.
-4. If the query is vague, choose a typical bundle (e.g. for “living room” choose sofa, coffee table, armchair, tv unit, sideboard, rug).
-5. DO NOT include any natural language or bullet points — ONLY JSON.
-`
-}
-,
-      {
-        role: "user",
-        content: input
       }
-    ],
-    max_tokens: 200,
-    temperature: 0.4
+    }
+
+    statusEl.textContent = "Thinking… 🤔";
+    outputEl.textContent = "";
+    let safeJson = "{}";
+    let requestedCats = [];
+
+    try {
+      const response = await ai.chat.completions.create({
+        messages: [
+          {
+            role: "system",
+            content: `You are a furniture recommendation engine. Pick 4–8 relevant furniture categories. Return ONLY JSON like: {
+  "categories": ["sofa", "coffee table", "sideboard"]
+}`
+          },
+          {
+            role: "user",
+            content: input
+          }
+        ],
+        max_tokens: 200,
+        temperature: 0.4
+      });
+      console.log("AI RESPONSE RAW OBJECT:", response);
+      let text =
+        response?.choices?.[0]?.message?.content ||
+        "No suggestion generated.";
+      console.log("RAW AI OUTPUT:", text);
+      let cleaned = text
+        .replace(/```json|```/g, "")
+        .trim();
+      const jsonMatch = cleaned.match(/{[\s\S]*?}/);
+      safeJson = jsonMatch ? jsonMatch[0] : "{}";
+      outputEl.textContent = safeJson;
+
+      try {
+        const parsed = JSON.parse(safeJson);
+        requestedCats = parsed.categories || [];
+      } catch (err) {
+        console.error("Failed to parse AI JSON:", err);
+        requestedCats = [];
+      }
+    } catch (err) {
+      console.error("❌ AI Suggestion Error:", err);
+      outputEl.textContent = "❌ AI failed to generate suggestions.";
+    }
+
+    const aiUserQuery = input.toLowerCase();
+    const aiIsVague =
+      aiUserQuery.includes("decorate") ||
+      aiUserQuery.includes("decorating") ||
+      aiUserQuery.includes("design") ||
+      aiUserQuery.includes("styling") ||
+      aiUserQuery.includes("style") ||
+      aiUserQuery.includes("room") ||
+      aiUserQuery.includes("new place") ||
+      aiUserQuery.includes("new home") ||
+      aiUserQuery.includes("moved in") ||
+      aiUserQuery.includes("living room") ||
+      aiUserQuery.includes("lounge") ||
+      aiUserQuery.includes("family room");
+
+    if (!requestedCats || !Array.isArray(requestedCats)) {
+      requestedCats = [];
+    }
+    if (requestedCats.length === 0 && !aiIsVague) {
+      requestedCats = ["sofa", "coffee table", "armchair", "tv unit"];
+    }
+
+    const defaultLivingBundle = [
+      "sofa",
+      "coffee table",
+      "armchair",
+      "tv unit",
+      "sideboard",
+      "rug"
+    ];
+    const defaultBedroomBundle = [
+      "bed",
+      "bedside table",
+      "wardrobe",
+      "drawers",
+      "bench",
+      "rug"
+    ];
+    const defaultDiningBundle = [
+      "dining table",
+      "dining chair",
+      "sideboard",
+      "bench",
+      "console table"
+    ];
+
+    if (requestedCats.length === 0 && aiIsVague) {
+      if (aiUserQuery.includes("living") || aiUserQuery.includes("lounge")) {
+        requestedCats = defaultLivingBundle;
+      } else if (aiUserQuery.includes("bedroom")) {
+        requestedCats = defaultBedroomBundle;
+      } else if (aiUserQuery.includes("dining")) {
+        requestedCats = defaultDiningBundle;
+      } else {
+        requestedCats = defaultLivingBundle;
+      }
+    }
+
+    const userQuery = input.toLowerCase();
+    const budgetMatch = input.match(/(?:under|below|max|budget)\s*£?(\d+)/i);
+    const maxBudget = budgetMatch ? parseFloat(budgetMatch[1]) : null;
+    const priceOk = p => !maxBudget || (parseFloat(p.price || 0) <= maxBudget);
+
+    const isVague =
+      userQuery.includes("decorate") ||
+      userQuery.includes("decorating") ||
+      userQuery.includes("design") ||
+      userQuery.includes("styling") ||
+      userQuery.includes("style") ||
+      userQuery.includes("room") ||
+      userQuery.includes("living room") ||
+      userQuery.includes("bedroom") ||
+      userQuery.includes("dining") ||
+      userQuery.includes("modern living room") ||
+      userQuery.includes("scandi living room");
+
+    function scoreProduct(p, requestedCats, aiUserQuery, maxBudget) {
+      let score = 0;
+      const cat = (p.category || "").toLowerCase();
+      const col = (p.colour || "").toLowerCase();
+      const style = (p.style || "").toLowerCase();
+      const room = (p.room || "").toLowerCase();
+      const title = (p.title || "").toLowerCase();
+      const price = parseFloat(p.price || 0);
+
+      const colourFamilies = {
+        grey: ["grey", "gray", "charcoal", "slate", "stone", "graphite"],
+        white: ["white", "ivory", "cream", "off white"],
+        black: ["black", "ebony", "onyx"],
+        brown: ["brown", "walnut", "oak", "chestnut"],
+        wood: ["oak", "walnut", "pine", "beech", "natural", "wood"],
+        green: ["green", "sage", "olive", "forest"],
+        blue: ["blue", "navy", "teal"],
+        beige: ["beige", "tan", "sand"],
+        gold: ["gold", "brass", "champagne"],
+        silver: ["silver", "chrome", "metal"],
+      };
+
+      if (maxBudget) {
+        if (price <= maxBudget) {
+          score += 300 + (maxBudget - price) * 0.4;
+        } else if (price <= maxBudget * 1.10) {
+          score -= (price - maxBudget) * 1.5;
+        } else {
+          return -99999;
+        }
+      }
+
+      if (requestedCats.includes(cat)) {
+        score += 600;
+      } else {
+        score -= 300;
+      }
+
+      if (aiUserQuery.includes("living") && room === "living") score += 500;
+      if (aiUserQuery.includes("bedroom") && room === "bedroom") score += 500;
+      if (aiUserQuery.includes("dining") && room === "dining") score += 500;
+      if (aiUserQuery.includes("office") && room === "office") score += 500;
+
+      for (const [family, synonyms] of Object.entries(colourFamilies)) {
+        if (aiUserQuery.includes(family)) {
+          if (synonyms.some(s => col.includes(s))) {
+            score += 600;
+          }
+        }
+      }
+
+      const styleFamilies = {
+        modern: ["modern", "contemporary", "sleek"],
+        scandi: ["scandi", "scandinavian", "nordic"],
+        rustic: ["rustic", "farmhouse", "country"],
+        minimalist: ["minimalist", "minimal", "clean"],
+        traditional: ["traditional", "classic"],
+        industrial: ["industrial", "metal", "factory"],
+      };
+      for (const [family, synonyms] of Object.entries(styleFamilies)) {
+        if (aiUserQuery.includes(family)) {
+          if (synonyms.some(s => style.includes(s))) {
+            score += 450;
+          }
+        }
+      }
+
+      for (const [family, synonyms] of Object.entries(colourFamilies)) {
+        if (aiUserQuery.includes(family)) {
+          if (!synonyms.some(s => col.includes(s))) {
+            score -= 150;
+          }
+        }
+      }
+
+      if (style && aiUserQuery.includes(style)) {
+        score += 200;
+      }
+
+      if (maxBudget) {
+        score += (maxBudget - price) / 10;
+      }
+
+      return score;
+    }
+
+    const aiBudgetMatch = input.match(/(?:under|below|max|budget)\s*£?(\d+)/i);
+    const aiMaxBudget = aiBudgetMatch ? parseFloat(aiBudgetMatch[1]) : null;
+
+    let scored = allProducts.map(p => ({
+      p,
+      score: scoreProduct(p, requestedCats, aiUserQuery, aiMaxBudget)
+    }));
+
+    let matches = scored
+      .filter(x => x.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 20)
+      .map(x => x.p);
+
+    const seen = new Set();
+    matches = matches.filter(p => {
+      const cat = (p.category || "").toLowerCase();
+      if (seen.has(cat)) return false;
+      seen.add(cat);
+      return true;
+    });
+
+    if (matches.length < 4) {
+      matches = allProducts
+        .filter(p =>
+          requestedCats.includes((p.category || "").toLowerCase())
+        )
+        .slice(0, 6);
+    }
+
+    const uniqueKeys = new Set();
+    matches = matches.filter(p => {
+      const key = productKey(p);
+      if (!key || uniqueKeys.has(key)) return false;
+      uniqueKeys.add(key);
+      return true;
+    });
+
+    matches.forEach(p => addToRoomset(p));
+    saveRoomset();
+    renderRoomset();
+    renderRoomsetCanvas();
+    alert(`✨ AI added ${matches.length} items to your roomset!`);
+    statusEl.textContent = "Done! You can tweak your description and try again.";
   });
-
-const text =
-  response?.choices?.[0]?.message?.content ||
-  "No suggestion generated.";
-// CLEAN AI OUTPUT FIRST
-let cleaned = text
-  .replace(/-+\s*assistant\s*:/gi, "") // remove "- assistant:"
-  .replace(/```json/gi, "")            // remove code fences
-  .replace(/```/g, "")                 // remove code fences
-  .trim();
-
-// Extract ONLY the first JSON block
-const jsonMatch = cleaned.match(/\{[\s\S]*?\}/);
-let safeJson = jsonMatch ? jsonMatch[0] : "{}";
-
-// Now parse
-let requestedCats = [];
-try {
-  const parsed = JSON.parse(safeJson);
-  if (Array.isArray(parsed.categories)) {
-    requestedCats = parsed.categories.map(c => c.toLowerCase().trim());
-  }
-} catch (e) {
-  console.warn("AI JSON CLEAN FAIL:", safeJson);
 }
-
-
-/* ---------------------------------------------------------
-   🧠 DEFINE aiUserQuery + aiIsVague FIRST (must be here!)
----------------------------------------------------------- */
-
-const aiUserQuery = input.toLowerCase();
-const aiIsVague =
-  aiUserQuery.includes("decorate") ||
-  aiUserQuery.includes("decorating") ||
-  aiUserQuery.includes("design") ||
-  aiUserQuery.includes("styling") ||
-  aiUserQuery.includes("style") ||
-  aiUserQuery.includes("room") ||
-  aiUserQuery.includes("new place") ||
-  aiUserQuery.includes("new home") ||
-  aiUserQuery.includes("moved in") ||
-  aiUserQuery.includes("living room") ||
-  aiUserQuery.includes("lounge") ||
-  aiUserQuery.includes("family room");
-
-/* ----------------------------------------------------------
-   STEP 6.1 — HANDLE EMPTY AI OUTPUT SAFELY
------------------------------------------------------------ */
-
-if (!requestedCats || !Array.isArray(requestedCats)) {
-  requestedCats = [];
-}
-
-if (requestedCats.length === 0 && !aiIsVague) {
-  requestedCats = ["sofa", "coffee table", "armchair", "tv unit"];
-}
-
-
-
-// Default bundles by room type
-const defaultLivingBundle = [
-  "sofa",
-  "coffee table",
-  "armchair",
-  "tv unit",
-  "sideboard",
-  "rug"
-];
-
-const defaultBedroomBundle = [
-  "bed",
-  "bedside table",
-  "wardrobe",
-  "drawers",
-  "bench",
-  "rug"
-];
-
-const defaultDiningBundle = [
-  "dining table",
-  "dining chair",
-  "sideboard",
-  "bench",
-  "console table"
-];
-
-// If the AI returned nothing OR user was vague, decide bundle logically
-if (requestedCats.length === 0 && aiIsVague) {
-  if (aiUserQuery.includes("living") || aiUserQuery.includes("lounge")) {
-    requestedCats = defaultLivingBundle;
-  } else if (aiUserQuery.includes("bedroom")) {
-    requestedCats = defaultBedroomBundle;
-  } else if (aiUserQuery.includes("dining")) {
-    requestedCats = defaultDiningBundle;
-  } else {
-    requestedCats = defaultLivingBundle; // absolute fallback
-  }
-}
-
-       // ─────────────────────── FINAL 100% WORKING SCORING (NO ERRORS) ───────────────────────
-      const userQuery = input.toLowerCase();
-
-      // Budget extraction
-      const budgetMatch = input.match(/(?:under|below|max|budget)\s*£?(\d+)/i);
-      const maxBudget = budgetMatch ? parseFloat(budgetMatch[1]) : null;
-
-      const priceOk = p => !maxBudget || (parseFloat(p.price || 0) <= maxBudget);
-
-      // Detect vague decorating queries
-const isVague =
-  userQuery.includes("decorate") ||
-  userQuery.includes("decorating") ||
-  userQuery.includes("design") ||
-  userQuery.includes("styling") ||
-  userQuery.includes("style") ||
-  userQuery.includes("room") ||
-  userQuery.includes("living room") ||
-  userQuery.includes("bedroom") ||
-  userQuery.includes("dining") ||
-  userQuery.includes("modern living room") ||
-  userQuery.includes("scandi living room");
-
-// Disable category lock for vague multi-item queries
-if (isVague) {
-  // do nothing – keep requestedCats as a list
-}
-
-
-function scoreProduct(p, requestedCats, aiUserQuery, maxBudget) {
-  let score = 0;
-
-  const cat = (p.category || "").toLowerCase();
-  const col = (p.colour || "").toLowerCase();
-  const style = (p.style || "").toLowerCase();
-  const room = (p.room || "").toLowerCase();
-  const title = (p.title || "").toLowerCase();
-  const price = parseFloat(p.price || 0);
-
-  // Colour families with synonyms
-const colourFamilies = {
-  grey: ["grey", "gray", "charcoal", "slate", "stone", "graphite"],
-  white: ["white", "ivory", "cream", "off white"],
-  black: ["black", "ebony", "onyx"],
-  brown: ["brown", "walnut", "oak", "chestnut"],
-  wood: ["oak", "walnut", "pine", "beech", "natural", "wood"],
-  green: ["green", "sage", "olive", "forest"],
-  blue: ["blue", "navy", "teal"],
-  beige: ["beige", "tan", "sand"],
-  gold: ["gold", "brass", "champagne"],
-  silver: ["silver", "chrome", "metal"],
-};
-
-// FLEXIBLE BUDGET SYSTEM
-if (maxBudget) {
-  if (price <= maxBudget) {
-    // Strong reward for being within budget
-    score += 300 + (maxBudget - price) * 0.4;  // cheaper = better
-  } else if (price <= maxBudget * 1.10) {
-    // Within 10% above budget allowed but penalised
-    score -= (price - maxBudget) * 1.5;
-  } else {
-    // More than 10% over budget = reject
-    return -99999;
-  }
-}
-
-
-  // 2️⃣ Category relevance (strong)
-  if (requestedCats.includes(cat)) {
-    score += 600;
-  } else {
-    score -= 300;
-  }
-
-// ROOM RELEVANCE BOOST
-if (aiUserQuery.includes("living") && room === "living") score += 500;
-if (aiUserQuery.includes("bedroom") && room === "bedroom") score += 500;
-if (aiUserQuery.includes("dining") && room === "dining") score += 500;
-if (aiUserQuery.includes("office") && room === "office") score += 500;
-
-
- // 4️⃣ Improved colour matching
-for (const [family, synonyms] of Object.entries(colourFamilies)) {
-  if (aiUserQuery.includes(family)) {
-    // If product colour matches any synonym in the family
-    if (synonyms.some(s => col.includes(s))) {
-  score += 600; // colour match is king
-    }
-  }
-}
-// 5️⃣ Bonus: style keyword matching
-const styleFamilies = {
-  modern: ["modern", "contemporary", "sleek"],
-  scandi: ["scandi", "scandinavian", "nordic"],
-  rustic: ["rustic", "farmhouse", "country"],
-  minimalist: ["minimalist", "minimal", "clean"],
-  traditional: ["traditional", "classic"],
-  industrial: ["industrial", "metal", "factory"],
-};
-
-for (const [family, synonyms] of Object.entries(styleFamilies)) {
-  if (aiUserQuery.includes(family)) {
-if (synonyms.some(s => style.includes(s))) {
-  score += 450; // style should strongly matter
-}
-  }
-}
-// PENALISE CLEARLY WRONG COLOURS
-for (const [family, synonyms] of Object.entries(colourFamilies)) {
-  if (aiUserQuery.includes(family)) {
-    if (!synonyms.some(s => col.includes(s))) {
-      score -= 150;   // light penalty
-    }
-  }
-}
-
-
-  // 5️⃣ Style match
-  if (style && aiUserQuery.includes(style)) {
-    score += 200;
-  }
-
-  // 6️⃣ Prefer cheaper items when there's a budget
-  if (maxBudget) {
-    score += (maxBudget - price) / 10;
-  }
-
-  return score;
-}
-
-// ------------------------------------------------------
-// STEP 5.2 — NEW MATCH SCORING + SELECTION
-// ------------------------------------------------------
-
-// Extract budget from user input
-const aiBudgetMatch = input.match(/(?:under|below|max|budget)\s*£?(\d+)/i);
-const aiMaxBudget = aiBudgetMatch ? parseFloat(aiBudgetMatch[1]) : null;
-
-// Score all products using the new scoring engine
-let scored = allProducts.map(p => ({
-  p,
-  score: scoreProduct(p, requestedCats, aiUserQuery, aiMaxBudget)
-}));
-
-// Sort and keep high-score products
-let matches = scored
-  .filter(x => x.score > 0)     // remove irrelevant
-  .sort((a, b) => b.score - a.score)
-  .slice(0, 20)                 // take top 20 first
-  .map(x => x.p);
-
-// ------------------------------------------------------
-// STEP 5.3 — CATEGORY DIVERSITY FILTER (no duplicates)
-// ------------------------------------------------------
-const seen = new Set();
-matches = matches.filter(p => {
-  const cat = (p.category || "").toLowerCase();
-  if (seen.has(cat)) return false;
-  seen.add(cat);
-  return true;
-});
-
-// ------------------------------------------------------
-// STEP 5.4 — MINIMUM FALLBACK (ensure at least 4 matches)
-// ------------------------------------------------------
-if (matches.length < 4) {
-  matches = allProducts
-    .filter(p =>
-      requestedCats.includes((p.category || "").toLowerCase())
-    )
-    .slice(0, 6);
-}
-// ------------------------------------------------------
-// STEP 6.3 — Prevent duplicate items in final matches
-// ------------------------------------------------------
-const uniqueKeys = new Set();
-matches = matches.filter(p => {
-  const key = productKey(p);
-  if (!key || uniqueKeys.has(key)) return false;
-  uniqueKeys.add(key);
-  return true;
-});
-
-// ------------------------------------------------------
-// ADD FINAL MATCHES TO ROOMSET (your original code)
-// ------------------------------------------------------
-matches.forEach(p => addToRoomset(p));
-saveRoomset();
-renderRoomset();
-renderRoomsetCanvas();
-
-
-alert(`✨ AI added ${matches.length} items to your roomset!`);
-statusEl.textContent = "Done! You can tweak your description and try again.";
-
-
-} catch (err) {
-  console.error("AI Generate Error:", err);
-  statusEl.textContent = "❌ Error while generating suggestions.";
-}
-
-});   // ← CLOSES click handler
-
-}     // ← CLOSES setupAISuggestions()
 
 /* -------------------------------------------------------
-   CATEGORY NORMALISATION + ROOM DERIVATION (FULL FIXED BLOCK)
+   CATEGORY NORMALISATION + ROOM DERIVATION
 ------------------------------------------------------- */
-
-// Normalise product categories into clean, consistent types
 function normalizeCategory(raw = "") {
   const t = raw.toLowerCase().trim();
-
-  // BEDROOM
   if (t.includes("bed frame") || t.includes("ottoman") || t.includes("divan") || t.includes("upholstered bed")) return "bed";
   if (t === "bed" || t === "beds") return "bed";
   if (t.includes("headboard")) return "headboard";
@@ -1526,8 +1264,6 @@ function normalizeCategory(raw = "") {
   if (t.includes("wardrobe")) return "wardrobe";
   if (t.includes("dressing")) return "dressing table";
   if (t.includes("furniture set")) return "furniture set";
-
-  // LIVING
   if (t.includes("sofa")) return "sofa";
   if (t.includes("armchair") || t.includes("accent chair") || t.includes("recliner")) return "armchair";
   if (t.includes("coffee")) return "coffee table";
@@ -1535,28 +1271,19 @@ function normalizeCategory(raw = "") {
   if (t.includes("tv") || t.includes("media") || t.includes("entertainment")) return "tv unit";
   if (t.includes("bookcase")) return "bookcase";
   if (t.includes("cabinet") || t.includes("cupboard") || t.includes("storage")) return "cabinet";
-
-  // DINING
   if (t.includes("dining table")) return "dining table";
   if (t.includes("dining chair")) return "dining chair";
   if (t.includes("bench")) return "bench";
   if (t.includes("sideboard") || t.includes("buffet")) return "sideboard";
   if (t.includes("nest")) return "side table";
-
-  // OFFICE
   if (t.includes("desk")) return "desk";
   if (t.includes("office chair")) return "office chair";
-
-  // GENERIC FALLBACKS
   if (t.includes("table")) return "table";
-
   return "misc";
 }
 
-// Assign each category to a room type
 function deriveRoom(cat = "") {
   switch (cat) {
-    // BEDROOM
     case "bed":
     case "headboard":
     case "bedside table":
@@ -1565,8 +1292,6 @@ function deriveRoom(cat = "") {
     case "dressing table":
     case "furniture set":
       return "bedroom";
-
-    // LIVING
     case "sofa":
     case "armchair":
     case "coffee table":
@@ -1575,29 +1300,19 @@ function deriveRoom(cat = "") {
     case "cabinet":
     case "bookcase":
       return "living";
-
-    // DINING
     case "dining table":
     case "dining chair":
     case "sideboard":
     case "bench":
     case "side table":
       return "dining";
-
-    // OFFICE
     case "desk":
     case "office chair":
       return "office";
-
     default:
       return "";
   }
 }
 
-
-// finally load products
 loadProducts();
-
-// initialise AI suggestion UI once everything is loaded
 document.addEventListener("DOMContentLoaded", setupAISuggestions);
-
