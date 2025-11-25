@@ -1080,10 +1080,18 @@ const WEBLLM_MODEL_URL = "Phi-3-mini-4k-instruct-q4f16_1-MLC";
 
 
 function setupAISuggestions() {
+
+  if (window.__AI_ALREADY_SETUP__) {
+    console.log("⛔ setupAISuggestions() already ran — skipping.");
+    return;
+  }
+  window.__AI_ALREADY_SETUP__ = true;
+
   const statusEl   = document.getElementById("roomsetSuggestStatus");
   const promptEl   = document.getElementById("roomsetPrompt");
   const suggestBtn = document.getElementById("roomsetSuggestBtn");
   const outputEl   = document.getElementById("roomsetSuggestOutput");
+
 
   if (!statusEl || !promptEl || !suggestBtn || !outputEl) return;
 
