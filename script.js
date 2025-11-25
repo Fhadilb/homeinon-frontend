@@ -1591,8 +1591,5 @@ function deriveRoom(cat = "") {
 loadProducts();
 
 // initialise AI suggestion UI once everything is loaded
-window.addEventListener("load", () => {
-  console.log("Initialising AI Suggestion UI…");
-  setupAISuggestions();
-});
+document.addEventListener("DOMContentLoaded", setupAISuggestions);
 
