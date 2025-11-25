@@ -1186,22 +1186,28 @@ Rules:
 const text =
   response?.choices?.[0]?.message?.content ||
   "No suggestion generated.";
-console.log("RAW AI JSON OUTPUT:", text);
+// CLEAN AI OUTPUT FIRST
+let cleaned = text
+  .replace(/-+\s*assistant\s*:/gi, "") // remove "- assistant:"
+  .replace(/```json/gi, "")            // remove code fences
+  .replace(/```/g, "")                 // remove code fences
+  .trim();
 
-// ❗ Hide AI output (do not show bullet list to the user)
-outputEl.textContent = "";
+// Extract ONLY the first JSON block
+const jsonMatch = cleaned.match(/\{[\s\S]*?\}/);
+let safeJson = jsonMatch ? jsonMatch[0] : "{}";
 
-// 🆕 Extract categories from AI JSON output
+// Now parse
 let requestedCats = [];
-
 try {
-  const parsed = JSON.parse(text);
+  const parsed = JSON.parse(safeJson);
   if (Array.isArray(parsed.categories)) {
-    requestedCats = parsed.categories.map(c => c.toLowerCase());
+    requestedCats = parsed.categories.map(c => c.toLowerCase().trim());
   }
 } catch (e) {
-  console.warn("AI did not return valid JSON:", text);
+  console.warn("AI JSON CLEAN FAIL:", safeJson);
 }
+
 
 /* ---------------------------------------------------------
    🧠 DEFINE aiUserQuery + aiIsVague FIRST (must be here!)
