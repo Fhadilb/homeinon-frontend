@@ -1108,8 +1108,12 @@ function setupAISuggestions() {
     if (e.key === "Enter") suggestBtn.click();
   });
 
-  suggestBtn.addEventListener("click", async () => {
+suggestBtn.addEventListener("click", async () => {
+
+    console.log("🔥 AI BUTTON CLICKED");  // <– ADD THIS
+
     const input = promptEl.value.trim();
+
     if (!input) {
       alert("Please describe your room first 🙂");
       return;
