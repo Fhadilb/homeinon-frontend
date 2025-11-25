@@ -1318,8 +1318,9 @@ const isVague =
 
 // Disable category lock for vague multi-item queries
 if (isVague) {
-  requestedCat = null;   // allow sofas + coffee tables + tv units etc
+  // do nothing – keep requestedCats as a list
 }
+
 
 function scoreProduct(p, requestedCats, aiUserQuery, maxBudget) {
   let score = 0;
