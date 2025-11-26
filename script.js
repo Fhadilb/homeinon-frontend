@@ -931,7 +931,8 @@ if (createFloorplanBtn && fpPopup) {
    AI SUGGESTION ENGINE — BACKEND (OPENAI)
 ----------------------------------------------------------- */
 
-const SUGGEST_API_URL = "https://homeinon-backend.onrender.com/ai-suggest";
+const SUGGEST_API_URL = "https://homeinon-backend.onrender.com/ai-gemini";
+
 
 function setupAISuggestions() {
   if (window.AI_ALREADY_SETUP) return;
