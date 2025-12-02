@@ -933,6 +933,37 @@ if (createFloorplanBtn && fpPopup) {
 
 const SUGGEST_API_URL = "https://homeinon-backend.onrender.com/ai-gemini";
 
+function scoreProduct(p, categories, query, maxBudget) {
+  let score = 0;
+
+  const title = (p.title || "").toLowerCase();
+  const desc  = (p.description || "").toLowerCase();
+  const cat   = (p.category || "").toLowerCase();
+  const room  = (p.room || "").toLowerCase();
+  const style = (p.style || "").toLowerCase();
+  const colour = (p.colour || "").toLowerCase();
+
+  // 1️⃣ Boost if product matches AI categories
+  categories.forEach(c => {
+    if (cat.includes(c)) score += 5;
+    if (title.includes(c)) score += 3;
+  });
+
+  // 2️⃣ Boost for keyword matches
+  query.split(/\s+/).forEach(word => {
+    if (title.includes(word)) score += 1;
+    if (desc.includes(word))  score += 1;
+    if (style.includes(word)) score += 1;
+    if (colour.includes(word)) score += 1;
+  });
+
+  // 3️⃣ Budget filter
+  const price = parseFloat(p.price) || 0;
+  if (maxBudget && price > maxBudget) score -= 10;
+
+  return score;
+}
+
 
 function setupAISuggestions() {
   if (window.AI_ALREADY_SETUP) return;
