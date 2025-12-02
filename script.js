@@ -1021,6 +1021,7 @@ function setupAISuggestions() {
   promptEl.addEventListener("keyup", (e) => {
     if (e.key === "Enter") suggestBtn.click();
   });
+const resultsBox = document.getElementById("ai-results");
 
   suggestBtn.addEventListener("click", async () => {
     const input = promptEl.value.trim();
