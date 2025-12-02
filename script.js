@@ -964,6 +964,13 @@ function scoreProduct(p, categories, query, maxBudget) {
   return score;
 }
 
+// Ensure AI suggestions initialize ONLY once
+if (!window.__AI_INIT_DONE__) {
+  document.addEventListener("DOMContentLoaded", () => {
+    setupAISuggestions();
+  });
+  window.__AI_INIT_DONE__ = true;
+}
 
 function setupAISuggestions() {
   if (window.AI_ALREADY_SETUP) return;
