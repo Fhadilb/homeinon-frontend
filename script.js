@@ -1043,6 +1043,16 @@ function setupAISuggestions() {
 
       const data = await resp.json();
       console.log("AI BACKEND RAW RESPONSE:", data);
+// Hide raw JSON — show a friendly explanation instead
+const cats = data.categories || [];
+
+let explanation = "Here’s what I found based on your request:\n\n";
+
+cats.forEach(c => {
+  explanation += `• ${c.charAt(0).toUpperCase() + c.slice(1)}\n`;
+});
+
+resultsBox.textContent = explanation.trim();
 
       const catsRaw = Array.isArray(data.categories) ? data.categories : [];
 
