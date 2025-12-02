@@ -964,7 +964,44 @@ function scoreProduct(p, categories, query, maxBudget) {
   return score;
 }
 
-// Ensure AI suggestions initialize ONLY once
+
+// ---------------------------------------------------------------
+// AI PRODUCT SCORING — KEEP THIS EXACTLY AS-IS
+// ---------------------------------------------------------------
+function scoreProduct(p, categories, query, maxBudget) {
+  let score = 0;
+
+  const title  = (p.title || "").toLowerCase();
+  const desc   = (p.description || "").toLowerCase();
+  const cat    = (p.category || "").toLowerCase();
+  const room   = (p.room || "").toLowerCase();
+  const style  = (p.style || "").toLowerCase();
+  const colour = (p.colour || "").toLowerCase();
+
+  // 1️⃣ Matches AI categories
+  categories.forEach(c => {
+    if (cat.includes(c)) score += 5;
+    if (title.includes(c)) score += 3;
+  });
+
+  // 2️⃣ Keyword matching
+  query.split(/\s+/).forEach(word => {
+    if (title.includes(word))  score += 1;
+    if (desc.includes(word))   score += 1;
+    if (style.includes(word))  score += 1;
+    if (colour.includes(word)) score += 1;
+  });
+
+  // 3️⃣ Budget penalty
+  const price = parseFloat(p.price) || 0;
+  if (maxBudget && price > maxBudget) score -= 10;
+
+  return score;
+}
+
+// ---------------------------------------------------------------
+// ENSURE AI SUGGESTIONS INITIALIZE ONLY ONCE (fixes 500 errors)
+// ---------------------------------------------------------------
 if (!window.__AI_INIT_DONE__) {
   document.addEventListener("DOMContentLoaded", () => {
     setupAISuggestions();
