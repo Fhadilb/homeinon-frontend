@@ -1611,7 +1611,7 @@ function generateFloorplanRoom(widthM, depthM, heightM) {
   const D = depthM * scale;
   const H = heightM * scale;
 
-  // Create SVG-based 3D illusion (fast, light)
+  // Create SVG-based 3D illusion
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   svg.setAttribute("width", "100%");
   svg.setAttribute("height", "100%");
@@ -1647,9 +1647,9 @@ function generateFloorplanRoom(widthM, depthM, heightM) {
   const lx = (container.clientWidth - W) / 2;
   const ly = (container.clientHeight - (D / 2)) / 2;
   const leftPoints = `
-    ${lx},${ly} 
+    ${lx},${ly}
     ${lx},${ly - H}
-    ${lx - (D / 3)},${ly - H + (D / 3)} 
+    ${lx - (D / 3)},${ly - H + (D / 3)}
     ${lx - (D / 3)},${ly + (D / 3)}
   `;
   leftWall.setAttribute("points", leftPoints);
@@ -1661,9 +1661,9 @@ function generateFloorplanRoom(widthM, depthM, heightM) {
   const rightWall = document.createElementNS(svg.namespaceURI, "polygon");
   const rx = (container.clientWidth + W) / 2;
   const rightPoints = `
-    ${rx},${ly} 
+    ${rx},${ly}
     ${rx},${ly - H}
-    ${rx + (D / 3)},${ly - H + (D / 3)} 
+    ${rx + (D / 3)},${ly - H + (D / 3)}
     ${rx + (D / 3)},${ly + (D / 3)}
   `;
   rightWall.setAttribute("points", rightPoints);
@@ -1671,14 +1671,54 @@ function generateFloorplanRoom(widthM, depthM, heightM) {
   rightWall.setAttribute("stroke", "#bbb");
   rightWall.setAttribute("stroke-width", "3");
 
-  // Append in correct stacking order
+  // -----------------------------------------
+  // ORDER: Floor → Grid → Walls
+  // -----------------------------------------
+
+  // 1️⃣ Append floor first
+  svg.appendChild(floor);
+
+  // 2️⃣ Add grid above floor
+  const gridGroup = document.createElementNS(svg.namespaceURI, "g");
+  gridGroup.setAttribute("opacity", "0.25");
+
+  const gridSize = 40; // px spacing
+
+  // Vertical grid lines
+  for (let x = 0; x <= W; x += gridSize) {
+    const line = document.createElementNS(svg.namespaceURI, "line");
+    line.setAttribute("x1", (container.clientWidth - W) / 2 + x);
+    line.setAttribute("y1", (container.clientHeight - (D / 2)) / 2);
+    line.setAttribute("x2", (container.clientWidth - W) / 2 + x);
+    line.setAttribute("y2", (container.clientHeight - (D / 2)) / 2 + D / 2);
+    line.setAttribute("stroke", "#999");
+    line.setAttribute("stroke-width", "1");
+    gridGroup.appendChild(line);
+  }
+
+  // Horizontal grid lines
+  for (let y = 0; y <= D / 2; y += gridSize) {
+    const line = document.createElementNS(svg.namespaceURI, "line");
+    line.setAttribute("x1", (container.clientWidth - W) / 2);
+    line.setAttribute("y1", (container.clientHeight - (D / 2)) / 2 + y);
+    line.setAttribute("x2", (container.clientWidth + W) / 2);
+    line.setAttribute("y2", (container.clientHeight - (D / 2)) / 2 + y);
+    line.setAttribute("stroke", "#999");
+    line.setAttribute("stroke-width", "1");
+    gridGroup.appendChild(line);
+  }
+
+  svg.appendChild(gridGroup);
+
+  // 3️⃣ Append walls LAST (so they appear in front)
   svg.appendChild(backWall);
   svg.appendChild(leftWall);
   svg.appendChild(rightWall);
-  svg.appendChild(floor);
 
+  // 4️⃣ Add SVG to the canvas
   container.appendChild(svg);
 }
+
 </script>
 <script>
 // STEP 4 — Add Roomset Items Into 3D Floorplan Room
