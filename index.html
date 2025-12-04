@@ -1921,6 +1921,61 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 </script>
 
+<script type="module">
+import * as THREE from "https://esm.sh/three@0.160.0";
+import { OrbitControls } from "https://esm.sh/three@0.160.0/examples/jsm/controls/OrbitControls.js";
+import { GLTFLoader } from "https://esm.sh/three@0.160.0/examples/jsm/loaders/GLTFLoader.js";
+
+// Viewer setup
+const container = document.getElementById("threeContainer");
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xf7f7f7);
+
+const camera = new THREE.PerspectiveCamera(
+  60,
+  container.clientWidth / container.clientHeight,
+  0.1,
+  100
+);
+camera.position.set(2, 1.5, 3);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(container.clientWidth, container.clientHeight);
+container.appendChild(renderer.domElement);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+
+// Light
+scene.add(new THREE.HemisphereLight(0xffffff, 0x444444, 1.2));
+
+// Load GLB
+const loader = new GLTFLoader();
+
+loader.load(
+  "https://homeinon-backend.onrender.com/11_albany002-_1_-albany_charcoal_fabric_2_seater-lifestyle-web-pdp_3d.glb",
+  (gltf) => {
+    const model = gltf.scene;
+    model.scale.set(1, 1, 1);
+    model.position.set(0, 0, 0);
+    scene.add(model);
+    console.log("✅ GLB loaded successfully!");
+  },
+  (xhr) => {
+    console.log(`Loading GLB: ${(xhr.loaded / xhr.total) * 100}%`);
+  },
+  (err) => {
+    console.error("❌ GLB load error:", err);
+  }
+);
+
+function animate() {
+  requestAnimationFrame(animate);
+  controls.update();
+  renderer.render(scene, camera);
+}
+animate();
+</script>
 
 
 </body>
