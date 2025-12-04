@@ -1053,13 +1053,16 @@ cats.forEach(c => {
   explanation += `• ${c.charAt(0).toUpperCase() + c.slice(1)}\n`;
 });
 
-resultsBox.textContent = explanation.trim();
+resultsBox.textContent = explanation.trim();   // Grey box only
 
-      const catsRaw = Array.isArray(data.categories) ? data.categories : [];
+const catsRaw = Array.isArray(data.categories) ? data.categories : [];
 
-      requestedCats = catsRaw.map(c =>
-        normalizeCategory(String(c).toLowerCase().trim())
-      );
+requestedCats = catsRaw.map(c =>
+  normalizeCategory(String(c).toLowerCase().trim())
+);
+
+// White box should stay empty
+outputEl.textContent = "";
 
 
     } catch (err) {
