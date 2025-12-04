@@ -1061,11 +1061,6 @@ resultsBox.textContent = explanation.trim();
         normalizeCategory(String(c).toLowerCase().trim())
       );
 
-      outputEl.textContent = JSON.stringify(
-        { categories: requestedCats },
-        null,
-        2
-      );
 
     } catch (err) {
       console.error("❌ AI Suggestion Error:", err);
