@@ -1612,12 +1612,15 @@ function generateFloorplanRoom(widthM, depthM, heightM) {
   const H = heightM * scale;
 
   // Create SVG-based 3D illusion
-  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  svg.setAttribute("width", "100%");
-  svg.setAttribute("height", "100%");
-  svg.style.position = "absolute";
-  svg.style.top = "0";
-  svg.style.left = "0";
+const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+svg.setAttribute("width", "100%");
+svg.setAttribute("height", "100%");
+svg.setAttribute("preserveAspectRatio", "none");  // ⭐ important
+svg.style.position = "absolute";
+svg.style.top = "0";
+svg.style.left = "0";
+svg.style.overflow = "visible";                    // ⭐ important
+
 
 // FLOOR (aligned to bottom)
 const floor = document.createElementNS(svg.namespaceURI, "rect");
@@ -1633,8 +1636,8 @@ floor.setAttribute("y", floorTop);
 floor.setAttribute("width", W);
 floor.setAttribute("height", D / 2);
 floor.setAttribute("fill", "#dcdcdc");
-floor.setAttribute("stroke", "#999");
-floor.setAttribute("stroke-width", "3");
+leftWall.setAttribute("fill", "rgba(255,0,0,0.4)");
+rightWall.setAttribute("fill", "rgba(0,0,255,0.4)");
 floor.style.opacity = 0.9;
 
 
@@ -1653,6 +1656,9 @@ backWallRect.setAttribute("height", H);
 backWallRect.setAttribute("fill", "#f5f5f5");
 backWallRect.setAttribute("stroke", "#aaa");
 backWallRect.setAttribute("stroke-width", "3");
+// ⭐ DEBUG COLOR
+backWallRect.setAttribute("fill", "rgba(0,255,0,0.4)");
+
 
 
 
@@ -1662,18 +1668,20 @@ const leftWall = document.createElementNS(svg.namespaceURI, "polygon");
 const lx = (container.clientWidth - W) / 2;
 const ly = floorTop; // wall meets floor
 
+// CORRECTED perspective points (all inside canvas)
 const leftPoints = `
-  ${lx},${ly}                 // bottom inner corner
-  ${lx},${ly - H}             // top inner corner
-  ${lx - (D / 3)},${ly - H + (D / 3)}  // top outer corner (perspective)
-  ${lx - (D / 3)},${ly + (D / 3)}      // bottom outer corner (perspective)
+  ${lx},${ly}                         /* bottom inner */
+  ${lx},${ly - H}                     /* top inner */
+  ${lx - (D / 3)},${ly - H + (D / 6)} /* top outer */
+  ${lx - (D / 3)},${ly - (D / 6)}     /* bottom outer */
 `;
 
 leftWall.setAttribute("points", leftPoints.trim());
 leftWall.setAttribute("fill", "#efefef");
 leftWall.setAttribute("stroke", "#bbb");
 leftWall.setAttribute("stroke-width", "3");
-
+// ⭐ DEBUG COLOR
+leftWall.setAttribute("fill", "rgba(255,0,0,0.4)");
 
 // RIGHT WALL (aligned to new floor position)
 const rightWall = document.createElementNS(svg.namespaceURI, "polygon");
@@ -1681,17 +1689,18 @@ const rightWall = document.createElementNS(svg.namespaceURI, "polygon");
 const rx = (container.clientWidth + W) / 2;
 
 const rightPoints = `
-  ${rx},${ly}                  // bottom inner corner
-  ${rx},${ly - H}              // top inner corner
-  ${rx + (D / 3)},${ly - H + (D / 3)}  // top outer corner
-  ${rx + (D / 3)},${ly + (D / 3)}      // bottom outer corner
+  ${rx},${ly}                          /* bottom inner */
+  ${rx},${ly - H}                      /* top inner */
+  ${rx + (D / 3)},${ly - H + (D / 6)}  /* top outer */
+  ${rx + (D / 3)},${ly - (D / 6)}      /* bottom outer */
 `;
 
 rightWall.setAttribute("points", rightPoints.trim());
 rightWall.setAttribute("fill", "#efefef");
 rightWall.setAttribute("stroke", "#bbb");
 rightWall.setAttribute("stroke-width", "3");
-
+// ⭐ DEBUG COLOR
+rightWall.setAttribute("fill", "rgba(0,0,255,0.4)");
 
 
   // -----------------------------------------
