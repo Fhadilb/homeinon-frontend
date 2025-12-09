@@ -1628,7 +1628,7 @@ floor.setAttribute("id", "floorRect");
 // Center horizontally
 floor.setAttribute("x", (container.clientWidth - W) / 2);
 
-// NEW: Snap floor to bottom with 20px padding
+// Snap floor to bottom with 20px padding
 const floorTop = container.clientHeight - (D / 2) - 20;
 floor.setAttribute("y", floorTop);
 
@@ -1638,14 +1638,14 @@ floor.setAttribute("fill", "#dcdcdc");
 floor.style.opacity = 0.9;
 
 
-// BACK WALL (aligned to floor)
+// BACK WALL (aligned directly above floor)
 const backWallRect = document.createElementNS(svg.namespaceURI, "rect");
 backWallRect.setAttribute("id", "backWallRect");
 
 // Center horizontally
 backWallRect.setAttribute("x", (container.clientWidth - W) / 2);
 
-// wall sits exactly above floor
+// Wall sits above the floor
 backWallRect.setAttribute("y", floorTop - H);
 
 backWallRect.setAttribute("width", W);
@@ -1655,13 +1655,12 @@ backWallRect.setAttribute("stroke", "#aaa");
 backWallRect.setAttribute("stroke-width", "3");
 
 
-// LEFT WALL (aligned to new floor position)
+// LEFT WALL (perspective)
 const leftWall = document.createElementNS(svg.namespaceURI, "polygon");
 
-const lx = (container.clientWidth - W) / 2;
-const ly = floorTop; // wall meets floor
+const lx = (container.clientWidth - W) / 2; 
+const ly = floorTop; // meets floor
 
-// perspective points (all inside canvas)
 const leftPoints = `
   ${lx},${ly}
   ${lx},${ly - H}
@@ -1675,7 +1674,7 @@ leftWall.setAttribute("stroke", "#bbb");
 leftWall.setAttribute("stroke-width", "3");
 
 
-// RIGHT WALL (aligned to new floor position)
+// RIGHT WALL (perspective)
 const rightWall = document.createElementNS(svg.namespaceURI, "polygon");
 
 const rx = (container.clientWidth + W) / 2;
@@ -1697,14 +1696,14 @@ rightWall.setAttribute("stroke-width", "3");
 // ORDER: Floor → Grid → Walls
 // -----------------------------------------
 
-// 1️⃣ Append floor first
+// 1️⃣ Floor first
 svg.appendChild(floor);
 
-// 2️⃣ Add grid above floor
+// 2️⃣ Grid next
 const gridGroup = document.createElementNS(svg.namespaceURI, "g");
 gridGroup.setAttribute("opacity", "0.25");
 
-const gridSize = 40; // px spacing
+const gridSize = 40;
 
 // Vertical grid lines
 for (let x = 0; x <= W; x += gridSize) {
@@ -1731,14 +1730,13 @@ for (let y = 0; y <= D / 2; y += gridSize) {
 
 svg.appendChild(gridGroup);
 
-// 3️⃣ Append walls LAST (so they appear in front)
+// 3️⃣ Walls LAST
 svg.appendChild(backWallRect);
 svg.appendChild(leftWall);
 svg.appendChild(rightWall);
 
-// 4️⃣ Add SVG to the canvas
+// 4️⃣ Add SVG to canvas
 container.appendChild(svg);
-
 
   // -----------------------------------------
 // ADD ZOOM IN/OUT (mouse wheel)
