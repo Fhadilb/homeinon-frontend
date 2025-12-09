@@ -1655,17 +1655,18 @@ backWallRect.setAttribute("stroke", "#aaa");
 backWallRect.setAttribute("stroke-width", "3");
 
 
-// LEFT WALL (perspective)
+// LEFT WALL
 const leftWall = document.createElementNS(svg.namespaceURI, "polygon");
 
-const lx = (container.clientWidth - W) / 2; 
-const ly = floorTop; // meets floor
+const lx = (container.clientWidth - W) / 2;
+const ly = floorTop;
 
+// CORRECTED LEFT WALL (no diagonal runaway)
 const leftPoints = `
-  ${lx},${ly}
-  ${lx},${ly - H}
-  ${lx - (D / 3)},${ly - H + (D / 6)}
-  ${lx - (D / 3)},${ly - (D / 6)}
+  ${lx},${ly}              /* bottom inner  */
+  ${lx},${ly - H}          /* top inner     */
+  ${lx - 150},${ly - H + 60} /* top outer     */
+  ${lx - 150},${ly + 60}     /* bottom outer  */
 `;
 
 leftWall.setAttribute("points", leftPoints.trim());
@@ -1674,22 +1675,24 @@ leftWall.setAttribute("stroke", "#bbb");
 leftWall.setAttribute("stroke-width", "3");
 
 
-// RIGHT WALL (perspective)
+// RIGHT WALL
 const rightWall = document.createElementNS(svg.namespaceURI, "polygon");
 
 const rx = (container.clientWidth + W) / 2;
 
+// CORRECTED RIGHT WALL
 const rightPoints = `
-  ${rx},${ly}
-  ${rx},${ly - H}
-  ${rx + (D / 3)},${ly - H + (D / 6)}
-  ${rx + (D / 3)},${ly - (D / 6)}
+  ${rx},${ly}               /* bottom inner  */
+  ${rx},${ly - H}           /* top inner     */
+  ${rx + 150},${ly - H + 60}  /* top outer     */
+  ${rx + 150},${ly + 60}      /* bottom outer  */
 `;
 
 rightWall.setAttribute("points", rightPoints.trim());
 rightWall.setAttribute("fill", "#efefef");
 rightWall.setAttribute("stroke", "#bbb");
 rightWall.setAttribute("stroke-width", "3");
+
 
 
 // -----------------------------------------
