@@ -1619,57 +1619,74 @@ function generateFloorplanRoom(widthM, depthM, heightM) {
   svg.style.top = "0";
   svg.style.left = "0";
 
-  // FLOOR
-  const floor = document.createElementNS(svg.namespaceURI, "rect");
-  floor.setAttribute("id", "floorRect");
-  floor.setAttribute("x", (container.clientWidth - W) / 2);
-  floor.setAttribute("y", (container.clientHeight - (D / 2)) / 2);
-  floor.setAttribute("width", W);
-  floor.setAttribute("height", D / 2);
-  floor.setAttribute("fill", "#dcdcdc");
-  floor.setAttribute("stroke", "#999");
-  floor.setAttribute("stroke-width", "3");
-  floor.style.opacity = 0.9;
+// FLOOR (aligned to bottom)
+const floor = document.createElementNS(svg.namespaceURI, "rect");
+floor.setAttribute("id", "floorRect");
 
-  // BACK WALL
-  const backWall = document.createElementNS(svg.namespaceURI, "rect");
-  backWall.setAttribute("id", "backWallRect");
-  backWall.setAttribute("x", (container.clientWidth - W) / 2);
-  backWall.setAttribute("y", (container.clientHeight - (D / 2)) / 2 - H);
-  backWall.setAttribute("width", W);
-  backWall.setAttribute("height", H);
-  backWall.setAttribute("fill", "#f5f5f5");
-  backWall.setAttribute("stroke", "#aaa");
-  backWall.setAttribute("stroke-width", "3");
+// Center horizontally
+floor.setAttribute("x", (container.clientWidth - W) / 2);
 
-  // LEFT WALL
-  const leftWall = document.createElementNS(svg.namespaceURI, "polygon");
-  const lx = (container.clientWidth - W) / 2;
-  const ly = (container.clientHeight - (D / 2)) / 2;
-  const leftPoints = `
-    ${lx},${ly}
-    ${lx},${ly - H}
-    ${lx - (D / 3)},${ly - H + (D / 3)}
-    ${lx - (D / 3)},${ly + (D / 3)}
-  `;
-  leftWall.setAttribute("points", leftPoints);
-  leftWall.setAttribute("fill", "#efefef");
-  leftWall.setAttribute("stroke", "#bbb");
-  leftWall.setAttribute("stroke-width", "3");
+// NEW: Snap floor to bottom with 20px padding
+const floorTop = container.clientHeight - (D / 2) - 20;
+floor.setAttribute("y", floorTop);
 
-  // RIGHT WALL
-  const rightWall = document.createElementNS(svg.namespaceURI, "polygon");
-  const rx = (container.clientWidth + W) / 2;
-  const rightPoints = `
-    ${rx},${ly}
-    ${rx},${ly - H}
-    ${rx + (D / 3)},${ly - H + (D / 3)}
-    ${rx + (D / 3)},${ly + (D / 3)}
-  `;
-  rightWall.setAttribute("points", rightPoints);
-  rightWall.setAttribute("fill", "#efefef");
-  rightWall.setAttribute("stroke", "#bbb");
-  rightWall.setAttribute("stroke-width", "3");
+floor.setAttribute("width", W);
+floor.setAttribute("height", D / 2);
+floor.setAttribute("fill", "#dcdcdc");
+floor.setAttribute("stroke", "#999");
+floor.setAttribute("stroke-width", "3");
+floor.style.opacity = 0.9;
+
+
+// BACK WALL (aligned to floor)
+const backWall = document.createElementNS(svg.namespaceURI, "rect");
+backWall.setAttribute("id", "backWallRect");
+
+// Center horizontally
+backWall.setAttribute("x", (container.clientWidth - W) / 2);
+
+// NEW: wall sits exactly above floor
+backWall.setAttribute("y", floorTop - H);
+
+backWall.setAttribute("width", W);
+backWall.setAttribute("height", H);
+backWall.setAttribute("fill", "#f5f5f5");
+backWall.setAttribute("stroke", "#aaa");
+backWall.setAttribute("stroke-width", "3");
+
+
+// LEFT WALL (aligned to new floor position)
+const leftWall = document.createElementNS(svg.namespaceURI, "polygon");
+const lx = (container.clientWidth - W) / 2;
+const ly = floorTop; // NEW — wall meets the floor
+
+const leftPoints = `
+  ${lx},${ly}
+  ${lx},${ly - H}
+  ${lx - (D / 3)},${ly - H + (D / 3)}
+  ${lx - (D / 3)},${ly + (D / 3)}
+`;
+leftWall.setAttribute("points", leftPoints);
+leftWall.setAttribute("fill", "#efefef");
+leftWall.setAttribute("stroke", "#bbb");
+leftWall.setAttribute("stroke-width", "3");
+
+
+// RIGHT WALL (aligned to new floor position)
+const rightWall = document.createElementNS(svg.namespaceURI, "polygon");
+const rx = (container.clientWidth + W) / 2;
+
+const rightPoints = `
+  ${rx},${ly}
+  ${rx},${ly - H}
+  ${rx + (D / 3)},${ly - H + (D / 3)}
+  ${rx + (D / 3)},${ly + (D / 3)}
+`;
+rightWall.setAttribute("points", rightPoints);
+rightWall.setAttribute("fill", "#efefef");
+rightWall.setAttribute("stroke", "#bbb");
+rightWall.setAttribute("stroke-width", "3");
+
 
   // -----------------------------------------
   // ORDER: Floor → Grid → Walls
@@ -1717,6 +1734,32 @@ function generateFloorplanRoom(widthM, depthM, heightM) {
 
   // 4️⃣ Add SVG to the canvas
   container.appendChild(svg);
+
+  // -----------------------------------------
+// ADD ZOOM IN/OUT (mouse wheel)
+// -----------------------------------------
+let zoom = 1;
+const minZoom = 0.5;
+const maxZoom = 2.5;
+
+container.addEventListener("wheel", (e) => {
+  e.preventDefault();
+
+  // Zoom direction
+  if (e.deltaY < 0) {
+    zoom += 0.1; // zoom in
+  } else {
+    zoom -= 0.1; // zoom out
+  }
+
+  // clamp limits
+  zoom = Math.max(minZoom, Math.min(maxZoom, zoom));
+
+  // Apply scale to SVG
+  svg.style.transformOrigin = "center bottom";  // floor stays anchored
+  svg.style.transform = `scale(${zoom})`;
+window.currentZoom = zoom;   // ⭐ ADD THIS LINE
+}, { passive: false });
 }
 
 </script>
@@ -1828,59 +1871,74 @@ document.addEventListener("DOMContentLoaded", () => {
 
     selected = target;
 
-    const rect = canvas.getBoundingClientRect();
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+const rect = canvas.getBoundingClientRect();
+const zoom = window.currentZoom || 1;
 
-    const curX = parseFloat(selected.getAttribute("x")) || 0;
-    const curY = parseFloat(selected.getAttribute("y")) || 0;
+const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+const clientY = e.touches ? e.touches[0].clientY : e.clientY;
 
-    offsetX = clientX - rect.left - curX;
-    offsetY = clientY - rect.top - curY;
+// Current SVG coordinates
+const curX = parseFloat(selected.getAttribute("x")) || 0;
+const curY = parseFloat(selected.getAttribute("y")) || 0;
 
-    // Bring item to front
-    svg.appendChild(selected);
+// Apply zoom compensation for grabbing point
+offsetX = (clientX - rect.left) / zoom - curX;
+offsetY = (clientY - rect.top) / zoom - curY;
 
-    document.addEventListener("mousemove", drag);
-    document.addEventListener("mouseup", endDrag);
-    document.addEventListener("touchmove", drag, { passive: false });
-    document.addEventListener("touchend", endDrag);
+// Bring item to front
+svg.appendChild(selected);
+
+// Event listeners
+document.addEventListener("mousemove", drag);
+document.addEventListener("mouseup", endDrag);
+document.addEventListener("touchmove", drag, { passive: false });
+document.addEventListener("touchend", endDrag);
+
   }
 
-  function drag(e) {
-    if (!selected) return;
-    e.preventDefault();
+function drag(e) {
+  if (!selected) return;
+  e.preventDefault();
 
-    const svg = canvas.querySelector("svg");
-    const rect = canvas.getBoundingClientRect();
+  const zoom = window.currentZoom || 1;
+  const svg = canvas.querySelector("svg");
+  const rect = canvas.getBoundingClientRect();
 
-    const floorRect = svg.querySelector("#floorRect");
-    if (!floorRect) return;
+  const floorRect = svg.querySelector("#floorRect");
+  if (!floorRect) return;
 
-    const floorY = parseFloat(floorRect.getAttribute("y"));
+  const floorY = parseFloat(floorRect.getAttribute("y"));
 
-    const baseW = selected.originalWidth || selected.width.baseVal.value;
-    const baseH = selected.originalHeight || selected.height.baseVal.value;
+  // Base unscaled image dimensions
+  const baseW = selected.originalWidth || selected.width.baseVal.value;
+  const baseH = selected.originalHeight || selected.height.baseVal.value;
 
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+  // Raw pointer position
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
 
-    let newX = clientX - rect.left - offsetX;
-    let newY = clientY - rect.top - offsetY;
+  // Convert pointer → SVG coords with zoom compensation
+  let newX = (clientX - rect.left) / zoom - offsetX;
+  let newY = (clientY - rect.top)  / zoom - offsetY;
 
-    if (newY > floorY - baseH) {
-      newY = floorY - baseH;
-    }
-
-    const depthRange = floorY - 40;
-    const depthFactor = 1 - (newY / depthRange);
-    const scale = Math.max(0.45, Math.min(1.2, depthFactor));
-
-    selected.setAttribute("x", newX);
-    selected.setAttribute("y", newY);
-    selected.setAttribute("width", baseW * scale);
-    selected.setAttribute("height", baseH * scale);
+  // Don't allow item below the floor
+  if (newY > floorY - baseH) {
+    newY = floorY - baseH;
   }
+
+  // -------------------------------
+  // DEPTH-BASED SCALE (3D illusion)
+  // -------------------------------
+  const depthRange = floorY - 40;
+  const depthFactor = 1 - (newY / depthRange);
+  const scale = Math.max(0.45, Math.min(1.2, depthFactor));
+
+  selected.setAttribute("x", newX);
+  selected.setAttribute("y", newY);
+  selected.setAttribute("width", baseW * scale);
+  selected.setAttribute("height", baseH * scale);
+}
+
 
   function endDrag() {
     if (!selected) {
