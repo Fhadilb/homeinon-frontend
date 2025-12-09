@@ -1668,11 +1668,13 @@ const ly = floorTop; // wall meets floor
 
 // CORRECTED perspective points (all inside canvas)
 const leftPoints = `
-  ${lx},${ly}                         /* bottom inner */
-  ${lx},${ly - H}                     /* top inner */
-  ${lx - (D / 3)},${ly - H + (D / 6)} /* top outer */
-  ${lx - (D / 3)},${ly - (D / 6)}     /* bottom outer */
+  ${lx},${ly}
+  ${lx},${ly - H}
+  ${lx - (D / 3)},${ly - H + (D / 6)}
+  ${lx - (D / 3)},${ly - (D / 6)}
 `;
+leftWall.setAttribute("points", leftPoints.trim());
+
 
 leftWall.setAttribute("points", leftPoints.trim());
 leftWall.setAttribute("fill", "#efefef");
@@ -1687,11 +1689,13 @@ const rightWall = document.createElementNS(svg.namespaceURI, "polygon");
 const rx = (container.clientWidth + W) / 2;
 
 const rightPoints = `
-  ${rx},${ly}                          /* bottom inner */
-  ${rx},${ly - H}                      /* top inner */
-  ${rx + (D / 3)},${ly - H + (D / 6)}  /* top outer */
-  ${rx + (D / 3)},${ly - (D / 6)}      /* bottom outer */
+  ${rx},${ly}
+  ${rx},${ly - H}
+  ${rx + (D / 3)},${ly - H + (D / 6)}
+  ${rx + (D / 3)},${ly - (D / 6)}
 `;
+rightWall.setAttribute("points", rightPoints.trim());
+
 
 rightWall.setAttribute("points", rightPoints.trim());
 rightWall.setAttribute("fill", "#efefef");
