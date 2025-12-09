@@ -1639,34 +1639,37 @@ floor.style.opacity = 0.9;
 
 
 // BACK WALL (aligned to floor)
-const backWall = document.createElementNS(svg.namespaceURI, "rect");
-backWall.setAttribute("id", "backWallRect");
+const backWallRect = document.createElementNS(svg.namespaceURI, "rect");
+backWallRect.setAttribute("id", "backWallRect");
 
 // Center horizontally
-backWall.setAttribute("x", (container.clientWidth - W) / 2);
+backWallRect.setAttribute("x", (container.clientWidth - W) / 2);
 
 // NEW: wall sits exactly above floor
-backWall.setAttribute("y", floorTop - H);
+backWallRect.setAttribute("y", floorTop - H);
 
-backWall.setAttribute("width", W);
-backWall.setAttribute("height", H);
-backWall.setAttribute("fill", "#f5f5f5");
-backWall.setAttribute("stroke", "#aaa");
-backWall.setAttribute("stroke-width", "3");
+backWallRect.setAttribute("width", W);
+backWallRect.setAttribute("height", H);
+backWallRect.setAttribute("fill", "#f5f5f5");
+backWallRect.setAttribute("stroke", "#aaa");
+backWallRect.setAttribute("stroke-width", "3");
+
 
 
 // LEFT WALL (aligned to new floor position)
 const leftWall = document.createElementNS(svg.namespaceURI, "polygon");
+
 const lx = (container.clientWidth - W) / 2;
-const ly = floorTop; // NEW — wall meets the floor
+const ly = floorTop; // wall meets floor
 
 const leftPoints = `
-  ${lx},${ly}
-  ${lx},${ly - H}
-  ${lx - (D / 3)},${ly - H + (D / 3)}
-  ${lx - (D / 3)},${ly + (D / 3)}
+  ${lx},${ly}                 // bottom inner corner
+  ${lx},${ly - H}             // top inner corner
+  ${lx - (D / 3)},${ly - H + (D / 3)}  // top outer corner (perspective)
+  ${lx - (D / 3)},${ly + (D / 3)}      // bottom outer corner (perspective)
 `;
-leftWall.setAttribute("points", leftPoints);
+
+leftWall.setAttribute("points", leftPoints.trim());
 leftWall.setAttribute("fill", "#efefef");
 leftWall.setAttribute("stroke", "#bbb");
 leftWall.setAttribute("stroke-width", "3");
@@ -1674,18 +1677,21 @@ leftWall.setAttribute("stroke-width", "3");
 
 // RIGHT WALL (aligned to new floor position)
 const rightWall = document.createElementNS(svg.namespaceURI, "polygon");
+
 const rx = (container.clientWidth + W) / 2;
 
 const rightPoints = `
-  ${rx},${ly}
-  ${rx},${ly - H}
-  ${rx + (D / 3)},${ly - H + (D / 3)}
-  ${rx + (D / 3)},${ly + (D / 3)}
+  ${rx},${ly}                  // bottom inner corner
+  ${rx},${ly - H}              // top inner corner
+  ${rx + (D / 3)},${ly - H + (D / 3)}  // top outer corner
+  ${rx + (D / 3)},${ly + (D / 3)}      // bottom outer corner
 `;
-rightWall.setAttribute("points", rightPoints);
+
+rightWall.setAttribute("points", rightPoints.trim());
 rightWall.setAttribute("fill", "#efefef");
 rightWall.setAttribute("stroke", "#bbb");
 rightWall.setAttribute("stroke-width", "3");
+
 
 
   // -----------------------------------------
@@ -1701,34 +1707,34 @@ rightWall.setAttribute("stroke-width", "3");
 
   const gridSize = 40; // px spacing
 
-  // Vertical grid lines
-  for (let x = 0; x <= W; x += gridSize) {
-    const line = document.createElementNS(svg.namespaceURI, "line");
-    line.setAttribute("x1", (container.clientWidth - W) / 2 + x);
-    line.setAttribute("y1", (container.clientHeight - (D / 2)) / 2);
-    line.setAttribute("x2", (container.clientWidth - W) / 2 + x);
-    line.setAttribute("y2", (container.clientHeight - (D / 2)) / 2 + D / 2);
-    line.setAttribute("stroke", "#999");
-    line.setAttribute("stroke-width", "1");
-    gridGroup.appendChild(line);
-  }
+// Vertical grid lines
+for (let x = 0; x <= W; x += gridSize) {
+  const line = document.createElementNS(svg.namespaceURI, "line");
+  line.setAttribute("x1", (container.clientWidth - W) / 2 + x);
+  line.setAttribute("y1", floorTop);                 // 👈 FIXED
+  line.setAttribute("y2", floorTop + D / 2);         // 👈 FIXED
+  line.setAttribute("stroke", "#999");
+  line.setAttribute("stroke-width", "1");
+  gridGroup.appendChild(line);
+}
 
-  // Horizontal grid lines
-  for (let y = 0; y <= D / 2; y += gridSize) {
-    const line = document.createElementNS(svg.namespaceURI, "line");
-    line.setAttribute("x1", (container.clientWidth - W) / 2);
-    line.setAttribute("y1", (container.clientHeight - (D / 2)) / 2 + y);
-    line.setAttribute("x2", (container.clientWidth + W) / 2);
-    line.setAttribute("y2", (container.clientHeight - (D / 2)) / 2 + y);
-    line.setAttribute("stroke", "#999");
-    line.setAttribute("stroke-width", "1");
-    gridGroup.appendChild(line);
-  }
+// Horizontal grid lines
+for (let y = 0; y <= D / 2; y += gridSize) {
+  const line = document.createElementNS(svg.namespaceURI, "line");
+  line.setAttribute("x1", (container.clientWidth - W) / 2);
+  line.setAttribute("y1", floorTop + y);             // 👈 FIXED
+  line.setAttribute("x2", (container.clientWidth + W) / 2);
+  line.setAttribute("y2", floorTop + y);             // 👈 FIXED
+  line.setAttribute("stroke", "#999");
+  line.setAttribute("stroke-width", "1");
+  gridGroup.appendChild(line);
+}
+
 
   svg.appendChild(gridGroup);
 
   // 3️⃣ Append walls LAST (so they appear in front)
-  svg.appendChild(backWall);
+  svg.appendChild(backWallRect);
   svg.appendChild(leftWall);
   svg.appendChild(rightWall);
 
@@ -1858,7 +1864,13 @@ document.addEventListener("DOMContentLoaded", () => {
   let selected = null;
   let offsetX = 0;
   let offsetY = 0;
-
+  
+  // 🔥 Wall-mount item detection helper
+  function isWallItem(itemData) {
+    const keywords = ["mirror", "shelf", "cabinet", "bookcase"];
+    const title = (itemData?.title || "").toLowerCase();
+    return keywords.some(k => title.includes(k));
+  }
   canvas.addEventListener("mousedown", startDrag);
   canvas.addEventListener("touchstart", startDrag, { passive: false });
 
@@ -1913,18 +1925,24 @@ function drag(e) {
   const baseW = selected.originalWidth || selected.width.baseVal.value;
   const baseH = selected.originalHeight || selected.height.baseVal.value;
 
-  // Raw pointer position
-  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+// Raw pointer position
+const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+const clientY = e.touches ? e.touches[0].clientY : e.clientY;
 
-  // Convert pointer → SVG coords with zoom compensation
-  let newX = (clientX - rect.left) / zoom - offsetX;
-  let newY = (clientY - rect.top)  / zoom - offsetY;
+// Convert pointer → SVG coords with zoom compensation
+let newX = (clientX - rect.left) / zoom - offsetX;
+let newY = (clientY - rect.top) / zoom - offsetY;
 
-  // Don't allow item below the floor
-  if (newY > floorY - baseH) {
-    newY = floorY - baseH;
-  }
+// ⭐ SNAP TO GRID (40px)
+const grid = 40;
+newX = Math.round(newX / grid) * grid;
+newY = Math.round(newY / grid) * grid;
+
+// ⭐ Correct floor clamp using SCALED height
+if (newY > floorY - (baseH * scale)) {
+  newY = floorY - (baseH * scale);
+}
+
 
   // -------------------------------
   // DEPTH-BASED SCALE (3D illusion)
@@ -1940,36 +1958,59 @@ function drag(e) {
 }
 
 
-  function endDrag() {
-    if (!selected) {
-      cleanup();
-      return;
-    }
+function endDrag() {
+  if (!selected) {
+    cleanup();
+    return;
+  }
 
-    const svg = canvas.querySelector("svg");
-    const backWall = svg.querySelector("#backWallRect");
+  const svg = canvas.querySelector("svg");
 
-    if (backWall) {
-      const backY = parseFloat(backWall.getAttribute("y"));
-      const y = parseFloat(selected.getAttribute("y"));
+  // ---------------------------------------------
+  // ⭐ WALL SNAPPING (only for wall-mount items)
+  // ---------------------------------------------
+  const backWall = svg.querySelector("#backWallRect");
+  if (backWall) {
+    const backX = parseFloat(backWall.getAttribute("x"));
+    const backWidth = parseFloat(backWall.getAttribute("width"));
+    const backY = parseFloat(backWall.getAttribute("y"));
 
-      if (y < backY + 30) {
+    const y = parseFloat(selected.getAttribute("y"));
+    const itemW = selected.width.baseVal.value;
+
+    if (isWallItem(selected.itemData)) {
+
+      // Snap to the wall if close
+      if (y < backY + 50) {
         selected.setAttribute("y", backY + 10);
+
+        // Snap horizontally if near center
+        const centerX = backX + backWidth / 2 - itemW / 2;
+        const currentX = parseFloat(selected.getAttribute("x"));
+        if (Math.abs(currentX - centerX) < 80) {
+          selected.setAttribute("x", centerX);
+        }
       }
     }
-
-    const items = [...svg.querySelectorAll("image")];
-    items
-      .sort((a, b) => {
-        const ay = parseFloat(a.getAttribute("y"));
-        const by = parseFloat(b.getAttribute("y"));
-        return ay - by;
-      })
-      .forEach((img) => svg.appendChild(img));
-
-    selected = null;
-    cleanup();
   }
+
+  // ---------------------------------------------
+  // Depth layering: bring closer items to front
+  // ---------------------------------------------
+  const items = [...svg.querySelectorAll("image")];
+  items
+    .sort((a, b) => {
+      const ay = parseFloat(a.getAttribute("y"));
+      const by = parseFloat(b.getAttribute("y"));
+      return ay - by;
+    })
+    .forEach((img) => svg.appendChild(img));
+
+  selected = null;
+  cleanup();
+}
+
+
 
   function cleanup() {
     document.removeEventListener("mousemove", drag);
