@@ -1735,7 +1735,7 @@ function generateFloorplanRoom(widthM, depthM, heightM) {
 
   // Smart mousedown - skip if dragging an item
   container.addEventListener("mousedown", (e) => {
-    if (isDraggingItem) return;  // SKIP IF ITEM DRAG STARTED
+    if (isDraggingItem) return;  // <-- Check global flag
 
     const target = e.target.closest("image");
     if (target) return;
@@ -1746,9 +1746,8 @@ function generateFloorplanRoom(widthM, depthM, heightM) {
     container.style.cursor = "grabbing";
   });
 
-  // Touch support
   container.addEventListener("touchstart", (e) => {
-    if (isDraggingItem) return;  // SKIP IF ITEM DRAG STARTED
+    if (isDraggingItem) return;  // <-- Check global flag
 
     if (e.touches.length !== 1) return;
     const touch = e.touches[0];
@@ -1865,6 +1864,9 @@ function extractNumber(dimText, index) {
 }
 </script>
 <script>
+// GLOBAL FLAG - must be outside any function so floorplan code can access it
+let isDraggingItem = false;
+
 // STEP 5+6 — Drag, depth-scale, z-ordering, wall snapping
 document.addEventListener("DOMContentLoaded", () => {
   const canvas = document.getElementById("roomsetCanvas");
@@ -1873,7 +1875,6 @@ document.addEventListener("DOMContentLoaded", () => {
   let selected = null;
   let offsetX = 0;
   let offsetY = 0;
-let isDraggingItem = false;  // NEW FLAG
 
   // 🔥 Wall-mount item detection helper
   function isWallItem(itemData) {
@@ -1889,8 +1890,9 @@ let isDraggingItem = false;  // NEW FLAG
     const target = e.target.closest("image");
     if (!target) return;
 
-    // CRITICAL: Prevent floorplan panning when dragging an item
-    e.stopPropagation();
+    e.stopPropagation(); // Backup prevention
+
+    isDraggingItem = true; // SET GLOBAL FLAG
 
     selected = target;
 
@@ -1900,18 +1902,14 @@ let isDraggingItem = false;  // NEW FLAG
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
 
-    // Current SVG coordinates
     const curX = parseFloat(selected.getAttribute("x")) || 0;
     const curY = parseFloat(selected.getAttribute("y")) || 0;
 
-    // Apply zoom compensation for grabbing point
     offsetX = (clientX - rect.left) / zoom - curX;
     offsetY = (clientY - rect.top) / zoom - curY;
 
-    // Bring item to front
-    svg.appendChild(selected);
+    svg.appendChild(selected); // Bring to front
 
-    // Attach move/end listeners
     document.addEventListener("mousemove", drag);
     document.addEventListener("mouseup", endDrag);
     document.addEventListener("touchmove", drag, { passive: false });
@@ -1926,8 +1924,6 @@ let isDraggingItem = false;  // NEW FLAG
     const svg = canvas.querySelector("svg");
     const rect = canvas.getBoundingClientRect();
 
-    // ... (rest of your drag function remains unchanged)
-    // Keep everything from here down exactly as you have it
     const floorRect = svg.querySelector("#floorRect");
     if (!floorRect) return;
 
@@ -1942,17 +1938,14 @@ let isDraggingItem = false;  // NEW FLAG
     let newX = (clientX - rect.left) / zoom - offsetX;
     let newY = (clientY - rect.top) / zoom - offsetY;
 
-    // SNAP TO GRID (40px)
     const grid = 40;
     newX = Math.round(newX / grid) * grid;
     newY = Math.round(newY / grid) * grid;
 
-    // Clamp to floor
     if (newY > floorY - (baseH * scale)) {
       newY = floorY - (baseH * scale);
     }
 
-    // DEPTH-BASED SCALE
     const depthRange = floorY - 40;
     const depthFactor = 1 - (newY / depthRange);
     const scaleFactor = Math.max(0.45, Math.min(1.2, depthFactor));
@@ -1968,13 +1961,10 @@ let isDraggingItem = false;  // NEW FLAG
       cleanup();
       return;
     }
-// ATTACH ON CAPTURE PHASE (true as third arg)
-  canvas.addEventListener("mousedown", startDrag, true);
-  canvas.addEventListener("touchstart", startDrag, { passive: false, capture: true });
 
     const svg = canvas.querySelector("svg");
 
-    // WALL SNAPPING (your existing logic)
+    // Your existing wall snapping and layering code
     const backWall = svg.querySelector("#backWallRect");
     if (backWall) {
       const backX = parseFloat(backWall.getAttribute("x"));
@@ -1996,16 +1986,12 @@ let isDraggingItem = false;  // NEW FLAG
       }
     }
 
-    // Depth layering
     const items = [...svg.querySelectorAll("image")];
     items
-      .sort((a, b) => {
-        const ay = parseFloat(a.getAttribute("y"));
-        const by = parseFloat(b.getAttribute("y"));
-        return ay - by;
-      })
-      .forEach((img) => svg.appendChild(img));
+      .sort((a, b) => parseFloat(a.getAttribute("y")) - parseFloat(b.getAttribute("y")))
+      .forEach(img => svg.appendChild(img));
 
+    isDraggingItem = false; // RESET GLOBAL FLAG
     selected = null;
     cleanup();
   }
@@ -2015,11 +2001,12 @@ let isDraggingItem = false;  // NEW FLAG
     document.removeEventListener("mouseup", endDrag);
     document.removeEventListener("touchmove", drag);
     document.removeEventListener("touchend", endDrag);
+    isDraggingItem = false; // Extra safety reset
   }
 
-  // Attach listeners once
-  canvas.addEventListener("mousedown", startDrag);
-  canvas.addEventListener("touchstart", startDrag, { passive: false });
+  // Attach with capture phase so item drag runs BEFORE floorplan pan
+  canvas.addEventListener("mousedown", startDrag, true);
+  canvas.addEventListener("touchstart", startDrag, { passive: false, capture: true });
 });
 
 </script>
