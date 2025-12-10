@@ -1733,9 +1733,9 @@ function generateFloorplanRoom(widthM, depthM, heightM) {
     window.currentZoom = zoom;
   }, { passive: false });
 
-  // Smart mousedown - skip if dragging an item
+  // Smart mousedown - only pan if NOT dragging an item
   container.addEventListener("mousedown", (e) => {
-    if (isDraggingItem) return;  // <-- Check global flag
+    if (isDraggingItem) return;  // ← THIS LINE IS CRITICAL
 
     const target = e.target.closest("image");
     if (target) return;
@@ -1746,8 +1746,30 @@ function generateFloorplanRoom(widthM, depthM, heightM) {
     container.style.cursor = "grabbing";
   });
 
+  container.addEventListener("mousemove", (e) => {
+    if (!isDragging) return;
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+    panX += dx;
+    panY += dy;
+    startX = e.clientX;
+    startY = e.clientY;
+    updateTransform();
+  });
+
+  container.addEventListener("mouseup", () => {
+    isDragging = false;
+    container.style.cursor = "default";
+  });
+
+  container.addEventListener("mouseleave", () => {
+    isDragging = false;
+    container.style.cursor = "default";
+  });
+
+  // Touch support
   container.addEventListener("touchstart", (e) => {
-    if (isDraggingItem) return;  // <-- Check global flag
+    if (isDraggingItem) return;  // ← THIS LINE IS CRITICAL
 
     if (e.touches.length !== 1) return;
     const touch = e.touches[0];
