@@ -8,14 +8,14 @@ async function loadWebLLM() {
 
   console.log("⏳ Loading WebLLM model…");
 
-  webllmModel = await window.webllm.CreateMLCEngine({
-    model: "Llama-3.1-8B-Instruct-q4f16_1",
-    modelLibURLPrefix: "https://huggingface.co/mlc-ai/web-llm-models/resolve/main/"
+  webllmModel = await window.webllm.Chat.create({
+    model: "Llama-3.1-8B-Instruct-q4f16_1-MLC-1k"
   });
 
   console.log("✅ WebLLM ready!");
   return webllmModel;
 }
+
 
 async function aiClassify(query) {
   const model = await loadWebLLM();
@@ -37,12 +37,11 @@ Return ONLY valid JSON:
 }
 `;
 
-  const response = await model.chatCompletion([
-    { role: "user", content: prompt }
-  ]);
+  const response = await model.chat.completions.create({
+    messages: [{ role: "user", content: prompt }]
+  });
 
-  const text =
-    response?.choices?.[0]?.message?.content?.trim() || "";
+  const text = response?.choices?.[0]?.message?.content?.trim() || "";
 
   try {
     return JSON.parse(text);
@@ -50,7 +49,6 @@ Return ONLY valid JSON:
     return { categories: [], room: null };
   }
 }
-
 
 
 const API_URL = "https://homeinon-backend.onrender.com/products";
