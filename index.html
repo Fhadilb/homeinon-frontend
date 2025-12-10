@@ -1607,11 +1607,7 @@ function generateFloorplanRoom(widthM, depthM, heightM) {
   const container = document.getElementById("roomsetCanvas");
   container.innerHTML = "";
 
-  // Blueprint dark blue background
-  container.style.background = "#0d1b2a"; 
-  container.style.backgroundImage = "none";
-
-  const scale = 120; // pixels per meter
+  const scale = 120;
   const W = widthM * scale;
   const D = depthM * scale;
   const H = heightM * scale;
@@ -1625,38 +1621,34 @@ function generateFloorplanRoom(widthM, depthM, heightM) {
   svg.style.left = "0";
   svg.style.overflow = "visible";
 
-  // Center the room
   const cx = container.clientWidth / 2;
-  const cy = container.clientHeight / 2 + 50; // Slight downward shift for better fit
+  const cy = container.clientHeight / 2 + 50;
 
-  // Isometric transformation helpers
-  const isoX = (x, y) => cx + (x - y) * 0.5 * scale * 0.866; // cos(30°)
+  const isoX = (x, y) => cx + (x - y) * 0.5 * scale * 0.866;
   const isoY = (x, y, z = 0) => cy - (x + y) * 0.5 * scale * 0.5 + z * scale * 0.8;
 
-  // Floor corners (top-down rectangle → isometric)
-  const floorFrontLeft  = { x: -widthM/2, y: depthM/2, z: 0 };
-  const floorFrontRight = { x: widthM/2,  y: depthM/2, z: 0 };
-  const floorBackRight  = { x: widthM/2,  y: -depthM/2, z: 0 };
-  const floorBackLeft   = { x: -widthM/2, y: -depthM/2, z: 0 };
+  const floorFrontLeft = { x: -widthM/2, y: depthM/2, z: 0 };
+  const floorFrontRight = { x: widthM/2, y: depthM/2, z: 0 };
+  const floorBackRight = { x: widthM/2, y: -depthM/2, z: 0 };
+  const floorBackLeft = { x: -widthM/2, y: -depthM/2, z: 0 };
 
   const pFL = { x: isoX(floorFrontLeft.x, floorFrontLeft.y), y: isoY(floorFrontLeft.x, floorFrontLeft.y) };
   const pFR = { x: isoX(floorFrontRight.x, floorFrontRight.y), y: isoY(floorFrontRight.x, floorFrontRight.y) };
   const pBR = { x: isoX(floorBackRight.x, floorBackRight.y), y: isoY(floorBackRight.x, floorBackRight.y) };
   const pBL = { x: isoX(floorBackLeft.x, floorBackLeft.y), y: isoY(floorBackLeft.x, floorBackLeft.y) };
 
-  // Top of walls
   const topFL = { x: pFL.x, y: pFL.y - H * 0.8 };
   const topFR = { x: pFR.x, y: pFR.y - H * 0.8 };
   const topBR = { x: pBR.x, y: pBR.y - H * 0.8 };
   const topBL = { x: pBL.x, y: pBL.y - H * 0.8 };
 
-  // GRID (on floor)
+  // Grid group
   const gridGroup = document.createElementNS(svg.namespaceURI, "g");
   gridGroup.setAttribute("opacity", "0.25");
   gridGroup.setAttribute("stroke", "#4fc3f7");
   gridGroup.setAttribute("stroke-width", "1");
 
-  const gridStep = 0.5; // 0.5m grid
+  const gridStep = 0.5;
   for (let x = -widthM/2; x <= widthM/2; x += gridStep) {
     const line = document.createElementNS(svg.namespaceURI, "line");
     const p1 = { x: isoX(x, depthM/2), y: isoY(x, depthM/2) };
@@ -1675,7 +1667,7 @@ function generateFloorplanRoom(widthM, depthM, heightM) {
   }
   svg.appendChild(gridGroup);
 
-  // FLOOR outline
+  // Floor
   const floor = document.createElementNS(svg.namespaceURI, "polygon");
   floor.setAttribute("points", `${pFL.x},${pFL.y} ${pFR.x},${pFR.y} ${pBR.x},${pBR.y} ${pBL.x},${pBL.y}`);
   floor.setAttribute("fill", "none");
@@ -1683,7 +1675,6 @@ function generateFloorplanRoom(widthM, depthM, heightM) {
   floor.setAttribute("stroke-width", "4");
   svg.appendChild(floor);
 
-  // WALLS (only visible ones)
   // Back wall
   const backWall = document.createElementNS(svg.namespaceURI, "polyline");
   backWall.setAttribute("points", `${pBL.x},${pBL.y} ${pBR.x},${pBR.y} ${topBR.x},${topBR.y} ${topBL.x},${topBL.y} ${pBL.x},${pBL.y}`);
@@ -1708,17 +1699,28 @@ function generateFloorplanRoom(widthM, depthM, heightM) {
   rightWall.setAttribute("stroke-width", "4");
   svg.appendChild(rightWall);
 
+  // Auto-fit: Wrap in group and scale/translate to contain within bounds
+  const group = document.createElementNS(svg.namespaceURI, "g");
+  while (svg.firstChild) group.appendChild(svg.firstChild);
+  svg.appendChild(group);
+
+  const bbox = group.getBBox();
+  const padding = 0.85; // 15% padding
+  const s = Math.min(container.clientWidth / bbox.width, container.clientHeight / bbox.height) * padding;
+  const tx = (container.clientWidth - bbox.width * s) / 2 - bbox.x * s;
+  const ty = (container.clientHeight - bbox.height * s) / 2 - bbox.y * s;
+  group.setAttribute("transform", `translate(${tx}, ${ty}) scale(${s})`);
+
   container.appendChild(svg);
 
-  // Simple zoom
+  // Zoom
   let zoom = 1;
   window.currentZoom = zoom;
   container.addEventListener("wheel", (e) => {
     e.preventDefault();
     zoom += e.deltaY > 0 ? -0.1 : 0.1;
     zoom = Math.max(0.5, Math.min(3, zoom));
-    svg.style.transform = `scale(${zoom})`;
-    svg.style.transformOrigin = "center center";
+    group.style.transform = `translate(${tx}, ${ty}) scale(${zoom * s})`;  // Apply zoom on top of fit scale
     window.currentZoom = zoom;
   }, { passive: false });
 }
