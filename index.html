@@ -1605,73 +1605,81 @@ document.addEventListener("DOMContentLoaded", () => {
 // ----------------------------------------------------------
 function generateFloorplanRoom(widthM, depthM, heightM) {
   const container = document.getElementById("roomsetCanvas");
-  container.innerHTML = ""; // Clear previous
+  container.innerHTML = "";
+
+  // Set blueprint background
+  container.style.background = "#0a1f3d"; // Deep blueprint blue
 
   const scale = 120; // pixels per meter
   const W = widthM * scale;
   const D = depthM * scale;
   const H = heightM * scale;
 
-  // Perspective settings
-  const vanishOffsetX = 300;     // How much side walls slant inward
-  const vanishOffsetY = 120;     // How much they rise toward vanishing point
+  // Isometric angles
+  const angle = Math.PI / 6; // 30 degrees
+  const sin = Math.sin(angle);
+  const cos = Math.cos(angle);
 
-  // Create SVG with proper viewBox to prevent clipping
+  // Offsets for perspective
+  const offsetX = 200;
+  const offsetY = 100;
+
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   svg.setAttribute("width", "100%");
   svg.setAttribute("height", "100%");
-  svg.setAttribute("viewBox", `-400 0 ${container.clientWidth + 800} ${container.clientHeight + 400}`);
+  svg.setAttribute("viewBox", "0 0 " + container.clientWidth + " " + container.clientHeight);
   svg.style.position = "absolute";
   svg.style.top = "0";
   svg.style.left = "0";
   svg.style.overflow = "visible";
 
-  // Center the room
-  const centerX = container.clientWidth / 2;
-  const bottomY = container.clientHeight - 80; // padding from bottom
+  // Center point
+  const cx = container.clientWidth / 2;
+  const cy = container.clientHeight / 2 + 100; // Lower to fit walls
 
-  // Floor (isometric diamond-ish)
+  // Floor (diamond shape)
   const floorPoints = `
-    ${centerX - W/2},${bottomY}
-    ${centerX},${bottomY - D/2}
-    ${centerX + W/2},${bottomY}
-    ${centerX},${bottomY + D/2}
+    ${cx - W/2 * cos},${cy + W/2 * sin}
+    ${cx},${cy + (W/2 + D) * sin}
+    ${cx + W/2 * cos},${cy + W/2 * sin}
+    ${cx},${cy - D * sin}
   `;
 
   const floor = document.createElementNS(svg.namespaceURI, "polygon");
   floor.setAttribute("points", floorPoints);
-  floor.setAttribute("fill", "#e8e8e8");
-  floor.setAttribute("stroke", "#999");
-  floor.setAttribute("stroke-width", "3");
+  floor.setAttribute("fill", "none");
+  floor.setAttribute("stroke", "#4fc3f7");
+  floor.setAttribute("stroke-width", "4");
+  floor.setAttribute("opacity", "0.8");
   svg.appendChild(floor);
 
   // Grid on floor
   const gridGroup = document.createElementNS(svg.namespaceURI, "g");
-  gridGroup.setAttribute("opacity", "0.25");
+  gridGroup.setAttribute("opacity", "0.3");
   const gridSize = 40;
 
-  // Grid lines along width and depth
   for (let i = 0; i <= widthM; i++) {
-    const x = centerX - W/2 + i * scale;
+    const prog = i / widthM;
+    const x = cx + (prog - 0.5) * W * cos;
     const line = document.createElementNS(svg.namespaceURI, "line");
     line.setAttribute("x1", x);
-    line.setAttribute("y1", bottomY);
-    line.setAttribute("x2", centerX + (x - centerX) * 0.5);
-    line.setAttribute("y2", bottomY - D/4);
-    line.setAttribute("stroke", "#888");
+    line.setAttribute("y1", cy + (prog - 0.5) * W * sin);
+    line.setAttribute("x2", cx);
+    line.setAttribute("y2", cy + (0.5 + depthM) * sin * gridSize / scale * i);
+    line.setAttribute("stroke", "#4fc3f7");
     line.setAttribute("stroke-width", "1");
     gridGroup.appendChild(line);
   }
 
   for (let i = 0; i <= depthM; i++) {
     const prog = i / depthM;
-    const y = bottomY - (D/2) * prog;
+    const y = cy + prog * D * sin;
     const line = document.createElementNS(svg.namespaceURI, "line");
-    line.setAttribute("x1", centerX - W/2);
-    line.setAttribute("y1", y);
-    line.setAttribute("x2", centerX + W/2);
-    line.setAttribute("y2", y);
-    line.setAttribute("stroke", "#888");
+    line.setAttribute("x1", cx - W/2 * cos);
+    line.setAttribute("y1", y + W/2 * sin);
+    line.setAttribute("x2", cx + W/2 * cos);
+    line.setAttribute("y2", y + W/2 * sin);
+    line.setAttribute("stroke", "#4fc3f7");
     line.setAttribute("stroke-width", "1");
     gridGroup.appendChild(line);
   }
@@ -1679,53 +1687,53 @@ function generateFloorplanRoom(widthM, depthM, heightM) {
 
   // Back wall
   const backWall = document.createElementNS(svg.namespaceURI, "rect");
-  backWall.setAttribute("x", centerX - W/2);
-  backWall.setAttribute("y", bottomY - H - D/2);
-  backWall.setAttribute("width", W);
+  backWall.setAttribute("x", cx - W/2 * cos);
+  backWall.setAttribute("y", cy - H + W/2 * sin);
+  backWall.setAttribute("width", W * cos);
   backWall.setAttribute("height", H);
-  backWall.setAttribute("fill", "#f8f8f8");
-  backWall.setAttribute("stroke", "#aaa");
-  backWall.setAttribute("stroke-width", "3");
+  backWall.setAttribute("fill", "none");
+  backWall.setAttribute("stroke", "#80deea");
+  backWall.setAttribute("stroke-width", "4");
   svg.appendChild(backWall);
 
   // Left wall
   const leftWall = document.createElementNS(svg.namespaceURI, "polygon");
   const leftPoints = `
-    ${centerX - W/2},${bottomY}
-    ${centerX - W/2},${bottomY - H}
-    ${centerX - W/2 - vanishOffsetX},${bottomY - H - vanishOffsetY}
-    ${centerX - vanishOffsetX},${bottomY - vanishOffsetY}
+    ${cx - W/2 * cos},${cy + W/2 * sin}
+    ${cx - W/2 * cos},${cy - H + W/2 * sin}
+    ${cx - W/2 * cos - offsetX},${cy - H + W/2 * sin - offsetY}
+    ${cx - offsetX},${cy + W/2 * sin - offsetY}
   `;
   leftWall.setAttribute("points", leftPoints);
-  leftWall.setAttribute("fill", "#f0f0f0");
-  leftWall.setAttribute("stroke", "#bbb");
-  leftWall.setAttribute("stroke-width", "3");
+  leftWall.setAttribute("fill", "none");
+  leftWall.setAttribute("stroke", "#80deea");
+  leftWall.setAttribute("stroke-width", "4");
   svg.appendChild(leftWall);
 
   // Right wall
   const rightWall = document.createElementNS(svg.namespaceURI, "polygon");
   const rightPoints = `
-    ${centerX + W/2},${bottomY}
-    ${centerX + W/2},${bottomY - H}
-    ${centerX + W/2 + vanishOffsetX},${bottomY - H - vanishOffsetY}
-    ${centerX + vanishOffsetX},${bottomY - vanishOffsetY}
+    ${cx + W/2 * cos},${cy + W/2 * sin}
+    ${cx + W/2 * cos},${cy - H + W/2 * sin}
+    ${cx + W/2 * cos + offsetX},${cy - H + W/2 * sin - offsetY}
+    ${cx + offsetX},${cy + W/2 * sin - offsetY}
   `;
   rightWall.setAttribute("points", rightPoints);
-  rightWall.setAttribute("fill", "#f0f0f0");
-  rightWall.setAttribute("stroke", "#bbb");
-  rightWall.setAttribute("stroke-width", "3");
+  rightWall.setAttribute("fill", "none");
+  rightWall.setAttribute("stroke", "#80deea");
+  rightWall.setAttribute("stroke-width", "4");
   svg.appendChild(rightWall);
 
   container.appendChild(svg);
 
-  // Zoom handler (improved)
+  // Zoom
   let zoom = 1;
   container.addEventListener("wheel", (e) => {
     e.preventDefault();
     zoom += e.deltaY > 0 ? -0.1 : 0.1;
-    zoom = Math.max(0.5, Math.min(3, zoom));
+    zoom = Math.max(0.6, Math.min(2.5, zoom));
     svg.style.transform = `scale(${zoom})`;
-    svg.style.transformOrigin = "50% 70%"; // zoom toward floor center
+    svg.style.transformOrigin = "center center";
     window.currentZoom = zoom;
   }, { passive: false });
 }
