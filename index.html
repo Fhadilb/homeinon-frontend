@@ -1703,7 +1703,7 @@ function generateFloorplanRoom(widthM, depthM, heightM) {
   const tx = (container.clientWidth - bbox.width * s) / 2 - bbox.x * s;
   const ty = (container.clientHeight - bbox.height * s) / 2 - bbox.y * s;
 
-  // === PAN & ZOOM WITH ITEM DRAG PROTECTION ===
+  // === PAN & ZOOM - RESPECT ITEM DRAG ===
   let zoom = 1;
   let panX = tx;
   let panY = ty;
@@ -1716,7 +1716,7 @@ function generateFloorplanRoom(widthM, depthM, heightM) {
 
   updateTransform();
 
-  // Zoom (unchanged - works fine)
+  // Zoom - unchanged
   container.addEventListener("wheel", (e) => {
     e.preventDefault();
     const oldZoom = zoom;
@@ -1733,9 +1733,9 @@ function generateFloorplanRoom(widthM, depthM, heightM) {
     window.currentZoom = zoom;
   }, { passive: false });
 
-  // Smart mousedown - only pan if NOT dragging an item
+  // Panning - only if NOT dragging an item
   container.addEventListener("mousedown", (e) => {
-    if (isDraggingItem) return;  // ← THIS LINE IS CRITICAL
+    if (isDraggingItem) return;  // ← BLOCK IF ITEM DRAG IS ACTIVE
 
     const target = e.target.closest("image");
     if (target) return;
@@ -1769,7 +1769,7 @@ function generateFloorplanRoom(widthM, depthM, heightM) {
 
   // Touch support
   container.addEventListener("touchstart", (e) => {
-    if (isDraggingItem) return;  // ← THIS LINE IS CRITICAL
+    if (isDraggingItem) return;  // ← BLOCK IF ITEM DRAG IS ACTIVE
 
     if (e.touches.length !== 1) return;
     const touch = e.touches[0];
