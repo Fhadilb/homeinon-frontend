@@ -1883,15 +1883,13 @@ document.addEventListener("DOMContentLoaded", () => {
   let selected = null;
   let offsetX = 0;
   let offsetY = 0;
-  
+
   // 🔥 Wall-mount item detection helper
   function isWallItem(itemData) {
     const keywords = ["mirror", "shelf", "cabinet", "bookcase"];
     const title = (itemData?.title || "").toLowerCase();
     return keywords.some(k => title.includes(k));
   }
-  canvas.addEventListener("mousedown", startDrag);
-  canvas.addEventListener("touchstart", startDrag, { passive: false });
 
   function startDrag(e) {
     const svg = canvas.querySelector("svg");
@@ -1900,136 +1898,123 @@ document.addEventListener("DOMContentLoaded", () => {
     const target = e.target.closest("image");
     if (!target) return;
 
+    // CRITICAL: Prevent floorplan panning when dragging an item
+    e.stopPropagation();
+
     selected = target;
 
-const rect = canvas.getBoundingClientRect();
-const zoom = window.currentZoom || 1;
+    const rect = canvas.getBoundingClientRect();
+    const zoom = window.currentZoom || 1;
 
-const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
 
-// Current SVG coordinates
-const curX = parseFloat(selected.getAttribute("x")) || 0;
-const curY = parseFloat(selected.getAttribute("y")) || 0;
+    // Current SVG coordinates
+    const curX = parseFloat(selected.getAttribute("x")) || 0;
+    const curY = parseFloat(selected.getAttribute("y")) || 0;
 
-// Apply zoom compensation for grabbing point
-offsetX = (clientX - rect.left) / zoom - curX;
-offsetY = (clientY - rect.top) / zoom - curY;
+    // Apply zoom compensation for grabbing point
+    offsetX = (clientX - rect.left) / zoom - curX;
+    offsetY = (clientY - rect.top) / zoom - curY;
 
-// Bring item to front
-svg.appendChild(selected);
+    // Bring item to front
+    svg.appendChild(selected);
 
-// Event listeners
-document.addEventListener("mousemove", drag);
-document.addEventListener("mouseup", endDrag);
-document.addEventListener("touchmove", drag, { passive: false });
-document.addEventListener("touchend", endDrag);
-
+    // Attach move/end listeners
+    document.addEventListener("mousemove", drag);
+    document.addEventListener("mouseup", endDrag);
+    document.addEventListener("touchmove", drag, { passive: false });
+    document.addEventListener("touchend", endDrag);
   }
 
-function drag(e) {
-  if (!selected) return;
-  e.preventDefault();
+  function drag(e) {
+    if (!selected) return;
+    e.preventDefault();
 
-  const zoom = window.currentZoom || 1;
-  const svg = canvas.querySelector("svg");
-  const rect = canvas.getBoundingClientRect();
+    const zoom = window.currentZoom || 1;
+    const svg = canvas.querySelector("svg");
+    const rect = canvas.getBoundingClientRect();
 
-  const floorRect = svg.querySelector("#floorRect");
-  if (!floorRect) return;
+    // ... (rest of your drag function remains unchanged)
+    // Keep everything from here down exactly as you have it
+    const floorRect = svg.querySelector("#floorRect");
+    if (!floorRect) return;
 
-  const floorY = parseFloat(floorRect.getAttribute("y"));
+    const floorY = parseFloat(floorRect.getAttribute("y"));
 
-  // Base unscaled image dimensions
-  const baseW = selected.originalWidth || selected.width.baseVal.value;
-  const baseH = selected.originalHeight || selected.height.baseVal.value;
+    const baseW = selected.originalWidth || selected.width.baseVal.value;
+    const baseH = selected.originalHeight || selected.height.baseVal.value;
 
-// Raw pointer position
-const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
 
-// Convert pointer → SVG coords with zoom compensation
-let newX = (clientX - rect.left) / zoom - offsetX;
-let newY = (clientY - rect.top) / zoom - offsetY;
+    let newX = (clientX - rect.left) / zoom - offsetX;
+    let newY = (clientY - rect.top) / zoom - offsetY;
 
-// ⭐ SNAP TO GRID (40px)
-const grid = 40;
-newX = Math.round(newX / grid) * grid;
-newY = Math.round(newY / grid) * grid;
+    // SNAP TO GRID (40px)
+    const grid = 40;
+    newX = Math.round(newX / grid) * grid;
+    newY = Math.round(newY / grid) * grid;
 
-// ⭐ Correct floor clamp using SCALED height
-if (newY > floorY - (baseH * scale)) {
-  newY = floorY - (baseH * scale);
-}
+    // Clamp to floor
+    if (newY > floorY - (baseH * scale)) {
+      newY = floorY - (baseH * scale);
+    }
 
+    // DEPTH-BASED SCALE
+    const depthRange = floorY - 40;
+    const depthFactor = 1 - (newY / depthRange);
+    const scaleFactor = Math.max(0.45, Math.min(1.2, depthFactor));
 
-  // -------------------------------
-  // DEPTH-BASED SCALE (3D illusion)
-  // -------------------------------
-  const depthRange = floorY - 40;
-  const depthFactor = 1 - (newY / depthRange);
-  const scale = Math.max(0.45, Math.min(1.2, depthFactor));
-
-  selected.setAttribute("x", newX);
-  selected.setAttribute("y", newY);
-  selected.setAttribute("width", baseW * scale);
-  selected.setAttribute("height", baseH * scale);
-}
-
-
-function endDrag() {
-  if (!selected) {
-    cleanup();
-    return;
+    selected.setAttribute("x", newX);
+    selected.setAttribute("y", newY);
+    selected.setAttribute("width", baseW * scaleFactor);
+    selected.setAttribute("height", baseH * scaleFactor);
   }
 
-  const svg = canvas.querySelector("svg");
+  function endDrag() {
+    if (!selected) {
+      cleanup();
+      return;
+    }
 
-  // ---------------------------------------------
-  // ⭐ WALL SNAPPING (only for wall-mount items)
-  // ---------------------------------------------
-  const backWall = svg.querySelector("#backWallRect");
-  if (backWall) {
-    const backX = parseFloat(backWall.getAttribute("x"));
-    const backWidth = parseFloat(backWall.getAttribute("width"));
-    const backY = parseFloat(backWall.getAttribute("y"));
+    const svg = canvas.querySelector("svg");
 
-    const y = parseFloat(selected.getAttribute("y"));
-    const itemW = selected.width.baseVal.value;
+    // WALL SNAPPING (your existing logic)
+    const backWall = svg.querySelector("#backWallRect");
+    if (backWall) {
+      const backX = parseFloat(backWall.getAttribute("x"));
+      const backWidth = parseFloat(backWall.getAttribute("width"));
+      const backY = parseFloat(backWall.getAttribute("y"));
 
-    if (isWallItem(selected.itemData)) {
+      const y = parseFloat(selected.getAttribute("y"));
+      const itemW = selected.width.baseVal.value;
 
-      // Snap to the wall if close
-      if (y < backY + 50) {
-        selected.setAttribute("y", backY + 10);
-
-        // Snap horizontally if near center
-        const centerX = backX + backWidth / 2 - itemW / 2;
-        const currentX = parseFloat(selected.getAttribute("x"));
-        if (Math.abs(currentX - centerX) < 80) {
-          selected.setAttribute("x", centerX);
+      if (isWallItem(selected.itemData)) {
+        if (y < backY + 50) {
+          selected.setAttribute("y", backY + 10);
+          const centerX = backX + backWidth / 2 - itemW / 2;
+          const currentX = parseFloat(selected.getAttribute("x"));
+          if (Math.abs(currentX - centerX) < 80) {
+            selected.setAttribute("x", centerX);
+          }
         }
       }
     }
+
+    // Depth layering
+    const items = [...svg.querySelectorAll("image")];
+    items
+      .sort((a, b) => {
+        const ay = parseFloat(a.getAttribute("y"));
+        const by = parseFloat(b.getAttribute("y"));
+        return ay - by;
+      })
+      .forEach((img) => svg.appendChild(img));
+
+    selected = null;
+    cleanup();
   }
-
-  // ---------------------------------------------
-  // Depth layering: bring closer items to front
-  // ---------------------------------------------
-  const items = [...svg.querySelectorAll("image")];
-  items
-    .sort((a, b) => {
-      const ay = parseFloat(a.getAttribute("y"));
-      const by = parseFloat(b.getAttribute("y"));
-      return ay - by;
-    })
-    .forEach((img) => svg.appendChild(img));
-
-  selected = null;
-  cleanup();
-}
-
-
 
   function cleanup() {
     document.removeEventListener("mousemove", drag);
@@ -2037,7 +2022,12 @@ function endDrag() {
     document.removeEventListener("touchmove", drag);
     document.removeEventListener("touchend", endDrag);
   }
+
+  // Attach listeners once
+  canvas.addEventListener("mousedown", startDrag);
+  canvas.addEventListener("touchstart", startDrag, { passive: false });
 });
+
 </script>
 <script>
 // STEP 6 — Make 3D Floorplan behave like a selectable background option
