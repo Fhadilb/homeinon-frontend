@@ -1745,20 +1745,21 @@ function generateFloorplanRoom(widthM, depthM, heightM) {
     window.currentZoom = zoom;
   }, { passive: false });
 
-  // Panning - only if NOT dragging an item
+// Panning - only if NOT dragging an item
 container.addEventListener("mousedown", (e) => {
 
   // block panning if dragging furniture
   if (isDraggingItem) return;
 
-  // block panning if clicked on an item
-  if (e.target.tagName.toLowerCase() === "image") return;
+  // block panning if clicking on a furniture item
+  if (e.target.closest(".roomset-item")) return;
 
   isDragging = true;
   startX = e.clientX;
   startY = e.clientY;
   container.style.cursor = "grabbing";
 });
+
 
 
   container.addEventListener("mousemove", (e) => {
