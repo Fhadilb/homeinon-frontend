@@ -1,3 +1,47 @@
+// -------------------------------------------------------
+// FREE IN-BROWSER AI — WebLLM (Llama 3.1 8B)
+// -------------------------------------------------------
+let webllmModel = null;
+
+async function loadWebLLM() {
+  if (webllmModel) return webllmModel;
+
+  console.log("⏳ Loading WebLLM model…");
+
+  webllmModel = await window.webllm.createChatSession({
+    model: "Llama-3.1-8B-Instruct-q4f16_1"
+  });
+
+  console.log("✅ WebLLM ready!");
+  return webllmModel;
+}
+
+async function aiClassify(query) {
+  const model = await loadWebLLM();
+
+  const prompt = `
+Extract FURNITURE CATEGORIES and preferred ROOM from this description:
+
+Valid categories: bed, wardrobe, drawers, dressing table, bedside table,
+sofa, armchair, coffee table, side table, tv unit, bookcase, cabinet,
+dining table, dining chair, bench, desk, office chair, sideboard.
+
+User query: "${query}"
+
+Return ONLY JSON:
+{
+  "categories": ["sofa","coffee table"],
+  "room": "living"
+}
+`;
+
+  const out = await model.generate(prompt);
+
+  try { return JSON.parse(out); }
+  catch { return { categories: [], room: null }; }
+}
+
+
 const API_URL = "https://homeinon-backend.onrender.com/products";
 const STYLE_IMAGES = {
   "contemporary": "assets/style-contemporary.jpg",
@@ -538,13 +582,21 @@ document.getElementById("filterToggle").addEventListener("click", ()=>{
   btn.textContent = isActive ? "Hide Filters ▲" : "Show Filters ▼";
 });
 
-document.getElementById("searchBox").addEventListener("input", ()=>{ updateFilterOptions(); applyFilters(); });
-document.getElementById("category").addEventListener("change", ()=>{ updateFilterOptions(); applyFilters(); });
-document.getElementById("material").addEventListener("change", ()=>{ updateFilterOptions(); applyFilters(); });
-document.getElementById("priceRange").addEventListener("input", e=>{
-  document.getElementById("priceValue").textContent = `£${e.target.value}`;
-  updateFilterOptions(); applyFilters();
+document.getElementById("searchBox").addEventListener("input", async () => {
+  const q = searchBox.value.trim();
+  if (!q) { updateFilterOptions(); return applyFilters(); }
+
+  const ai = await aiClassify(q);
+
+  // auto-apply category if AI confident
+  if (ai.categories?.length > 0) {
+    document.getElementById("category").value = ai.categories[0];
+  }
+
+  updateFilterOptions();
+  applyFilters();
 });
+
 
 // --------- ROOMSET BACKGROUND SELECTOR ----------
 const ROOMSET_BACKGROUNDS = Array.from({ length: 13 }, (_, i) =>
@@ -1035,14 +1087,20 @@ const resultsBox = document.getElementById("ai-results");
     let requestedCats = [];
 
     try {
-      // 🔥 CALL BACKEND OPENAI ENDPOINT
-      const resp = await fetch(SUGGEST_API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: input })
-      });
+// 🌟 Use WebLLM instead of backend Gemini
+const data = await aiClassify(input);
 
-      const data = await resp.json();
+console.log("AI RESULT:", data);
+
+const catsRaw = Array.isArray(data.categories) ? data.categories : [];
+requestedCats = catsRaw.map(c =>
+  normalizeCategory(String(c).toLowerCase().trim())
+);
+
+outputEl.textContent = "";
+resultsBox.textContent = 
+  "AI detected categories:\n" + requestedCats.map(c => "• " + c).join("\n");
+
       console.log("AI BACKEND RAW RESPONSE:", data);
 // Hide raw JSON — show a friendly explanation instead
 const cats = data.categories || [];
@@ -1054,12 +1112,6 @@ cats.forEach(c => {
 });
 
 resultsBox.textContent = explanation.trim();   // Grey box only
-
-const catsRaw = Array.isArray(data.categories) ? data.categories : [];
-
-requestedCats = catsRaw.map(c =>
-  normalizeCategory(String(c).toLowerCase().trim())
-);
 
 // White box should stay empty
 outputEl.textContent = "";
