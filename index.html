@@ -1761,7 +1761,7 @@ svg.style.overflow = "visible";   // ⭐ REQUIRED — fixes missing walls
     zoom = Math.max(minZoom, Math.min(maxZoom, zoom));
 
     // Apply scale to SVG
-    svg.style.transformOrigin = "50% 100%";   // bottom-center
+    svg.style.transformOrigin = "50% 0%";  // top-center anchor
     svg.style.transform = `scale(${zoom})`;
     window.currentZoom = zoom;
   }, { passive: false });
