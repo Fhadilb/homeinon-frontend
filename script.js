@@ -8,9 +8,10 @@ async function loadWebLLM() {
 
   console.log("⏳ Loading WebLLM model…");
 
-  webllmModel = await window.webllm.createChatSession({
-    model: "Llama-3.1-8B-Instruct-q4f16_1"
-  });
+  // Correct API for your WebLLM build
+webllmModel = await window.webllm.createMLCEngine({
+  model: "Llama-3.1-8B-Instruct-q4f16_1"
+});
 
   console.log("✅ WebLLM ready!");
   return webllmModel;
@@ -20,26 +21,37 @@ async function aiClassify(query) {
   const model = await loadWebLLM();
 
   const prompt = `
-Extract FURNITURE CATEGORIES and preferred ROOM from this description:
+Extract furniture categories and room from the user query.
 
-Valid categories: bed, wardrobe, drawers, dressing table, bedside table,
+Valid categories:
+bed, wardrobe, drawers, dressing table, bedside table,
 sofa, armchair, coffee table, side table, tv unit, bookcase, cabinet,
 dining table, dining chair, bench, desk, office chair, sideboard.
 
 User query: "${query}"
 
-Return ONLY JSON:
+Return ONLY valid JSON:
 {
-  "categories": ["sofa","coffee table"],
+  "categories": ["sofa", "coffee table"],
   "room": "living"
 }
 `;
 
-  const out = await model.generate(prompt);
+// Correct WebLLM API — chatCompletion()
+const response = await model.chat.completions.create({
+  messages: [{ role: "user", content: prompt }]
+});
 
-  try { return JSON.parse(out); }
-  catch { return { categories: [], room: null }; }
+// YOUR VERSION RETURNS THIS SHAPE:
+const text = response.choices?.[0]?.message?.content?.trim() || "";
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    return { categories: [], room: null };
+  }
 }
+
 
 
 const API_URL = "https://homeinon-backend.onrender.com/products";
@@ -583,7 +595,7 @@ document.getElementById("filterToggle").addEventListener("click", ()=>{
 });
 
 document.getElementById("searchBox").addEventListener("input", async () => {
-  const q = searchBox.value.trim();
+  const q = document.getElementById("searchBox").value.trim();
   if (!q) { updateFilterOptions(); return applyFilters(); }
 
   const ai = await aiClassify(q);
@@ -979,43 +991,6 @@ if (createFloorplanBtn && fpPopup) {
   });
 }
 
-/* -----------------------------------------------------------
-   AI SUGGESTION ENGINE — BACKEND (OPENAI)
------------------------------------------------------------ */
-
-const SUGGEST_API_URL = "https://homeinon-backend.onrender.com/ai-gemini";
-
-function scoreProduct(p, categories, query, maxBudget) {
-  let score = 0;
-
-  const title = (p.title || "").toLowerCase();
-  const desc  = (p.description || "").toLowerCase();
-  const cat   = (p.category || "").toLowerCase();
-  const room  = (p.room || "").toLowerCase();
-  const style = (p.style || "").toLowerCase();
-  const colour = (p.colour || "").toLowerCase();
-
-  // 1️⃣ Boost if product matches AI categories
-  categories.forEach(c => {
-    if (cat.includes(c)) score += 5;
-    if (title.includes(c)) score += 3;
-  });
-
-  // 2️⃣ Boost for keyword matches
-  query.split(/\s+/).forEach(word => {
-    if (title.includes(word)) score += 1;
-    if (desc.includes(word))  score += 1;
-    if (style.includes(word)) score += 1;
-    if (colour.includes(word)) score += 1;
-  });
-
-  // 3️⃣ Budget filter
-  const price = parseFloat(p.price) || 0;
-  if (maxBudget && price > maxBudget) score -= 10;
-
-  return score;
-}
-
 
 // ---------------------------------------------------------------
 // AI PRODUCT SCORING — KEEP THIS EXACTLY AS-IS
@@ -1054,12 +1029,6 @@ function scoreProduct(p, categories, query, maxBudget) {
 // ---------------------------------------------------------------
 // ENSURE AI SUGGESTIONS INITIALIZE ONLY ONCE (fixes 500 errors)
 // ---------------------------------------------------------------
-if (!window.__AI_INIT_DONE__) {
-  document.addEventListener("DOMContentLoaded", () => {
-    setupAISuggestions();
-  });
-  window.__AI_INIT_DONE__ = true;
-}
 
 function setupAISuggestions() {
   if (window.AI_ALREADY_SETUP) return;
@@ -1226,4 +1195,11 @@ function deriveRoom(cat = "") {
 }
 
 loadProducts();
-document.addEventListener("DOMContentLoaded", setupAISuggestions);
+
+if (!window.__AI_INIT_DONE__) {
+  document.addEventListener("DOMContentLoaded", () => {
+    setupAISuggestions();
+  });
+  window.__AI_INIT_DONE__ = true;
+}
+
