@@ -1612,161 +1612,159 @@ function generateFloorplanRoom(widthM, depthM, heightM) {
   const H = heightM * scale;
 
   // Create SVG-based 3D illusion
-const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-svg.setAttribute("width", "100%");
-svg.setAttribute("height", "100%");
-svg.style.position = "absolute";
-svg.style.top = "0";
-svg.style.left = "0";
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("width", "100%");
+  svg.setAttribute("height", "100%");
+  svg.style.position = "absolute";
+  svg.style.top = "0";
+  svg.style.left = "0";
 
+  // FLOOR (aligned to bottom)
+  const floor = document.createElementNS(svg.namespaceURI, "rect");
+  floor.setAttribute("id", "floorRect");
 
+  // Center horizontally
+  const floorX = (container.clientWidth - W) / 2;
+  floor.setAttribute("x", floorX);
 
-// FLOOR (aligned to bottom)
-const floor = document.createElementNS(svg.namespaceURI, "rect");
-floor.setAttribute("id", "floorRect");
+  // Snap floor to bottom with 20px padding
+  const floorTop = container.clientHeight - (D / 2) - 20;
+  floor.setAttribute("y", floorTop);
 
-// Center horizontally
-floor.setAttribute("x", (container.clientWidth - W) / 2);
+  floor.setAttribute("width", W);
+  floor.setAttribute("height", D / 2);
+  floor.setAttribute("fill", "#dcdcdc");
+  floor.setAttribute("stroke", "#999");
+  floor.setAttribute("stroke-width", "2");
+  floor.style.opacity = 0.9;
 
-// Snap floor to bottom with 20px padding
-const floorTop = container.clientHeight - (D / 2) - 20;
-floor.setAttribute("y", floorTop);
+  // BACK WALL (aligned directly above floor)
+  const backWallRect = document.createElementNS(svg.namespaceURI, "rect");
+  backWallRect.setAttribute("id", "backWallRect");
 
-floor.setAttribute("width", W);
-floor.setAttribute("height", D / 2);
-floor.setAttribute("fill", "#dcdcdc");
-floor.style.opacity = 0.9;
+  // Center horizontally
+  backWallRect.setAttribute("x", floorX);
 
+  // Wall sits above the floor
+  backWallRect.setAttribute("y", floorTop - H);
 
-// BACK WALL (aligned directly above floor)
-const backWallRect = document.createElementNS(svg.namespaceURI, "rect");
-backWallRect.setAttribute("id", "backWallRect");
+  backWallRect.setAttribute("width", W);
+  backWallRect.setAttribute("height", H);
+  backWallRect.setAttribute("fill", "#f5f5f5");
+  backWallRect.setAttribute("stroke", "#aaa");
+  backWallRect.setAttribute("stroke-width", "3");
 
-// Center horizontally
-backWallRect.setAttribute("x", (container.clientWidth - W) / 2);
+  // LEFT WALL
+  const leftWall = document.createElementNS(svg.namespaceURI, "polygon");
 
-// Wall sits above the floor
-backWallRect.setAttribute("y", floorTop - H);
+  const lx = floorX;
+  const ly = floorTop;
 
-backWallRect.setAttribute("width", W);
-backWallRect.setAttribute("height", H);
-backWallRect.setAttribute("fill", "#f5f5f5");
-backWallRect.setAttribute("stroke", "#aaa");
-backWallRect.setAttribute("stroke-width", "3");
+  // CORRECTED LEFT WALL (no diagonal runaway)
+  const leftPoints = `
+    ${lx},${ly}              
+    ${lx},${ly - H}          
+    ${lx - 150},${ly - H + 60} 
+    ${lx - 150},${ly + 60}     
+  `;
 
+  leftWall.setAttribute("points", leftPoints.trim());
+  leftWall.setAttribute("fill", "#efefef");
+  leftWall.setAttribute("stroke", "#bbb");
+  leftWall.setAttribute("stroke-width", "3");
 
-// LEFT WALL
-const leftWall = document.createElementNS(svg.namespaceURI, "polygon");
+  // RIGHT WALL
+  const rightWall = document.createElementNS(svg.namespaceURI, "polygon");
 
-const lx = (container.clientWidth - W) / 2;
-const ly = floorTop;
+  const rx = floorX + W;
 
-// CORRECTED LEFT WALL (no diagonal runaway)
-const leftPoints = `
-  ${lx},${ly}              /* bottom inner  */
-  ${lx},${ly - H}          /* top inner     */
-  ${lx - 150},${ly - H + 60} /* top outer     */
-  ${lx - 150},${ly + 60}     /* bottom outer  */
-`;
+  // CORRECTED RIGHT WALL
+  const rightPoints = `
+    ${rx},${ly}               
+    ${rx},${ly - H}           
+    ${rx + 150},${ly - H + 60}  
+    ${rx + 150},${ly + 60}      
+  `;
 
-leftWall.setAttribute("points", leftPoints.trim());
-leftWall.setAttribute("fill", "#efefef");
-leftWall.setAttribute("stroke", "#bbb");
-leftWall.setAttribute("stroke-width", "3");
-
-
-// RIGHT WALL
-const rightWall = document.createElementNS(svg.namespaceURI, "polygon");
-
-const rx = (container.clientWidth + W) / 2;
-
-// CORRECTED RIGHT WALL
-const rightPoints = `
-  ${rx},${ly}               /* bottom inner  */
-  ${rx},${ly - H}           /* top inner     */
-  ${rx + 150},${ly - H + 60}  /* top outer     */
-  ${rx + 150},${ly + 60}      /* bottom outer  */
-`;
-
-rightWall.setAttribute("points", rightPoints.trim());
-rightWall.setAttribute("fill", "#efefef");
-rightWall.setAttribute("stroke", "#bbb");
-rightWall.setAttribute("stroke-width", "3");
-
-
-
-// -----------------------------------------
-// ORDER: Floor → Grid → Walls
-// -----------------------------------------
-
-// 1️⃣ Floor first
-svg.appendChild(floor);
-
-// 2️⃣ Grid next
-const gridGroup = document.createElementNS(svg.namespaceURI, "g");
-gridGroup.setAttribute("opacity", "0.25");
-
-const gridSize = 40;
-
-// Vertical grid lines
-for (let x = 0; x <= W; x += gridSize) {
-  const line = document.createElementNS(svg.namespaceURI, "line");
-  line.setAttribute("x1", (container.clientWidth - W) / 2 + x);
-  line.setAttribute("y1", floorTop);
-  line.setAttribute("y2", floorTop + D / 2);
-  line.setAttribute("stroke", "#999");
-  line.setAttribute("stroke-width", "1");
-  gridGroup.appendChild(line);
-}
-
-// Horizontal grid lines
-for (let y = 0; y <= D / 2; y += gridSize) {
-  const line = document.createElementNS(svg.namespaceURI, "line");
-  line.setAttribute("x1", (container.clientWidth - W) / 2);
-  line.setAttribute("y1", floorTop + y);
-  line.setAttribute("x2", (container.clientWidth + W) / 2);
-  line.setAttribute("y2", floorTop + y);
-  line.setAttribute("stroke", "#999");
-  line.setAttribute("stroke-width", "1");
-  gridGroup.appendChild(line);
-}
-
-svg.appendChild(gridGroup);
-
-// 3️⃣ Walls LAST
-svg.appendChild(backWallRect);
-svg.appendChild(leftWall);
-svg.appendChild(rightWall);
-
-// 4️⃣ Add SVG to canvas
-container.appendChild(svg);
+  rightWall.setAttribute("points", rightPoints.trim());
+  rightWall.setAttribute("fill", "#efefef");
+  rightWall.setAttribute("stroke", "#bbb");
+  rightWall.setAttribute("stroke-width", "3");
 
   // -----------------------------------------
-// ADD ZOOM IN/OUT (mouse wheel)
-// -----------------------------------------
-let zoom = 1;
-const minZoom = 0.5;
-const maxZoom = 2.5;
+  // ORDER: Floor → Grid → Walls
+  // -----------------------------------------
 
-container.addEventListener("wheel", (e) => {
-  e.preventDefault();
+  // 1️⃣ Floor first
+  svg.appendChild(floor);
 
-  // Zoom direction
-  if (e.deltaY < 0) {
-    zoom += 0.1; // zoom in
-  } else {
-    zoom -= 0.1; // zoom out
+  // 2️⃣ Grid next (FIXED VERSION)
+  const gridGroup = document.createElementNS(svg.namespaceURI, "g");
+  gridGroup.setAttribute("opacity", "0.2");
+
+  const gridSize = 40;
+
+  // Vertical grid lines (along width)
+  for (let x = 0; x <= W; x += gridSize) {
+    const line = document.createElementNS(svg.namespaceURI, "line");
+    line.setAttribute("x1", floorX + x);
+    line.setAttribute("y1", floorTop);
+    line.setAttribute("x2", floorX + x);
+    line.setAttribute("y2", floorTop + D / 2);
+    line.setAttribute("stroke", "#888");
+    line.setAttribute("stroke-width", "0.5");
+    gridGroup.appendChild(line);
   }
 
-  // clamp limits
-  zoom = Math.max(minZoom, Math.min(maxZoom, zoom));
+  // Horizontal grid lines (along depth)
+  for (let y = 0; y <= D / 2; y += gridSize) {
+    const line = document.createElementNS(svg.namespaceURI, "line");
+    line.setAttribute("x1", floorX);
+    line.setAttribute("y1", floorTop + y);
+    line.setAttribute("x2", floorX + W);
+    line.setAttribute("y2", floorTop + y);
+    line.setAttribute("stroke", "#888");
+    line.setAttribute("stroke-width", "0.5");
+    gridGroup.appendChild(line);
+  }
 
-  // Apply scale to SVG
-svg.style.transformOrigin = "50% 100%";   // bottom-center
-svg.style.transform = `scale(${zoom})`;
-window.currentZoom = zoom;   // ⭐ ADD THIS LINE
-}, { passive: false });
+  svg.appendChild(gridGroup);
+
+  // 3️⃣ Walls LAST
+  svg.appendChild(backWallRect);
+  svg.appendChild(leftWall);
+  svg.appendChild(rightWall);
+
+  // 4️⃣ Add SVG to canvas
+  container.appendChild(svg);
+
+  // -----------------------------------------
+  // ADD ZOOM IN/OUT (mouse wheel)
+  // -----------------------------------------
+  let zoom = 1;
+  const minZoom = 0.5;
+  const maxZoom = 2.5;
+
+  container.addEventListener("wheel", (e) => {
+    e.preventDefault();
+
+    // Zoom direction
+    if (e.deltaY < 0) {
+      zoom += 0.1; // zoom in
+    } else {
+      zoom -= 0.1; // zoom out
+    }
+
+    // clamp limits
+    zoom = Math.max(minZoom, Math.min(maxZoom, zoom));
+
+    // Apply scale to SVG
+    svg.style.transformOrigin = "50% 100%";   // bottom-center
+    svg.style.transform = `scale(${zoom})`;
+    window.currentZoom = zoom;
+  }, { passive: false });
 }
+
 
 </script>
 <script>
