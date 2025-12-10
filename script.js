@@ -8,7 +8,7 @@ async function loadWebLLM() {
 
   console.log("⏳ Loading WebLLM model…");
 
-  // This matches YOUR installed functions
+  // CORRECT ENGINE FUNCTION FOR YOUR BUILD
   webllmModel = await window.webllm.CreateMLCEngine({
     model: "Llama-3.1-8B-Instruct-q4f16_1"
   });
@@ -37,11 +37,12 @@ Return ONLY valid JSON:
 }
 `;
 
-  // WebLLM's correct completion API for this build
+  // CORRECT COMPLETION METHOD FOR YOUR ENGINE
   const response = await model.chatCompletion([
     { role: "user", content: prompt }
   ]);
 
+  // THE CORRECT RESPONSE PATH
   const text =
     response?.choices?.[0]?.message?.content?.trim() || "";
 
