@@ -982,6 +982,15 @@
   user-select: none;
   -webkit-user-drag: none;
 }
+/* --- FIX: Allow items to receive pointer events, but not the SVG grid --- */
+#roomsetCanvas svg,
+#roomsetCanvas svg * {
+  pointer-events: none;      /* Grid, walls, floor, lines cannot capture mouse */
+}
+
+#roomsetCanvas image {
+  pointer-events: all;       /* Furniture items CAN be clicked & dragged */
+}
 
 #roomsetModal .modal-body {
   width: 100%;
