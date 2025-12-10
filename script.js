@@ -8,13 +8,19 @@ async function loadWebLLM() {
 
   console.log("⏳ Loading WebLLM model…");
 
-  webllmModel = await window.webllm.Chat.create({
-    model: "Llama-3.1-8B-Instruct-q4f16_1-MLC-1k"
-  });
+  webllmModel = await window.webllm.CreateMLCEngine(
+    "Llama-3.1-8B-Instruct-q4f16_1-MLC-1k",
+    {
+      useIndexedDBCache: false,
+      wasmUrl: undefined,  // let WebLLM auto-resolve
+      modelId: "Llama-3.1-8B-Instruct-q4f16_1-MLC-1k"
+    }
+  );
 
-  console.log("✅ WebLLM ready!");
+  console.log("✅ WebLLM ready:", webllmModel);
   return webllmModel;
 }
+
 
 
 async function aiClassify(query) {
