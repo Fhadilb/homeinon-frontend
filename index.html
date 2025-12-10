@@ -1564,6 +1564,12 @@
   console.log("WebLLM loaded (module)?", window.webllm);
 </script>
 
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  console.log("WEBLLM CONFIG:", window.webllm?.prebuiltAppConfig);
+  console.log("AVAILABLE MODELS:", window.webllm?.prebuiltAppConfig?.model_list);
+});
+</script>
 
 <!-- Load THREE.js (as module) -->
 <script type="module">
