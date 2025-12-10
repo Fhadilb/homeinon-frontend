@@ -967,17 +967,17 @@
   width: 100%;
   height: 600px;
   margin-top: 20px;
-  background: #f8f8f8;
+  background: #0d1b2a; /* Blueprint dark blue - overrides old light gray */
   border-radius: 12px;
   box-shadow: var(--shadow-sm);
   touch-action: none;
-  overflow: visible;        /* already here, but we'll strengthen it */
+  overflow: visible !important; /* Critical - prevents clipping of walls */
   user-select: none;
-  overflow: visible !important;   /* ← add this */
 }
 
+/* Ensure SVG content isn't clipped either */
 #roomsetCanvas svg {
-  overflow: visible !important;   /* ← add this */
+  overflow: visible !important;
 }
 .roomset-item, 
 .roomset-item * {
@@ -1607,118 +1607,102 @@ function generateFloorplanRoom(widthM, depthM, heightM) {
   const container = document.getElementById("roomsetCanvas");
   container.innerHTML = "";
 
-  // Set blueprint background
-  container.style.background = "#0a1f3d"; // Deep blueprint blue
+  // Blueprint dark blue background
+  container.style.background = "#0d1b2a"; 
+  container.style.backgroundImage = "none";
 
   const scale = 120; // pixels per meter
   const W = widthM * scale;
   const D = depthM * scale;
   const H = heightM * scale;
 
-  // Isometric angles
-  const angle = Math.PI / 6; // 30 degrees
-  const sin = Math.sin(angle);
-  const cos = Math.cos(angle);
-
-  // Offsets for perspective
-  const offsetX = 200;
-  const offsetY = 100;
-
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   svg.setAttribute("width", "100%");
   svg.setAttribute("height", "100%");
-  svg.setAttribute("viewBox", "0 0 " + container.clientWidth + " " + container.clientHeight);
+  svg.setAttribute("viewBox", `0 0 ${container.clientWidth} ${container.clientHeight}`);
   svg.style.position = "absolute";
   svg.style.top = "0";
   svg.style.left = "0";
   svg.style.overflow = "visible";
 
-  // Center point
+  // Center the room
   const cx = container.clientWidth / 2;
-  const cy = container.clientHeight / 2 + 100; // Lower to fit walls
+  const cy = container.clientHeight / 2 + 50; // Slight downward shift for better fit
 
-  // Floor (diamond shape)
-  const floorPoints = `
-    ${cx - W/2 * cos},${cy + W/2 * sin}
-    ${cx},${cy + (W/2 + D) * sin}
-    ${cx + W/2 * cos},${cy + W/2 * sin}
-    ${cx},${cy - D * sin}
-  `;
+  // Isometric transformation helpers
+  const isoX = (x, y) => cx + (x - y) * 0.5 * scale * 0.866; // cos(30°)
+  const isoY = (x, y, z = 0) => cy - (x + y) * 0.5 * scale * 0.5 + z * scale * 0.8;
 
-  const floor = document.createElementNS(svg.namespaceURI, "polygon");
-  floor.setAttribute("points", floorPoints);
-  floor.setAttribute("fill", "none");
-  floor.setAttribute("stroke", "#4fc3f7");
-  floor.setAttribute("stroke-width", "4");
-  floor.setAttribute("opacity", "0.8");
-  svg.appendChild(floor);
+  // Floor corners (top-down rectangle → isometric)
+  const floorFrontLeft  = { x: -widthM/2, y: depthM/2, z: 0 };
+  const floorFrontRight = { x: widthM/2,  y: depthM/2, z: 0 };
+  const floorBackRight  = { x: widthM/2,  y: -depthM/2, z: 0 };
+  const floorBackLeft   = { x: -widthM/2, y: -depthM/2, z: 0 };
 
-  // Grid on floor
+  const pFL = { x: isoX(floorFrontLeft.x, floorFrontLeft.y), y: isoY(floorFrontLeft.x, floorFrontLeft.y) };
+  const pFR = { x: isoX(floorFrontRight.x, floorFrontRight.y), y: isoY(floorFrontRight.x, floorFrontRight.y) };
+  const pBR = { x: isoX(floorBackRight.x, floorBackRight.y), y: isoY(floorBackRight.x, floorBackRight.y) };
+  const pBL = { x: isoX(floorBackLeft.x, floorBackLeft.y), y: isoY(floorBackLeft.x, floorBackLeft.y) };
+
+  // Top of walls
+  const topFL = { x: pFL.x, y: pFL.y - H * 0.8 };
+  const topFR = { x: pFR.x, y: pFR.y - H * 0.8 };
+  const topBR = { x: pBR.x, y: pBR.y - H * 0.8 };
+  const topBL = { x: pBL.x, y: pBL.y - H * 0.8 };
+
+  // GRID (on floor)
   const gridGroup = document.createElementNS(svg.namespaceURI, "g");
-  gridGroup.setAttribute("opacity", "0.3");
-  const gridSize = 40;
+  gridGroup.setAttribute("opacity", "0.25");
+  gridGroup.setAttribute("stroke", "#4fc3f7");
+  gridGroup.setAttribute("stroke-width", "1");
 
-  for (let i = 0; i <= widthM; i++) {
-    const prog = i / widthM;
-    const x = cx + (prog - 0.5) * W * cos;
+  const gridStep = 0.5; // 0.5m grid
+  for (let x = -widthM/2; x <= widthM/2; x += gridStep) {
     const line = document.createElementNS(svg.namespaceURI, "line");
-    line.setAttribute("x1", x);
-    line.setAttribute("y1", cy + (prog - 0.5) * W * sin);
-    line.setAttribute("x2", cx);
-    line.setAttribute("y2", cy + (0.5 + depthM) * sin * gridSize / scale * i);
-    line.setAttribute("stroke", "#4fc3f7");
-    line.setAttribute("stroke-width", "1");
+    const p1 = { x: isoX(x, depthM/2), y: isoY(x, depthM/2) };
+    const p2 = { x: isoX(x, -depthM/2), y: isoY(x, -depthM/2) };
+    line.setAttribute("x1", p1.x); line.setAttribute("y1", p1.y);
+    line.setAttribute("x2", p2.x); line.setAttribute("y2", p2.y);
     gridGroup.appendChild(line);
   }
-
-  for (let i = 0; i <= depthM; i++) {
-    const prog = i / depthM;
-    const y = cy + prog * D * sin;
+  for (let y = -depthM/2; y <= depthM/2; y += gridStep) {
     const line = document.createElementNS(svg.namespaceURI, "line");
-    line.setAttribute("x1", cx - W/2 * cos);
-    line.setAttribute("y1", y + W/2 * sin);
-    line.setAttribute("x2", cx + W/2 * cos);
-    line.setAttribute("y2", y + W/2 * sin);
-    line.setAttribute("stroke", "#4fc3f7");
-    line.setAttribute("stroke-width", "1");
+    const p1 = { x: isoX(-widthM/2, y), y: isoY(-widthM/2, y) };
+    const p2 = { x: isoX(widthM/2, y), y: isoY(widthM/2, y) };
+    line.setAttribute("x1", p1.x); line.setAttribute("y1", p1.y);
+    line.setAttribute("x2", p2.x); line.setAttribute("y2", p2.y);
     gridGroup.appendChild(line);
   }
   svg.appendChild(gridGroup);
 
+  // FLOOR outline
+  const floor = document.createElementNS(svg.namespaceURI, "polygon");
+  floor.setAttribute("points", `${pFL.x},${pFL.y} ${pFR.x},${pFR.y} ${pBR.x},${pBR.y} ${pBL.x},${pBL.y}`);
+  floor.setAttribute("fill", "none");
+  floor.setAttribute("stroke", "#4fc3f7");
+  floor.setAttribute("stroke-width", "4");
+  svg.appendChild(floor);
+
+  // WALLS (only visible ones)
   // Back wall
-  const backWall = document.createElementNS(svg.namespaceURI, "rect");
-  backWall.setAttribute("x", cx - W/2 * cos);
-  backWall.setAttribute("y", cy - H + W/2 * sin);
-  backWall.setAttribute("width", W * cos);
-  backWall.setAttribute("height", H);
+  const backWall = document.createElementNS(svg.namespaceURI, "polyline");
+  backWall.setAttribute("points", `${pBL.x},${pBL.y} ${pBR.x},${pBR.y} ${topBR.x},${topBR.y} ${topBL.x},${topBL.y} ${pBL.x},${pBL.y}`);
   backWall.setAttribute("fill", "none");
   backWall.setAttribute("stroke", "#80deea");
   backWall.setAttribute("stroke-width", "4");
   svg.appendChild(backWall);
 
   // Left wall
-  const leftWall = document.createElementNS(svg.namespaceURI, "polygon");
-  const leftPoints = `
-    ${cx - W/2 * cos},${cy + W/2 * sin}
-    ${cx - W/2 * cos},${cy - H + W/2 * sin}
-    ${cx - W/2 * cos - offsetX},${cy - H + W/2 * sin - offsetY}
-    ${cx - offsetX},${cy + W/2 * sin - offsetY}
-  `;
-  leftWall.setAttribute("points", leftPoints);
+  const leftWall = document.createElementNS(svg.namespaceURI, "polyline");
+  leftWall.setAttribute("points", `${pFL.x},${pFL.y} ${pBL.x},${pBL.y} ${topBL.x},${topBL.y} ${topFL.x},${topFL.y} ${pFL.x},${pFL.y}`);
   leftWall.setAttribute("fill", "none");
   leftWall.setAttribute("stroke", "#80deea");
   leftWall.setAttribute("stroke-width", "4");
   svg.appendChild(leftWall);
 
   // Right wall
-  const rightWall = document.createElementNS(svg.namespaceURI, "polygon");
-  const rightPoints = `
-    ${cx + W/2 * cos},${cy + W/2 * sin}
-    ${cx + W/2 * cos},${cy - H + W/2 * sin}
-    ${cx + W/2 * cos + offsetX},${cy - H + W/2 * sin - offsetY}
-    ${cx + offsetX},${cy + W/2 * sin - offsetY}
-  `;
-  rightWall.setAttribute("points", rightPoints);
+  const rightWall = document.createElementNS(svg.namespaceURI, "polyline");
+  rightWall.setAttribute("points", `${pFR.x},${pFR.y} ${pBR.x},${pBR.y} ${topBR.x},${topBR.y} ${topFR.x},${topFR.y} ${pFR.x},${pFR.y}`);
   rightWall.setAttribute("fill", "none");
   rightWall.setAttribute("stroke", "#80deea");
   rightWall.setAttribute("stroke-width", "4");
@@ -1726,12 +1710,13 @@ function generateFloorplanRoom(widthM, depthM, heightM) {
 
   container.appendChild(svg);
 
-  // Zoom
+  // Simple zoom
   let zoom = 1;
+  window.currentZoom = zoom;
   container.addEventListener("wheel", (e) => {
     e.preventDefault();
     zoom += e.deltaY > 0 ? -0.1 : 0.1;
-    zoom = Math.max(0.6, Math.min(2.5, zoom));
+    zoom = Math.max(0.5, Math.min(3, zoom));
     svg.style.transform = `scale(${zoom})`;
     svg.style.transformOrigin = "center center";
     window.currentZoom = zoom;
