@@ -1,5 +1,5 @@
 // -------------------------------------------------------
-// FREE IN-BROWSER AI — WebLLM (Llama 3 8B)
+// FREE IN-BROWSER AI — WebLLM (Llama 3.1 8B)
 // -------------------------------------------------------
 let webllmModel = null;
 
@@ -9,7 +9,8 @@ async function loadWebLLM() {
   console.log("⏳ Loading WebLLM model…");
 
   webllmModel = await window.webllm.CreateMLCEngine({
-    model: "Llama-3-8B-Instruct-q4f16_1"   // ✔ THIS MODEL EXISTS
+    model: "Llama-3.1-8B-Instruct-q4f16_1",
+    modelLibURLPrefix: "https://huggingface.co/mlc-ai/web-llm-models/resolve/main/"
   });
 
   console.log("✅ WebLLM ready!");
@@ -40,7 +41,8 @@ Return ONLY valid JSON:
     { role: "user", content: prompt }
   ]);
 
-  const text = response?.choices?.[0]?.message?.content?.trim() || "";
+  const text =
+    response?.choices?.[0]?.message?.content?.trim() || "";
 
   try {
     return JSON.parse(text);
@@ -48,6 +50,7 @@ Return ONLY valid JSON:
     return { categories: [], room: null };
   }
 }
+
 
 
 const API_URL = "https://homeinon-backend.onrender.com/products";
