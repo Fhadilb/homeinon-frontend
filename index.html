@@ -1910,38 +1910,39 @@ document.addEventListener("DOMContentLoaded", () => {
     return keywords.some(k => title.includes(k));
   }
 
-  function startDrag(e) {
-    const svg = canvas.querySelector("svg");
-    if (!svg) return;
+function startDrag(e) {
+  const svg = canvas.querySelector("svg");
+  if (!svg) return;
 
-    const target = e.target.closest("image");
-    if (!target) return;
+  const target = e.target;
+  if (!target || target.tagName.toLowerCase() !== "image") return;
 
-    e.stopPropagation();
-    isDraggingItem = true;
+  // 💥 THE FIX — stop event reaching pan handler
+  e.stopPropagation();
+  e.stopImmediatePropagation();
+  e.preventDefault();
 
-    selected = target;
-    selected.classList.add("dragging-item");  // <-- NEW: Enable pointer-events for grip
+  isDraggingItem = true;
+  selected = target;
 
-    const rect = canvas.getBoundingClientRect();
-    const zoom = window.currentZoom || 1;
+  const rect = canvas.getBoundingClientRect();
+  const zoom = window.currentZoom || 1;
 
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
 
-    const curX = parseFloat(selected.getAttribute("x")) || 0;
-    const curY = parseFloat(selected.getAttribute("y")) || 0;
+  const curX = parseFloat(selected.getAttribute("x")) || 0;
+  const curY = parseFloat(selected.getAttribute("y")) || 0;
 
-    offsetX = (clientX - rect.left) / zoom - curX;
-    offsetY = (clientY - rect.top) / zoom - curY;
+  offsetX = (clientX - rect.left) / zoom - curX;
+  offsetY = (clientY - rect.top) / zoom - curY;
 
-    svg.appendChild(selected);
+  document.addEventListener("mousemove", drag);
+  document.addEventListener("mouseup", endDrag);
+  document.addEventListener("touchmove", drag, { passive: false });
+  document.addEventListener("touchend", endDrag);
+}
 
-    document.addEventListener("mousemove", drag);
-    document.addEventListener("mouseup", endDrag);
-    document.addEventListener("touchmove", drag, { passive: false });
-    document.addEventListener("touchend", endDrag);
-  }
 
   // ... keep your drag() function unchanged ...
 
