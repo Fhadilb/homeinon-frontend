@@ -8,10 +8,10 @@ async function loadWebLLM() {
 
   console.log("⏳ Loading WebLLM model…");
 
-  // Correct API for your WebLLM build
-webllmModel = await window.webllm.createMLCEngine({
-  model: "Llama-3.1-8B-Instruct-q4f16_1"
-});
+  // This matches YOUR installed functions
+  webllmModel = await window.webllm.CreateMLCEngine({
+    model: "Llama-3.1-8B-Instruct-q4f16_1"
+  });
 
   console.log("✅ WebLLM ready!");
   return webllmModel;
@@ -37,13 +37,13 @@ Return ONLY valid JSON:
 }
 `;
 
-// Correct WebLLM API — chatCompletion()
-const response = await model.chat.completions.create({
-  messages: [{ role: "user", content: prompt }]
-});
+  // WebLLM's correct completion API for this build
+  const response = await model.chatCompletion([
+    { role: "user", content: prompt }
+  ]);
 
-// YOUR VERSION RETURNS THIS SHAPE:
-const text = response.choices?.[0]?.message?.content?.trim() || "";
+  const text =
+    response?.choices?.[0]?.message?.content?.trim() || "";
 
   try {
     return JSON.parse(text);
@@ -51,7 +51,6 @@ const text = response.choices?.[0]?.message?.content?.trim() || "";
     return { categories: [], room: null };
   }
 }
-
 
 
 const API_URL = "https://homeinon-backend.onrender.com/products";
