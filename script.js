@@ -1,5 +1,5 @@
 // -------------------------------------------------------
-// FREE IN-BROWSER AI — WebLLM (Llama 3.1 8B)
+// FREE IN-BROWSER AI — WebLLM (Llama 3 8B)
 // -------------------------------------------------------
 let webllmModel = null;
 
@@ -8,9 +8,8 @@ async function loadWebLLM() {
 
   console.log("⏳ Loading WebLLM model…");
 
-  // CORRECT ENGINE FUNCTION FOR YOUR BUILD
   webllmModel = await window.webllm.CreateMLCEngine({
-    model: "Llama-3.1-8B-Instruct-q4f16_1"
+    model: "Llama-3-8B-Instruct-q4f16_1"   // ✔ THIS MODEL EXISTS
   });
 
   console.log("✅ WebLLM ready!");
@@ -37,14 +36,11 @@ Return ONLY valid JSON:
 }
 `;
 
-  // CORRECT COMPLETION METHOD FOR YOUR ENGINE
   const response = await model.chatCompletion([
     { role: "user", content: prompt }
   ]);
 
-  // THE CORRECT RESPONSE PATH
-  const text =
-    response?.choices?.[0]?.message?.content?.trim() || "";
+  const text = response?.choices?.[0]?.message?.content?.trim() || "";
 
   try {
     return JSON.parse(text);
