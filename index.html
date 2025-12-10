@@ -1733,50 +1733,27 @@ function generateFloorplanRoom(widthM, depthM, heightM) {
     window.currentZoom = zoom;
   }, { passive: false });
 
-  // NEW: Smart mousedown - only pan if NOT clicking on a furniture item
+  // Smart mousedown - skip if dragging an item
   container.addEventListener("mousedown", (e) => {
-    const target = e.target.closest("image");  // Check if clicked on furniture
-    if (target) {
-      // Let item drag handle it - do nothing here
-      return;
-    }
+    if (isDraggingItem) return;  // SKIP IF ITEM DRAG STARTED
 
-    // Only start panning if clicked on empty space
+    const target = e.target.closest("image");
+    if (target) return;
+
     isDragging = true;
     startX = e.clientX;
     startY = e.clientY;
     container.style.cursor = "grabbing";
   });
 
-  container.addEventListener("mousemove", (e) => {
-    if (!isDragging) return;
-    const dx = e.clientX - startX;
-    const dy = e.clientY - startY;
-    panX += dx;
-    panY += dy;
-    startX = e.clientX;
-    startY = e.clientY;
-    updateTransform();
-  });
-
-  container.addEventListener("mouseup", () => {
-    isDragging = false;
-    container.style.cursor = "default";
-  });
-
-  container.addEventListener("mouseleave", () => {
-    isDragging = false;
-    container.style.cursor = "default";
-  });
-
-  // Touch support (also checks for image)
+  // Touch support
   container.addEventListener("touchstart", (e) => {
+    if (isDraggingItem) return;  // SKIP IF ITEM DRAG STARTED
+
     if (e.touches.length !== 1) return;
     const touch = e.touches[0];
     const target = document.elementFromPoint(touch.clientX, touch.clientY);
-    if (target && target.closest("image")) {
-      return; // Let item drag handle it
-    }
+    if (target && target.closest("image")) return;
 
     isDragging = true;
     startX = touch.clientX;
@@ -1896,6 +1873,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let selected = null;
   let offsetX = 0;
   let offsetY = 0;
+let isDraggingItem = false;  // NEW FLAG
 
   // 🔥 Wall-mount item detection helper
   function isWallItem(itemData) {
@@ -1990,6 +1968,9 @@ document.addEventListener("DOMContentLoaded", () => {
       cleanup();
       return;
     }
+// ATTACH ON CAPTURE PHASE (true as third arg)
+  canvas.addEventListener("mousedown", startDrag, true);
+  canvas.addEventListener("touchstart", startDrag, { passive: false, capture: true });
 
     const svg = canvas.querySelector("svg");
 
