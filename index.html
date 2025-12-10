@@ -975,22 +975,25 @@
   user-select: none;
 }
 #roomsetCanvas svg {
-  overflow: hidden !important; /* Also hide any potential SVG overflow */
-}
-.roomset-item, 
-.roomset-item * {
-  user-select: none;
-  -webkit-user-drag: none;
-}
-/* --- FIX: Allow items to receive pointer events, but not the SVG grid --- */
-#roomsetCanvas svg,
-#roomsetCanvas svg * {
-  pointer-events: none;      /* Grid, walls, floor, lines cannot capture mouse */
+  overflow: hidden !important;
 }
 
-#roomsetCanvas image {
-  pointer-events: all;       /* Furniture items CAN be clicked & dragged */
+/* Disable pointer events for the SVG grid (so it cannot steal drags) */
+#roomsetCanvas svg,
+#roomsetCanvas svg * {
+  pointer-events: none;
 }
+
+/* Enable pointer events ONLY for draggable furniture items */
+.roomset-item {
+  pointer-events: all;
+}
+
+/* Prevent IMG inside items from capturing events instead of the container */
+.roomset-item img {
+  pointer-events: none;
+}
+
 
 #roomsetModal .modal-body {
   width: 100%;
