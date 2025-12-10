@@ -967,17 +967,15 @@
   width: 100%;
   height: 600px;
   margin-top: 20px;
-  background: #0d1b2a; /* Blueprint dark blue - overrides old light gray */
+  background: #0d1b2a !important; /* Blueprint dark blue */
   border-radius: 12px;
   box-shadow: var(--shadow-sm);
   touch-action: none;
-  overflow: visible !important; /* Critical - prevents clipping of walls */
+  overflow: hidden !important; /* Changed to hidden - contains lines inside border */
   user-select: none;
 }
-
-/* Ensure SVG content isn't clipped either */
 #roomsetCanvas svg {
-  overflow: visible !important;
+  overflow: hidden !important; /* Also hide any potential SVG overflow */
 }
 .roomset-item, 
 .roomset-item * {
@@ -1616,10 +1614,6 @@ function generateFloorplanRoom(widthM, depthM, heightM) {
   svg.setAttribute("width", "100%");
   svg.setAttribute("height", "100%");
   svg.setAttribute("viewBox", `0 0 ${container.clientWidth} ${container.clientHeight}`);
-  svg.style.position = "absolute";
-  svg.style.top = "0";
-  svg.style.left = "0";
-  svg.style.overflow = "visible";
 
   const cx = container.clientWidth / 2;
   const cy = container.clientHeight / 2 + 50;
@@ -1642,7 +1636,6 @@ function generateFloorplanRoom(widthM, depthM, heightM) {
   const topBR = { x: pBR.x, y: pBR.y - H * 0.8 };
   const topBL = { x: pBL.x, y: pBL.y - H * 0.8 };
 
-  // Grid group
   const gridGroup = document.createElementNS(svg.namespaceURI, "g");
   gridGroup.setAttribute("opacity", "0.25");
   gridGroup.setAttribute("stroke", "#4fc3f7");
@@ -1665,66 +1658,60 @@ function generateFloorplanRoom(widthM, depthM, heightM) {
     line.setAttribute("x2", p2.x); line.setAttribute("y2", p2.y);
     gridGroup.appendChild(line);
   }
-  svg.appendChild(gridGroup);
 
-  // Floor
   const floor = document.createElementNS(svg.namespaceURI, "polygon");
   floor.setAttribute("points", `${pFL.x},${pFL.y} ${pFR.x},${pFR.y} ${pBR.x},${pBR.y} ${pBL.x},${pBL.y}`);
   floor.setAttribute("fill", "none");
   floor.setAttribute("stroke", "#4fc3f7");
   floor.setAttribute("stroke-width", "4");
-  svg.appendChild(floor);
 
-  // Back wall
   const backWall = document.createElementNS(svg.namespaceURI, "polyline");
   backWall.setAttribute("points", `${pBL.x},${pBL.y} ${pBR.x},${pBR.y} ${topBR.x},${topBR.y} ${topBL.x},${topBL.y} ${pBL.x},${pBL.y}`);
   backWall.setAttribute("fill", "none");
   backWall.setAttribute("stroke", "#80deea");
   backWall.setAttribute("stroke-width", "4");
-  svg.appendChild(backWall);
 
-  // Left wall
   const leftWall = document.createElementNS(svg.namespaceURI, "polyline");
   leftWall.setAttribute("points", `${pFL.x},${pFL.y} ${pBL.x},${pBL.y} ${topBL.x},${topBL.y} ${topFL.x},${topFL.y} ${pFL.x},${pFL.y}`);
   leftWall.setAttribute("fill", "none");
   leftWall.setAttribute("stroke", "#80deea");
   leftWall.setAttribute("stroke-width", "4");
-  svg.appendChild(leftWall);
 
-  // Right wall
   const rightWall = document.createElementNS(svg.namespaceURI, "polyline");
   rightWall.setAttribute("points", `${pFR.x},${pFR.y} ${pBR.x},${pBR.y} ${topBR.x},${topBR.y} ${topFR.x},${topFR.y} ${pFR.x},${pFR.y}`);
   rightWall.setAttribute("fill", "none");
   rightWall.setAttribute("stroke", "#80deea");
   rightWall.setAttribute("stroke-width", "4");
-  svg.appendChild(rightWall);
 
-  // Auto-fit: Wrap in group and scale/translate to contain within bounds
   const group = document.createElementNS(svg.namespaceURI, "g");
-  while (svg.firstChild) group.appendChild(svg.firstChild);
+  group.appendChild(gridGroup);
+  group.appendChild(floor);
+  group.appendChild(backWall);
+  group.appendChild(leftWall);
+  group.appendChild(rightWall);
   svg.appendChild(group);
 
+  // Append to DOM *before* bbox for accurate calculation
+  container.appendChild(svg);
+
   const bbox = group.getBBox();
-  const padding = 0.85; // 15% padding
+  const padding = 0.8; // Increased margin inside border
   const s = Math.min(container.clientWidth / bbox.width, container.clientHeight / bbox.height) * padding;
   const tx = (container.clientWidth - bbox.width * s) / 2 - bbox.x * s;
   const ty = (container.clientHeight - bbox.height * s) / 2 - bbox.y * s;
+
   group.setAttribute("transform", `translate(${tx}, ${ty}) scale(${s})`);
 
-  container.appendChild(svg);
-
-  // Zoom
   let zoom = 1;
   window.currentZoom = zoom;
   container.addEventListener("wheel", (e) => {
     e.preventDefault();
     zoom += e.deltaY > 0 ? -0.1 : 0.1;
     zoom = Math.max(0.5, Math.min(3, zoom));
-    group.style.transform = `translate(${tx}, ${ty}) scale(${zoom * s})`;  // Apply zoom on top of fit scale
+    group.setAttribute("transform", `translate(${tx}, ${ty}) scale(${zoom * s})`);
     window.currentZoom = zoom;
   }, { passive: false });
 }
-
 
 </script>
 <script>
