@@ -9,7 +9,7 @@ async function loadWebLLM() {
   console.log("Loading WebLLM model…");
 
   if (!window.webllm) {
-    console.error("WebLLM not loaded — check HTML module import");
+    console.error("WebLLM library not loaded - check module import in HTML");
     return null;
   }
 
@@ -24,14 +24,17 @@ async function loadWebLLM() {
     );
     console.log("WebLLM ready:", webllmModel);
   } catch (e) {
-    console.error("WebLLM failed to load:", e);
+    console.error("Failed to load WebLLM:", e);
   }
   return webllmModel;
 }
 
 async function aiClassify(query) {
   const model = await loadWebLLM();
-  if (!model) return { categories: [], room: null };
+  if (!model) {
+    console.error("Model not loaded - cannot classify");
+    return { categories: [], room: null };
+  }
 
   const prompt = `
 Extract furniture categories and room from the user query.
@@ -163,7 +166,7 @@ let roomset = JSON.parse(localStorage.getItem("roomset") || "[]");
 let floorplanFeatures = JSON.parse(localStorage.getItem("floorplanFeatures") || "[]");
 let addFeatureMode = null;
 let currentScalePxPerM = 60;
-let isFloorplanMode = false;
+let isFloorplanMode = false;  // Track floorplan mode
 
 function productKey(p){
   return (p && (p.sku || p.SKU || p.id || p.ID || p.title || "")).toString();
@@ -879,14 +882,14 @@ if (createFloorplanBtn && fpPopup) {
   });
 }
 
-// Global floorplan controls — created once, inside canvas
+// Global fixed floorplan controls (created once)
 document.addEventListener("DOMContentLoaded", () => {
   let fpControls = document.getElementById("fpControls");
-  if (fpControls) fpControls.remove();
+  if (fpControls) fpControls.remove(); // clean old if exists
 
   fpControls = document.createElement("div");
   fpControls.id = "fpControls";
-  fpControls.style.position = "absolute";
+  fpControls.style.position = "absolute";     // ← absolute, not fixed
   fpControls.style.top = "16px";
   fpControls.style.right = "16px";
   fpControls.style.zIndex = "100";
@@ -900,17 +903,29 @@ document.addEventListener("DOMContentLoaded", () => {
     <button id="addWindowBtn" style="padding:10px 16px;font-size:15px;cursor:pointer;">🪟 Add Window</button>
   `;
 
+  // Append directly to the canvas so it's inside the modal
   const canvas = document.getElementById("roomsetCanvas");
-  if (canvas) canvas.appendChild(fpControls);
+  if (canvas) {
+    canvas.appendChild(fpControls);
+  } else {
+    console.error("roomsetCanvas not found - cannot append controls");
+  }
 
-  document.getElementById("addDoorBtn").onclick = () => {
-    addFeatureMode = "door";
-    alert("Click anywhere on the floorplan to place a door");
-  };
-  document.getElementById("addWindowBtn").onclick = () => {
-    addFeatureMode = "window";
-    alert("Click anywhere on the floorplan to place a window");
-  };
+  const addDoorBtn = document.getElementById("addDoorBtn");
+  if (addDoorBtn) {
+    addDoorBtn.onclick = () => {
+      addFeatureMode = "door";
+      alert("Click anywhere on the floorplan to place a door");
+    };
+  }
+
+  const addWindowBtn = document.getElementById("addWindowBtn");
+  if (addWindowBtn) {
+    addWindowBtn.onclick = () => {
+      addFeatureMode = "window";
+      alert("Click anywhere on the floorplan to place a window");
+    };
+  }
 });
 
 // Clear Roomset button
@@ -930,6 +945,15 @@ document.addEventListener("DOMContentLoaded", () => {
         const depth = parseFloat(document.getElementById("fpDepth")?.value) || 4;
         createFloorplanSvg(width, depth);
       }
+    });
+  }
+
+  // Close room dimensions popup with X
+  const closeFloorplanDims = document.getElementById("closeFloorplanDims");
+  const floorplanDimPopup = document.getElementById("floorplanDimPopup");
+  if (closeFloorplanDims && floorplanDimPopup) {
+    closeFloorplanDims.addEventListener("click", () => {
+      floorplanDimPopup.style.display = "none";
     });
   }
 });
