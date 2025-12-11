@@ -647,14 +647,23 @@ function renderRoomsetBackgrounds() {
     div.style.marginBottom = "8px";
 
     div.addEventListener("click", () => {
-      roomsetCanvas.style.backgroundImage = `url('${src}')`;
-      roomsetCanvas.style.backgroundSize = "cover";
-      roomsetCanvas.style.backgroundPosition = "center";
-      roomsetCanvas.style.backgroundRepeat = "no-repeat";
-
+      // Hide 3D floorplan canvas and overlays
+      roomsetCanvas.style.display = "none";
+      roomsetList.style.display = "none";
+      // Show only the background image in a new overlay
+      let bgOverlay = document.getElementById("roomsetBgOverlay");
+      if (bgOverlay) bgOverlay.remove();
+      bgOverlay = document.createElement("div");
+      bgOverlay.id = "roomsetBgOverlay";
+      bgOverlay.style.position = "absolute";
+      bgOverlay.style.inset = "0";
+      bgOverlay.style.zIndex = "50";
+      bgOverlay.style.background = `url('${src}') center/cover no-repeat`;
+      bgOverlay.style.borderRadius = "16px";
+      bgOverlay.style.boxShadow = "var(--shadow-lg)";
+      roomsetCanvas.parentElement.appendChild(bgOverlay);
       document.querySelectorAll(".roomset-bg-thumb")
         .forEach(el => el.style.border = "3px solid transparent");
-
       div.style.border = "3px solid var(--accent)";
     });
 
@@ -943,6 +952,22 @@ viewCanvasBtn.addEventListener("click", ()=>{
   roomsetCanvas.style.display = "block";
   setTimeout(() => {
     renderRoomsetCanvas();
+    // Always render controls for doors/windows when switching to canvas view
+    let fpControls = document.getElementById("fpControls");
+    if (fpControls) fpControls.remove();
+    fpControls = document.createElement("div");
+    fpControls.id = "fpControls";
+    fpControls.style.position = "fixed";
+    fpControls.style.top = "24px";
+    fpControls.style.right = "32px";
+    fpControls.style.zIndex = "100";
+    fpControls.innerHTML = `
+      <button id="addDoorBtn" style="margin-right:8px;">🚪 Add Door</button>
+      <button id="addWindowBtn">🪟 Add Window</button>
+    `;
+    document.body.appendChild(fpControls);
+    document.getElementById("addDoorBtn").onclick = () => { addFeatureMode = "door"; };
+    document.getElementById("addWindowBtn").onclick = () => { addFeatureMode = "window"; };
   }, 20);
 });
 
