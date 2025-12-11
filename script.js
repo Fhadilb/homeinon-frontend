@@ -960,6 +960,9 @@ window.addEventListener("resize", () => {
     el.style.top = top + "px";
   });
 });
+// Fix: define createFloorplanBtn and fpPopup
+const createFloorplanBtn = document.getElementById("createFloorplan");
+const fpPopup = document.getElementById("fpPopup");
 if (createFloorplanBtn && fpPopup) {
   createFloorplanBtn.addEventListener("click", () => {
     const width = parseFloat(document.getElementById("fpWidth").value);
