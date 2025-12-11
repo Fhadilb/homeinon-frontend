@@ -1223,3 +1223,23 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
+
+// Render controls outside the canvas so they're always visible
+document.addEventListener("DOMContentLoaded", () => {
+  let fpControls = document.getElementById("fpControls");
+  if (!fpControls) {
+    fpControls = document.createElement("div");
+    fpControls.id = "fpControls";
+    fpControls.style.position = "fixed";
+    fpControls.style.top = "24px";
+    fpControls.style.right = "32px";
+    fpControls.style.zIndex = "100";
+    fpControls.innerHTML = `
+      <button id="addDoorBtn" style="margin-right:8px;">🚪 Add Door</button>
+      <button id="addWindowBtn">🪟 Add Window</button>
+    `;
+    document.body.appendChild(fpControls);
+    document.getElementById("addDoorBtn").onclick = () => { addFeatureMode = "door"; };
+    document.getElementById("addWindowBtn").onclick = () => { addFeatureMode = "window"; };
+  }
+});
