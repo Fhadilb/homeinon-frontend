@@ -875,33 +875,38 @@ if (createFloorplanBtn && fpPopup) {
 // Global fixed floorplan controls (created once)
 document.addEventListener("DOMContentLoaded", () => {
   let fpControls = document.getElementById("fpControls");
-  if (!fpControls) {
-    fpControls = document.createElement("div");
-    fpControls.id = "fpControls";
-    fpControls.style.position = "fixed";
-    fpControls.style.top = "24px";
-    fpControls.style.right = "32px";
-    fpControls.style.zIndex = "100";
-    fpControls.style.background = "#fff";
-    fpControls.style.padding = "12px";
-    fpControls.style.borderRadius = "8px";
-    fpControls.style.boxShadow = "var(--shadow-md)";
-    fpControls.style.display = "none";  // Start hidden
-    fpControls.innerHTML = `
-      <button id="addDoorBtn" style="margin-right:8px; padding:8px 12px;">🚪 Add Door</button>
-      <button id="addWindowBtn" style="padding:8px 12px;">🪟 Add Window</button>
-    `;
-    document.body.appendChild(fpControls);
+  if (fpControls) fpControls.remove(); // clean old if exists
 
-    document.getElementById("addDoorBtn").onclick = () => { 
-      addFeatureMode = "door"; 
-      alert("Click on the floorplan to place a door");
-    };
-    document.getElementById("addWindowBtn").onclick = () => { 
-      addFeatureMode = "window"; 
-      alert("Click on the floorplan to place a window");
-    };
+  fpControls = document.createElement("div");
+  fpControls.id = "fpControls";
+  fpControls.style.position = "absolute";     // ← absolute, not fixed
+  fpControls.style.top = "16px";
+  fpControls.style.right = "16px";
+  fpControls.style.zIndex = "100";
+  fpControls.style.background = "rgba(255,255,255,0.9)";
+  fpControls.style.padding = "12px";
+  fpControls.style.borderRadius = "12px";
+  fpControls.style.boxShadow = "0 4px 16px rgba(0,0,0,0.2)";
+  fpControls.style.display = "none";
+  fpControls.innerHTML = `
+    <button id="addDoorBtn" style="margin-right:10px;padding:10px 16px;font-size:15px;cursor:pointer;">🚪 Add Door</button>
+    <button id="addWindowBtn" style="padding:10px 16px;font-size:15px;cursor:pointer;">🪟 Add Window</button>
+  `;
+
+  // Append directly to the canvas so it's inside the modal
+  const canvas = document.getElementById("roomsetCanvas");
+  if (canvas) {
+    canvas.appendChild(fpControls);
   }
+
+  document.getElementById("addDoorBtn").onclick = () => {
+    addFeatureMode = "door";
+    alert("Click anywhere on the floorplan to place a door");
+  };
+  document.getElementById("addWindowBtn").onclick = () => {
+    addFeatureMode = "window";
+    alert("Click anywhere on the floorplan to place a window");
+  };
 });
 
 // Load everything
