@@ -167,6 +167,9 @@ let selectedColour = "";
 let showFavourites = false;
 let favourites = JSON.parse(localStorage.getItem("favourites")||"[]");
 let roomset = JSON.parse(localStorage.getItem("roomset") || "[]");
+// New: store doors and windows
+let floorplanFeatures = JSON.parse(localStorage.getItem("floorplanFeatures") || "[]");
+let addFeatureMode = null; // 'door' or 'window'
 
 // Store the current scale factor globally
 let currentScalePxPerM = 60; // default, will be set by floorplan
@@ -709,7 +712,7 @@ function createFloorplanSvg(width, depth) {
   svg.style.position = "absolute";
   svg.style.inset = "0";
   svg.style.zIndex = "0";
-  svg.style.pointerEvents = "none";
+  svg.style.pointerEvents = "auto";
   // Auto-fit the room to the canvas
   // SVG area: x=50 to x=750 (width), y=200 to y=450 (depth)
   const svgFloorMargin = 20; // slightly larger margin for comfort
@@ -748,7 +751,54 @@ function createFloorplanSvg(width, depth) {
   depthText.setAttribute("transform", `rotate(-90, 30, ${depthY})`);
   depthText.textContent = `Depth: ${depth}m`;
   svg.appendChild(depthText);
+  // Draw doors and windows
+  floorplanFeatures.forEach(f => {
+    if (f.type === "door" || f.type === "window") {
+      const rect = document.createElementNS(svgNS, "rect");
+      rect.setAttribute("x", f.x);
+      rect.setAttribute("y", f.y);
+      rect.setAttribute("width", f.w);
+      rect.setAttribute("height", f.h);
+      rect.setAttribute("fill", f.type === "door" ? "#8e7b6b" : "#aee3f7");
+      rect.setAttribute("stroke", "#333");
+      rect.setAttribute("stroke-width", "2");
+      rect.setAttribute("rx", "6");
+      rect.setAttribute("ry", "6");
+      svg.appendChild(rect);
+    }
+  });
+  // Click-to-place feature
+  svg.addEventListener("click", function(e) {
+    if (!addFeatureMode) return;
+    const rect = svg.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    // Default size for door/window
+    const w = addFeatureMode === "door" ? 60 : 80;
+    const h = addFeatureMode === "door" ? 16 : 40;
+    floorplanFeatures.push({ type: addFeatureMode, x, y, w, h });
+    localStorage.setItem("floorplanFeatures", JSON.stringify(floorplanFeatures));
+    createFloorplanSvg(width, depth); // re-render
+    addFeatureMode = null;
+  });
   roomsetCanvas.appendChild(svg);
+  // Add UI buttons for doors/windows
+  let fpControls = document.getElementById("fpControls");
+  if (!fpControls) {
+    fpControls = document.createElement("div");
+    fpControls.id = "fpControls";
+    fpControls.style.position = "absolute";
+    fpControls.style.top = "16px";
+    fpControls.style.right = "16px";
+    fpControls.style.zIndex = "10";
+    fpControls.innerHTML = `
+      <button id="addDoorBtn" style="margin-right:8px;">🚪 Add Door</button>
+      <button id="addWindowBtn">🪟 Add Window</button>
+    `;
+    roomsetCanvas.appendChild(fpControls);
+    document.getElementById("addDoorBtn").onclick = () => { addFeatureMode = "door"; };
+    document.getElementById("addWindowBtn").onclick = () => { addFeatureMode = "window"; };
+  }
 }
 
 function renderRoomsetCanvas(){
