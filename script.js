@@ -708,8 +708,10 @@ function createFloorplanSvg(width, depth) {
   svg.style.zIndex = "0";
   svg.style.pointerEvents = "none";
   // Dynamically calculate scale so SVG floor width matches room width
-  const svgFloorWidthPx = 700; // e.g., SVG floor starts at x=50, ends at x=750
-  const svgFloorDepthPx = 250; // e.g., SVG floor starts at y=200, ends at y=450
+  // SVG floor area: x=50 to x=750, y=200 to y=450
+  const svgFloorMargin = 10; // margin to avoid edge overflow
+  const svgFloorWidthPx = 700 - svgFloorMargin * 2;
+  const svgFloorDepthPx = 250 - svgFloorMargin * 2;
   currentScalePxPerM = svgFloorWidthPx / width;
   const roomWidthPx = width * currentScalePxPerM;
   const roomDepthPx = depth * currentScalePxPerM;
@@ -941,47 +943,9 @@ window.addEventListener("resize", () => {
     });
   }
   if (!wasDesktop && nowDesktop) {
-    items.forEach(el => {
-      el.style.transform = `rotate(${el.dataset.angle || 0}deg) scale(1)`;
-    });
-  }
-  wasDesktop = nowDesktop;
-  const rect = canvas.getBoundingClientRect();
-  items.forEach(el => {
-    let left = parseFloat(el.style.left) || 0;
-    let top = parseFloat(el.style.top) || 0;
-    const maxLeft = Math.max(0, rect.width - el.offsetWidth);
-    const maxTop = Math.max(0, rect.height - el.offsetHeight);
-    if (left > maxLeft) left = maxLeft;
-    if (top > maxTop) top = maxTop;
-    el.style.left = left + "px";
-    el.style.top = top + "px";
-  });
-});
-
-document.getElementById("roomsetClear").addEventListener("click", ()=>{
-  if(confirm("Clear all items from your roomset?")){
-    roomset = [];
-    saveRoomset();
-    renderRoomset();
-    renderRoomsetCanvas();
-  }
-});
-
-// --------- FLOORPLAN POPUP & GENERATION ----------
-const fpTile = document.getElementById("bgFloorplanOption");
-const fpPopup = document.getElementById("floorplanDimPopup");
-const createFloorplanBtn = document.getElementById("createFloorplan");
-const closeFloorplanBtn = document.getElementById("closeFloorplanDims");
-if (fpTile && fpPopup) {
-  fpTile.addEventListener("click", () => {
-    fpPopup.style.display = "flex";
-  });
-}
-if (closeFloorplanBtn && fpPopup) {
-  closeFloorplanBtn.addEventListener("click", () => {
-    fpPopup.style.display = "none";
-  });
+    item.innerHTML = `
+      <img src="${imgSrc}" alt="${it.title || ''}" title="${it.title || ''}">
+    `;
 }
 if (createFloorplanBtn && fpPopup) {
   createFloorplanBtn.addEventListener("click", () => {
