@@ -759,7 +759,7 @@ function renderRoomsetCanvas(){
     const x = it.x ?? 60 + (idx*60) % (stageRect.width - 150);
     const y = it.y ?? 60 + Math.floor(idx/4)*160;
     // --- SCALE LOGIC ---
-    const scalePxPerM = 60; // matches floorplan
+    const scalePxPerM = 200; // improved visual balance: 1m = 200px
     const widthCm = parseFloat(it.width_cm) || 0;
     const heightCm = parseFloat(it.height_cm) || 0;
     const w = widthCm ? (widthCm / 100) * scalePxPerM : (it.w ?? 140);
