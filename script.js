@@ -710,12 +710,15 @@ function createFloorplanSvg(width, depth) {
   svg.style.inset = "0";
   svg.style.zIndex = "0";
   svg.style.pointerEvents = "none";
-  // Dynamically calculate scale so SVG floor width matches room width
-  // SVG floor area: x=50 to x=750, y=200 to y=450
-  const svgFloorMargin = 10; // margin to avoid edge overflow
-  const svgFloorWidthPx = 700 - svgFloorMargin * 2;
-  const svgFloorDepthPx = 250 - svgFloorMargin * 2;
-  currentScalePxPerM = svgFloorWidthPx / width;
+  // Auto-fit the room to the canvas
+  // SVG area: x=50 to x=750 (width), y=200 to y=450 (depth)
+  const svgFloorMargin = 20; // slightly larger margin for comfort
+  const svgAreaWidthPx = 700 - svgFloorMargin * 2;
+  const svgAreaDepthPx = 250 - svgFloorMargin * 2;
+  // Calculate scale so both width and depth fit within SVG area
+  const scaleW = svgAreaWidthPx / width;
+  const scaleD = svgAreaDepthPx / depth;
+  currentScalePxPerM = Math.min(scaleW, scaleD); // fit both dimensions
   const roomWidthPx = width * currentScalePxPerM;
   const roomDepthPx = depth * currentScalePxPerM;
   const floorRect = document.createElementNS(svgNS, "rect");
