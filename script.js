@@ -8,21 +8,30 @@ async function loadWebLLM() {
 
   console.log("Loading WebLLM model…");
 
-  webllmModel = await window.webllm.CreateMLCEngine(
-    "Llama-3.1-8B-Instruct-q4f16_1-MLC-1k",
-    {
-      useIndexedDBCache: false,
-      wasmUrl: undefined,
-      modelId: "Llama-3.1-8B-Instruct-q4f16_1-MLC-1k"
-    }
-  );
+  if (!window.webllm) {
+    console.error("WebLLM not loaded — check HTML module import");
+    return null;
+  }
 
-  console.log("WebLLM ready:", webllmModel);
+  try {
+    webllmModel = await window.webllm.CreateMLCEngine(
+      "Llama-3.1-8B-Instruct-q4f16_1-MLC-1k",
+      {
+        useIndexedDBCache: false,
+        wasmUrl: undefined,
+        modelId: "Llama-3.1-8B-Instruct-q4f16_1-MLC-1k"
+      }
+    );
+    console.log("WebLLM ready:", webllmModel);
+  } catch (e) {
+    console.error("WebLLM failed to load:", e);
+  }
   return webllmModel;
 }
 
 async function aiClassify(query) {
   const model = await loadWebLLM();
+  if (!model) return { categories: [], room: null };
 
   const prompt = `
 Extract furniture categories and room from the user query.
@@ -41,15 +50,14 @@ Return ONLY valid JSON:
 }
 `;
 
-  const response = await model.chat.completions.create({
-    messages: [{ role: "user", content: prompt }]
-  });
-
-  const text = response?.choices?.[0]?.message?.content?.trim() || "";
-
   try {
+    const response = await model.chat.completions.create({
+      messages: [{ role: "user", content: prompt }]
+    });
+    const text = response?.choices?.[0]?.message?.content?.trim() || "";
     return JSON.parse(text);
-  } catch {
+  } catch (err) {
+    console.error("AI classify error:", err);
     return { categories: [], room: null };
   }
 }
@@ -155,7 +163,7 @@ let roomset = JSON.parse(localStorage.getItem("roomset") || "[]");
 let floorplanFeatures = JSON.parse(localStorage.getItem("floorplanFeatures") || "[]");
 let addFeatureMode = null;
 let currentScalePxPerM = 60;
-let isFloorplanMode = false;  // Track floorplan mode
+let isFloorplanMode = false;
 
 function productKey(p){
   return (p && (p.sku || p.SKU || p.id || p.ID || p.title || "")).toString();
@@ -304,9 +312,9 @@ function renderProducts(products){
   count.textContent = `${products.length} product${products.length!==1?"s":""} found`;
   if(products.length === 0){
     list.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:80px 20px">
-      <div style="font-size:4rem;margin-bottom:16px">${showFavourites ? 'No favourites' : 'No products'}</div>
+      <div style="font-size:4rem;margin-bottom:16px">${showFavourites ? '💔' : '🔍'}</div>
       <h3 style="color:var(--ink);margin-bottom:8px">${showFavourites ? 'No favourites yet' : 'No products found'}</h3>
-      <p style="color:var(--muted)">${showFavourites ? 'Click the heart on products you love!' : 'Try adjusting your filters'}</p>
+      <p style="color:var(--muted)">${showFavourites ? 'Click the ❤️ on products you love!' : 'Try adjusting your filters'}</p>
     </div>`;
     return;
   }
@@ -318,7 +326,7 @@ function renderProducts(products){
     div.innerHTML = `<div class="style-label">${p.style || ""}</div>
       <img src="${getImage(p)}" alt="${p.title}" />
       <div class="product-info"><h3>${p.title}</h3><p class="price">£${price.toFixed(2)}</p></div>
-      <button class="heart-btn ${liked ? "liked":""}" title="Favourite" data-key="${p.title || p.sku || ""}">heart</button>`;
+      <button class="heart-btn ${liked ? "liked":""}" title="Favourite" data-key="${p.title || p.sku || ""}">❤</button>`;
     div.addEventListener("click", (e)=>{ if(!e.target.classList.contains("heart-btn")) openProductModal(idx); });
     div.querySelector(".heart-btn").addEventListener("click", (e)=>{ e.stopPropagation(); toggleFavourite(e.currentTarget.dataset.key, e.currentTarget); });
     list.appendChild(div);
@@ -391,7 +399,7 @@ function openProductModal(index){
   modalCol.textContent = p.colour || "—";
   modalStyle.textContent = p.style || deriveStyle(p.title || p.description);
   modalDesc.textContent = p.description || "—";
-  modalRoomsetBtn.textContent = inRoomset(productKey(p)) ? "Remove from Roomset" : "Add to Roomset";
+  modalRoomsetBtn.textContent = inRoomset(productKey(p)) ? "🗑️ Remove from Roomset" : "🪄 Add to Roomset";
   modalRoomsetBtn.classList.toggle("active", inRoomset(productKey(p)));
   modalKey = productKey(p);
   modalLink.style.display = p.url ? "inline-block" : "none";
@@ -417,9 +425,10 @@ modalRoomsetBtn.addEventListener("click", () => {
   const p = filterProducts(getState()).find(prod => productKey(prod) === modalKey);
   if (!p) return;
   toggleRoomset(p);
-  modalRoomsetBtn.textContent = inRoomset(productKey(p)) ? "Remove from Roomset" : "Add to Roomset";
+  modalRoomsetBtn.textContent = inRoomset(productKey(p)) ? "🗑️ Remove from Roomset" : "🪄 Add to Roomset";
   modalRoomsetBtn.classList.toggle("active", inRoomset(productKey(p)));
 });
+
 /* -------------------------------------------------------
    CATEGORY NORMALISATION + ROOM DERIVATION
 ------------------------------------------------------- */
@@ -519,7 +528,7 @@ async function loadProducts() {
 // --------- TOP BAR FILTER CONTROLS ----------
 document.getElementById("toggleFavourites").addEventListener("click", ()=>{
   showFavourites = !showFavourites;
-  document.getElementById("toggleFavourites").textContent = showFavourites ? "View All Products" : "View Favourites";
+  document.getElementById("toggleFavourites").textContent = showFavourites ? "🔙 View All Products" : "⭐ View Favourites";
   applyFilters();
 });
 
@@ -540,7 +549,7 @@ document.getElementById("filterToggle").addEventListener("click", ()=>{
   const btn = document.getElementById("filterToggle");
   const f = document.getElementById("filters");
   const active = f.classList.toggle("active");
-  btn.textContent = active ? "Hide Filters Up Arrow" : "Show Filters Down Arrow";
+  btn.textContent = active ? "Hide Filters ▲" : "Show Filters ▼";
 });
 
 document.getElementById("searchBox").addEventListener("input", async () => {
@@ -611,7 +620,7 @@ function showViewSwitchControl() {
     canvasMode = true;
     roomsetList.style.display = "none";
     roomsetCanvas.style.display = "block";
-    roomsetCanvas.style.backgroundImage = "none";  // Ensure no preset image remains
+    roomsetCanvas.style.backgroundImage = "none";
     roomsetCanvas.style.backgroundSize = "";
     roomsetCanvas.style.backgroundPosition = "";
     roomsetCanvas.style.backgroundRepeat = "";
@@ -626,12 +635,11 @@ function showViewSwitchControl() {
   };
   document.getElementById("switchToRoomset").onclick = () => {
     isFloorplanMode = false;
-    canvasMode = true;  // Keep canvas view but with image
+    canvasMode = true;
     roomsetList.style.display = "none";
     roomsetCanvas.style.display = "block";
     const fpControls = document.getElementById("fpControls");
     if (fpControls) fpControls.style.display = "none";
-    // Note: preset image will be re-applied when you click a thumbnail again
   };
 }
 
@@ -657,7 +665,7 @@ function renderRoomset(){
     return `<div class="roomset-item-list">
       <img src="${imgSrc}" alt="${it.title}">
       <div class="roomset-item-info"><h4>${it.title}</h4><p>${it.style || '—'} | £${parseFloat(it.price || 0).toFixed(2)}</p></div>
-      <button class="roomset-remove-btn" onclick="removeFromRoomset('${it.key}');renderRoomset();">Remove</button>
+      <button class="roomset-remove-btn" onclick="removeFromRoomset('${it.key}');renderRoomset();renderRoomsetCanvas();">Remove</button>
     </div>`;
   }).join("");
 }
@@ -728,7 +736,6 @@ function createFloorplanSvg(width, depth) {
   });
 
   roomsetCanvas.appendChild(svg);
-  // Controls are now created globally — no creation here
 }
 
 function renderRoomsetCanvas(){
@@ -872,14 +879,14 @@ if (createFloorplanBtn && fpPopup) {
   });
 }
 
-// Global fixed floorplan controls (created once)
+// Global floorplan controls — created once, inside canvas
 document.addEventListener("DOMContentLoaded", () => {
   let fpControls = document.getElementById("fpControls");
-  if (fpControls) fpControls.remove(); // clean old if exists
+  if (fpControls) fpControls.remove();
 
   fpControls = document.createElement("div");
   fpControls.id = "fpControls";
-  fpControls.style.position = "absolute";     // ← absolute, not fixed
+  fpControls.style.position = "absolute";
   fpControls.style.top = "16px";
   fpControls.style.right = "16px";
   fpControls.style.zIndex = "100";
@@ -893,11 +900,8 @@ document.addEventListener("DOMContentLoaded", () => {
     <button id="addWindowBtn" style="padding:10px 16px;font-size:15px;cursor:pointer;">🪟 Add Window</button>
   `;
 
-  // Append directly to the canvas so it's inside the modal
   const canvas = document.getElementById("roomsetCanvas");
-  if (canvas) {
-    canvas.appendChild(fpControls);
-  }
+  if (canvas) canvas.appendChild(fpControls);
 
   document.getElementById("addDoorBtn").onclick = () => {
     addFeatureMode = "door";
@@ -909,5 +913,26 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 });
 
-// Load everything
+// Clear Roomset button
+document.addEventListener("DOMContentLoaded", () => {
+  const clearBtn = document.getElementById("roomsetClear");
+  if (clearBtn) {
+    clearBtn.addEventListener("click", () => {
+      if (!confirm("Clear your entire roomset?")) return;
+      roomset = [];
+      floorplanFeatures = [];
+      localStorage.setItem("roomset", JSON.stringify(roomset));
+      localStorage.setItem("floorplanFeatures", JSON.stringify(floorplanFeatures));
+      renderRoomset();
+      renderRoomsetCanvas();
+      if (isFloorplanMode) {
+        const width = parseFloat(document.getElementById("fpWidth")?.value) || 8;
+        const depth = parseFloat(document.getElementById("fpDepth")?.value) || 4;
+        createFloorplanSvg(width, depth);
+      }
+    });
+  }
+});
+
+// Load products
 loadProducts();
