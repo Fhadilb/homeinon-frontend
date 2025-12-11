@@ -463,6 +463,9 @@ const modalRoom    = document.getElementById("modalRoom");
 const modalDimsText = document.getElementById("modalDimsText");
 const modalRoomsetBtn = document.getElementById("modalRoomsetBtn");
 let modalKey = "";
+// Move these up so they are defined before use
+const createFloorplanBtn = document.getElementById("createFloorplan");
+const fpPopup = document.getElementById("fpPopup");
 
 function openProductModal(index){
   const filtered = filterProducts(getState());
@@ -771,8 +774,8 @@ function renderRoomsetCanvas(){
     // --- SCALE LOGIC ---
     const widthCm = parseFloat(it.width_cm) || 0;
     const heightCm = parseFloat(it.height_cm) || 0;
-    const w = widthCm ? (widthCm / 100) * currentScalePxPerM : (it.w ?? 140);
-    const h = heightCm ? (heightCm / 100) * currentScalePxPerM : (it.h ?? 140);
+    const w = (widthCm / 100) * currentScalePxPerM;
+    const h = (heightCm / 100) * currentScalePxPerM;
     const rot = it.rot ?? 0;
     item.style.left = `${x}px`;
     item.style.top = `${y}px`;
@@ -785,12 +788,11 @@ function renderRoomsetCanvas(){
       : getImage(it);
     item.innerHTML = `
       <img src="${imgSrc}" alt="${it.title || ''}" title="${it.title || ''}">
-      <div class="handle resize-handle"></div>
     `;
     roomsetCanvas.appendChild(item);
+    // Only allow dragging, not resizing
     let dragging = false, offsetX = 0, offsetY = 0;
     function startDrag(e) {
-      if (e.target.classList.contains("handle")) return;
       dragging = true;
       const point = e.touches ? e.touches[0] : e;
       const rect = item.getBoundingClientRect();
@@ -836,43 +838,6 @@ function renderRoomsetCanvas(){
     document.addEventListener("touchmove", moveDrag, { passive: false });
     document.addEventListener("mouseup", endDrag);
     document.addEventListener("touchend", endDrag);
-    const resizeHandle = item.querySelector(".resize-handle");
-    let resizing = false, startW=0, startH=0, startX=0, startY=0;
-    function startResize(e) {
-      e.stopPropagation();
-      e.preventDefault();
-      resizing = true;
-      const point = e.touches ? e.touches[0] : e;
-      startW = item.offsetWidth;
-      startH = item.offsetHeight;
-      startX = point.clientX;
-      startY = point.clientY;
-    }
-    function moveResize(e) {
-      if (!resizing) return;
-      e.preventDefault();
-      const point = e.touches ? e.touches[0] : e;
-      const deltaX = point.clientX - startX;
-      const deltaY = point.clientY - startY;
-      const newW = Math.max(60, startW + deltaX);
-      const newH = Math.max(60, startH + deltaY);
-      item.style.width  = newW + "px";
-      item.style.height = newH + "px";
-    }
-    function endResize() {
-      if (resizing) {
-        resizing = false;
-        it.w = item.offsetWidth;
-        it.h = item.offsetHeight;
-        saveRoomset();
-      }
-    }
-    resizeHandle.addEventListener("mousedown", startResize);
-    resizeHandle.addEventListener("touchstart", startResize, { passive: false });
-    document.addEventListener("mousemove", moveResize);
-    document.addEventListener("touchmove", moveResize, { passive: false });
-    document.addEventListener("mouseup", endResize);
-    document.addEventListener("touchend", endResize);
   });
   const canvasRect = roomsetCanvas.getBoundingClientRect();
   const allItems = roomsetCanvas.querySelectorAll(".roomset-item");
@@ -960,9 +925,6 @@ window.addEventListener("resize", () => {
     el.style.top = top + "px";
   });
 });
-// Fix: define createFloorplanBtn and fpPopup
-const createFloorplanBtn = document.getElementById("createFloorplan");
-const fpPopup = document.getElementById("fpPopup");
 if (createFloorplanBtn && fpPopup) {
   createFloorplanBtn.addEventListener("click", () => {
     const width = parseFloat(document.getElementById("fpWidth").value);
