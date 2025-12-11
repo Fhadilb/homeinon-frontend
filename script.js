@@ -707,7 +707,10 @@ function createFloorplanSvg(width, depth) {
   svg.style.inset = "0";
   svg.style.zIndex = "0";
   svg.style.pointerEvents = "none";
-  currentScalePxPerM = 60; // set scale factor for this floorplan
+  // Dynamically calculate scale so SVG floor width matches room width
+  const svgFloorWidthPx = 700; // e.g., SVG floor starts at x=50, ends at x=750
+  const svgFloorDepthPx = 250; // e.g., SVG floor starts at y=200, ends at y=450
+  currentScalePxPerM = svgFloorWidthPx / width;
   const roomWidthPx = width * currentScalePxPerM;
   const roomDepthPx = depth * currentScalePxPerM;
   const floorRect = document.createElementNS(svgNS, "rect");
