@@ -782,23 +782,22 @@ function createFloorplanSvg(width, depth) {
     addFeatureMode = null;
   });
   roomsetCanvas.appendChild(svg);
-  // Add UI buttons for doors/windows
+  // Always render controls for doors/windows after floorplan is created
   let fpControls = document.getElementById("fpControls");
-  if (!fpControls) {
-    fpControls = document.createElement("div");
-    fpControls.id = "fpControls";
-    fpControls.style.position = "absolute";
-    fpControls.style.top = "16px";
-    fpControls.style.right = "16px";
-    fpControls.style.zIndex = "10";
-    fpControls.innerHTML = `
-      <button id="addDoorBtn" style="margin-right:8px;">🚪 Add Door</button>
-      <button id="addWindowBtn">🪟 Add Window</button>
-    `;
-    roomsetCanvas.appendChild(fpControls);
-    document.getElementById("addDoorBtn").onclick = () => { addFeatureMode = "door"; };
-    document.getElementById("addWindowBtn").onclick = () => { addFeatureMode = "window"; };
-  }
+  if (fpControls) fpControls.remove();
+  fpControls = document.createElement("div");
+  fpControls.id = "fpControls";
+  fpControls.style.position = "absolute";
+  fpControls.style.top = "16px";
+  fpControls.style.right = "16px";
+  fpControls.style.zIndex = "10";
+  fpControls.innerHTML = `
+    <button id="addDoorBtn" style="margin-right:8px;">🚪 Add Door</button>
+    <button id="addWindowBtn">🪟 Add Window</button>
+  `;
+  roomsetCanvas.appendChild(fpControls);
+  document.getElementById("addDoorBtn").onclick = () => { addFeatureMode = "door"; };
+  document.getElementById("addWindowBtn").onclick = () => { addFeatureMode = "window"; };
 }
 
 function renderRoomsetCanvas(){
@@ -1211,3 +1210,16 @@ if (!window.__AI_INIT_DONE__) {
   });
   window.__AI_INIT_DONE__ = true;
 }
+
+// Add event for Clear Roomset button
+document.addEventListener("DOMContentLoaded", () => {
+  const clearBtn = document.getElementById("roomsetClear");
+  if (clearBtn) {
+    clearBtn.addEventListener("click", () => {
+      roomset = [];
+      saveRoomset();
+      renderRoomset();
+      renderRoomsetCanvas();
+    });
+  }
+});
