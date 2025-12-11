@@ -594,27 +594,44 @@ function showViewSwitchControl() {
   if (!switcher) {
     switcher = document.createElement("div");
     switcher.id = "viewSwitcher";
-    switcher.style.position = "fixed"; switcher.style.top = "24px"; switcher.style.right = "120px";
-    switcher.style.zIndex = "101"; switcher.style.background = "#fff"; switcher.style.borderRadius = "8px";
-    switcher.style.boxShadow = "var(--shadow-md)"; switcher.style.padding = "8px 16px"; switcher.style.fontWeight = "bold";
+    switcher.style.position = "fixed";
+    switcher.style.top = "24px";
+    switcher.style.right = "120px";
+    switcher.style.zIndex = "101";
+    switcher.style.background = "#fff";
+    switcher.style.borderRadius = "8px";
+    switcher.style.boxShadow = "var(--shadow-md)";
+    switcher.style.padding = "8px 16px";
+    switcher.style.fontWeight = "bold";
     document.body.appendChild(switcher);
   }
   switcher.innerHTML = `<button id="switchTo3D">3D Floorplan</button> <button id="switchToRoomset">Roomset Images</button>`;
   document.getElementById("switchTo3D").onclick = () => {
-    canvasMode = true; isFloorplanMode = true;
-    roomsetCanvas.style.backgroundImage = "none"; roomsetCanvas.style.backgroundSize = ""; roomsetCanvas.style.backgroundPosition = ""; roomsetCanvas.style.backgroundRepeat = "";
-    roomsetList.style.display = "none"; roomsetCanvas.style.display = "block";
-    const width = parseFloat(document.getElementById("fpWidth").value) || 8;
-    const depth = parseFloat(document.getElementById("fpDepth").value) || 4;
-    setTimeout(() => { createFloorplanSvg(width, depth); renderRoomsetCanvas(); }, 10);
+    isFloorplanMode = true;
+    canvasMode = true;
+    roomsetList.style.display = "none";
+    roomsetCanvas.style.display = "block";
+    roomsetCanvas.style.backgroundImage = "none";  // Ensure no preset image remains
+    roomsetCanvas.style.backgroundSize = "";
+    roomsetCanvas.style.backgroundPosition = "";
+    roomsetCanvas.style.backgroundRepeat = "";
+    const oldSvg = roomsetCanvas.querySelector("svg.floorplan-bg");
+    if (oldSvg) oldSvg.remove();
+    const width = parseFloat(document.getElementById("fpWidth")?.value) || 8;
+    const depth = parseFloat(document.getElementById("fpDepth")?.value) || 4;
+    createFloorplanSvg(width, depth);
+    renderRoomsetCanvas();
     const fpControls = document.getElementById("fpControls");
     if (fpControls) fpControls.style.display = "block";
   };
   document.getElementById("switchToRoomset").onclick = () => {
-    canvasMode = false; isFloorplanMode = false;
-    roomsetList.style.display = "block"; roomsetCanvas.style.display = "none";
+    isFloorplanMode = false;
+    canvasMode = true;  // Keep canvas view but with image
+    roomsetList.style.display = "none";
+    roomsetCanvas.style.display = "block";
     const fpControls = document.getElementById("fpControls");
     if (fpControls) fpControls.style.display = "none";
+    // Note: preset image will be re-applied when you click a thumbnail again
   };
 }
 
@@ -865,14 +882,25 @@ document.addEventListener("DOMContentLoaded", () => {
     fpControls.style.top = "24px";
     fpControls.style.right = "32px";
     fpControls.style.zIndex = "100";
-    fpControls.style.display = "none"; // hidden by default
+    fpControls.style.background = "#fff";
+    fpControls.style.padding = "12px";
+    fpControls.style.borderRadius = "8px";
+    fpControls.style.boxShadow = "var(--shadow-md)";
+    fpControls.style.display = "none";  // Start hidden
     fpControls.innerHTML = `
-      <button id="addDoorBtn" style="margin-right:8px;">Add Door</button>
-      <button id="addWindowBtn">Add Window</button>
+      <button id="addDoorBtn" style="margin-right:8px; padding:8px 12px;">🚪 Add Door</button>
+      <button id="addWindowBtn" style="padding:8px 12px;">🪟 Add Window</button>
     `;
     document.body.appendChild(fpControls);
-    document.getElementById("addDoorBtn").onclick = () => { addFeatureMode = "door"; };
-    document.getElementById("addWindowBtn").onclick = () => { addFeatureMode = "window"; };
+
+    document.getElementById("addDoorBtn").onclick = () => { 
+      addFeatureMode = "door"; 
+      alert("Click on the floorplan to place a door");
+    };
+    document.getElementById("addWindowBtn").onclick = () => { 
+      addFeatureMode = "window"; 
+      alert("Click on the floorplan to place a window");
+    };
   }
 });
 
