@@ -159,6 +159,7 @@ function normalizeCutoutPath(p) {
 }
 
 // --------- STATE ---------
+
 let allProducts = [];
 let selectedStyle = "";
 let selectedRoom = "";
@@ -166,6 +167,9 @@ let selectedColour = "";
 let showFavourites = false;
 let favourites = JSON.parse(localStorage.getItem("favourites")||"[]");
 let roomset = JSON.parse(localStorage.getItem("roomset") || "[]");
+
+// Store the current scale factor globally
+let currentScalePxPerM = 60; // default, will be set by floorplan
 
 function productKey(p){
   return (p && (p.sku || p.SKU || p.id || p.ID || p.title || "")).toString();
@@ -703,8 +707,9 @@ function createFloorplanSvg(width, depth) {
   svg.style.inset = "0";
   svg.style.zIndex = "0";
   svg.style.pointerEvents = "none";
-  const roomWidthPx = width * 60;
-  const roomDepthPx = depth * 60;
+  currentScalePxPerM = 60; // set scale factor for this floorplan
+  const roomWidthPx = width * currentScalePxPerM;
+  const roomDepthPx = depth * currentScalePxPerM;
   const floorRect = document.createElementNS(svgNS, "rect");
   floorRect.setAttribute("x", "50");
   floorRect.setAttribute("y", "200");
@@ -759,11 +764,10 @@ function renderRoomsetCanvas(){
     const x = it.x ?? 60 + (idx*60) % (stageRect.width - 150);
     const y = it.y ?? 60 + Math.floor(idx/4)*160;
     // --- SCALE LOGIC ---
-    const scalePxPerM = 100; // realistic scale: 1m = 100px
     const widthCm = parseFloat(it.width_cm) || 0;
     const heightCm = parseFloat(it.height_cm) || 0;
-    const w = widthCm ? (widthCm / 100) * scalePxPerM : (it.w ?? 140);
-    const h = heightCm ? (heightCm / 100) * scalePxPerM : (it.h ?? 140);
+    const w = widthCm ? (widthCm / 100) * currentScalePxPerM : (it.w ?? 140);
+    const h = heightCm ? (heightCm / 100) * currentScalePxPerM : (it.h ?? 140);
     const rot = it.rot ?? 0;
     item.style.left = `${x}px`;
     item.style.top = `${y}px`;
