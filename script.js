@@ -18,13 +18,13 @@ async function loadWebLLM() {
   try {
     console.log("⏳ Creating MLC Engine…");
 
-    webllmModel = await window.webllm.CreateMLCEngine(
-      "Llama-3.1-8B-Instruct-q4f16_1-MLC-1k",
-      {
-        model_id: "Llama-3.1-8B-Instruct-q4f16_1-MLC-1k",
-        useIndexedDBCache: false
-      }
-    );
+webllmModel = await window.webllm.CreateMLCEngine(
+  "Llama-3.2-1B-Instruct-q4f16_1-MLC",
+  {
+    model_id: "Llama-3.2-1B-Instruct-q4f16_1-MLC",
+    useIndexedDBCache: false
+  }
+);
 
     console.log("🚀 WebLLM LOADED:", webllmModel);
     return webllmModel;
