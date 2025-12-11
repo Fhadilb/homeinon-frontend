@@ -6,10 +6,10 @@ let webllmModel = null;
 async function loadWebLLM() {
   if (webllmModel) return webllmModel;
 
-  console.log("Loading WebLLM model…");
+  console.log("⏳ Loading WebLLM…");
 
   if (!window.webllm) {
-    console.error("WebLLM library not loaded - check module import in HTML");
+    console.error("❌ WebLLM library not loaded");
     return null;
   }
 
@@ -17,14 +17,14 @@ async function loadWebLLM() {
     webllmModel = await window.webllm.CreateMLCEngine(
       "Llama-3.1-8B-Instruct-q4f16_1-MLC-1k",
       {
-        useIndexedDBCache: false,
-        wasmUrl: undefined,
-        modelId: "Llama-3.1-8B-Instruct-q4f16_1-MLC-1k"
+        useIndexedDBCache: false
       }
     );
-    console.log("WebLLM ready:", webllmModel);
-  } catch (e) {
-    console.error("Failed to load WebLLM:", e);
+
+    console.log("✅ WebLLM ready:", webllmModel);
+
+  } catch (err) {
+    console.error("❌ Failed to load WebLLM:", err);
   }
   return webllmModel;
 }
