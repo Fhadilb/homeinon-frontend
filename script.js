@@ -647,25 +647,63 @@ function renderRoomsetBackgrounds() {
     div.style.marginBottom = "8px";
 
     div.addEventListener("click", () => {
-      // Hide 3D floorplan canvas and overlays
-      roomsetCanvas.style.display = "none";
+      // Switch to roomset image view with products overlaid
+      canvasMode = true;
       roomsetList.style.display = "none";
-      // Show only the background image in a new overlay
-      let bgOverlay = document.getElementById("roomsetBgOverlay");
-      if (bgOverlay) bgOverlay.remove();
-      bgOverlay = document.createElement("div");
-      bgOverlay.id = "roomsetBgOverlay";
-      bgOverlay.style.position = "absolute";
-      bgOverlay.style.inset = "0";
-      bgOverlay.style.zIndex = "50";
-      bgOverlay.style.background = `url('${src}') center/cover no-repeat`;
-      bgOverlay.style.borderRadius = "16px";
-      bgOverlay.style.boxShadow = "var(--shadow-lg)";
-      roomsetCanvas.parentElement.appendChild(bgOverlay);
+      roomsetCanvas.style.display = "block";
+      roomsetCanvas.style.backgroundImage = `url('${src}')`;
+      roomsetCanvas.style.backgroundSize = "cover";
+      roomsetCanvas.style.backgroundPosition = "center";
+      roomsetCanvas.style.backgroundRepeat = "no-repeat";
+      // Remove any SVG floorplan overlay
+      const svg = roomsetCanvas.querySelector("svg.floorplan-bg");
+      if (svg) svg.remove();
+      renderRoomsetCanvas();
+      showViewSwitchControl();
       document.querySelectorAll(".roomset-bg-thumb")
         .forEach(el => el.style.border = "3px solid transparent");
       div.style.border = "3px solid var(--accent)";
     });
+// Persistent view switch control
+function showViewSwitchControl() {
+  let switcher = document.getElementById("viewSwitcher");
+  if (!switcher) {
+    switcher = document.createElement("div");
+    switcher.id = "viewSwitcher";
+    switcher.style.position = "fixed";
+    switcher.style.top = "24px";
+    switcher.style.right = "120px";
+    switcher.style.zIndex = "101";
+    switcher.style.background = "#fff";
+    switcher.style.borderRadius = "8px";
+    switcher.style.boxShadow = "var(--shadow-md)";
+    switcher.style.padding = "8px 16px";
+    switcher.style.fontWeight = "bold";
+    document.body.appendChild(switcher);
+  }
+  switcher.innerHTML = `<button id="switchTo3D">3D Floorplan</button> <button id="switchToRoomset">Roomset Images</button>`;
+  document.getElementById("switchTo3D").onclick = () => {
+    // Show 3D floorplan SVG and overlays
+    canvasMode = true;
+    roomsetCanvas.style.backgroundImage = "none";
+    roomsetCanvas.style.backgroundSize = "";
+    roomsetCanvas.style.backgroundPosition = "";
+    roomsetCanvas.style.backgroundRepeat = "";
+    roomsetList.style.display = "none";
+    roomsetCanvas.style.display = "block";
+    // Recreate SVG floorplan with walls/doors/windows
+    const width = parseFloat(document.getElementById("fpWidth").value) || 8;
+    const depth = parseFloat(document.getElementById("fpDepth").value) || 4;
+    createFloorplanSvg(width, depth);
+    renderRoomsetCanvas();
+  };
+  document.getElementById("switchToRoomset").onclick = () => {
+    // Show roomset image backgrounds
+    canvasMode = false;
+    roomsetList.style.display = "block";
+    roomsetCanvas.style.display = "none";
+  };
+}
 
     roomsetBackgrounds.appendChild(div);
   });
