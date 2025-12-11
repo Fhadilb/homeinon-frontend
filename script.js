@@ -943,10 +943,23 @@ window.addEventListener("resize", () => {
     });
   }
   if (!wasDesktop && nowDesktop) {
-    item.innerHTML = `
-      <img src="${imgSrc}" alt="${it.title || ''}" title="${it.title || ''}">
-    `;
-}
+    items.forEach(el => {
+      el.style.transform = `rotate(${el.dataset.angle || 0}deg) scale(1)`;
+    });
+  }
+  wasDesktop = nowDesktop;
+  const rect = canvas.getBoundingClientRect();
+  items.forEach(el => {
+    let left = parseFloat(el.style.left) || 0;
+    let top = parseFloat(el.style.top) || 0;
+    const maxLeft = Math.max(0, rect.width - el.offsetWidth);
+    const maxTop = Math.max(0, rect.height - el.offsetHeight);
+    if (left > maxLeft) left = maxLeft;
+    if (top > maxTop) top = maxTop;
+    el.style.left = left + "px";
+    el.style.top = top + "px";
+  });
+});
 if (createFloorplanBtn && fpPopup) {
   createFloorplanBtn.addEventListener("click", () => {
     const width = parseFloat(document.getElementById("fpWidth").value);
@@ -1180,4 +1193,3 @@ if (!window.__AI_INIT_DONE__) {
   });
   window.__AI_INIT_DONE__ = true;
 }
-
