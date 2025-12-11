@@ -847,8 +847,8 @@ window.addEventListener("resize", () => {
   const rect = roomsetCanvas.getBoundingClientRect();
   items.forEach(el => {
     let left = parseFloat(el.style.left) || 0;
-    let top = parseFloat(el.style.top) || 0;
     left = Math.max(0, Math.min(rect.width - el.offsetWidth, left));
+    let top = parseFloat(el.style.top) || 0;
     top = Math.max(0, Math.min(rect.height - el.offsetHeight, top));
     el.style.left = left + "px"; el.style.top = top + "px";
   });
