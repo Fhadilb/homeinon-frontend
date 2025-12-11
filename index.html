@@ -1570,15 +1570,15 @@
 <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 <script>console.log("Axios loaded?", typeof axios);</script>
 
-<!-- Load WebLLM as an ES module (official pattern) -->
-<script type="module">
-  import * as webllm from "https://esm.run/@mlc-ai/web-llm@0.2.74";
-
-  // Expose it globally so script.js can use window.webllm
-  window.webllm = webllm;
-
-  console.log("WebLLM loaded (module)?", window.webllm);
+<!-- WebLLM (Non-module) -->
+<script src="https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm/dist/index.min.js"></script>
+<script>
+  console.log("WebLLM loaded?", window.webllm);
 </script>
+
+<!-- Your app JS -->
+<script src="script.js?v=2007"></script>
+
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
