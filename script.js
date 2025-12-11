@@ -658,7 +658,8 @@ function renderRoomsetBackgrounds() {
       // Remove any SVG floorplan overlay
       const svg = roomsetCanvas.querySelector("svg.floorplan-bg");
       if (svg) svg.remove();
-      renderRoomsetCanvas();
+      // Overlay products
+      setTimeout(() => { renderRoomsetCanvas(); }, 10);
       showViewSwitchControl();
       document.querySelectorAll(".roomset-bg-thumb")
         .forEach(el => el.style.border = "3px solid transparent");
@@ -694,8 +695,10 @@ function showViewSwitchControl() {
     // Recreate SVG floorplan with walls/doors/windows
     const width = parseFloat(document.getElementById("fpWidth").value) || 8;
     const depth = parseFloat(document.getElementById("fpDepth").value) || 4;
-    createFloorplanSvg(width, depth);
-    renderRoomsetCanvas();
+    setTimeout(() => {
+      createFloorplanSvg(width, depth);
+      renderRoomsetCanvas();
+    }, 10);
   };
   document.getElementById("switchToRoomset").onclick = () => {
     // Show roomset image backgrounds
