@@ -420,6 +420,68 @@ modalRoomsetBtn.addEventListener("click", () => {
   modalRoomsetBtn.textContent = inRoomset(productKey(p)) ? "Remove from Roomset" : "Add to Roomset";
   modalRoomsetBtn.classList.toggle("active", inRoomset(productKey(p)));
 });
+/* -------------------------------------------------------
+   CATEGORY NORMALISATION + ROOM DERIVATION
+------------------------------------------------------- */
+function normalizeCategory(raw = "") {
+  const t = raw.toLowerCase().trim();
+  if (t.includes("bed frame") || t.includes("ottoman") || t.includes("divan") || t.includes("upholstered bed")) return "bed";
+  if (t === "bed" || t === "beds") return "bed";
+  if (t.includes("headboard")) return "headboard";
+  if (t.includes("bedside")) return "bedside table";
+  if (t.includes("drawer") || t.includes("chest")) return "drawers";
+  if (t.includes("wardrobe")) return "wardrobe";
+  if (t.includes("dressing")) return "dressing table";
+  if (t.includes("furniture set")) return "furniture set";
+  if (t.includes("sofa")) return "sofa";
+  if (t.includes("armchair") || t.includes("accent chair") || t.includes("recliner")) return "armchair";
+  if (t.includes("coffee")) return "coffee table";
+  if (t.includes("console")) return "console table";
+  if (t.includes("tv") || t.includes("media") || t.includes("entertainment")) return "tv unit";
+  if (t.includes("bookcase")) return "bookcase";
+  if (t.includes("cabinet") || t.includes("cupboard") || t.includes("storage")) return "cabinet";
+  if (t.includes("dining table")) return "dining table";
+  if (t.includes("dining chair")) return "dining chair";
+  if (t.includes("bench")) return "bench";
+  if (t.includes("sideboard") || t.includes("buffet")) return "sideboard";
+  if (t.includes("nest")) return "side table";
+  if (t.includes("desk")) return "desk";
+  if (t.includes("office chair")) return "office chair";
+  if (t.includes("table")) return "table";
+  return "misc";
+}
+
+function deriveRoom(cat = "") {
+  switch (cat) {
+    case "bed":
+    case "headboard":
+    case "bedside table":
+    case "drawers":
+    case "wardrobe":
+    case "dressing table":
+    case "furniture set":
+      return "bedroom";
+    case "sofa":
+    case "armchair":
+    case "coffee table":
+    case "console table":
+    case "tv unit":
+    case "cabinet":
+    case "bookcase":
+      return "living";
+    case "dining table":
+    case "dining chair":
+    case "sideboard":
+    case "bench":
+    case "side table":
+      return "dining";
+    case "desk":
+    case "office chair":
+      return "office";
+    default:
+      return "";
+  }
+}
 
 // --------- LOAD PRODUCTS ----------
 async function loadProducts() {
