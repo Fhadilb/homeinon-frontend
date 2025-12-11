@@ -994,11 +994,16 @@
   pointer-events: auto;
 }
 
-/* SVG grid must NOT intercept drags */
-#roomsetCanvas svg,
-#roomsetCanvas svg * {
+/* Only grid group should ignore events */
+#roomsetCanvas svg g {
   pointer-events: none !important;
 }
+
+/* Furniture images INSIDE SVG should allow dragging */
+#roomsetCanvas svg image {
+  pointer-events: all !important;
+}
+
 
 /* Furniture items must receive drags */
 .roomset-item {
@@ -2045,7 +2050,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("viewCanvasBtn").click();
 
     // Clear any OLD 2D background image (if exists)
-    canvas.style.backgroundImage = "none";
+    canvas.style.backgroundImage = canvas.style.backgroundImage; // no-op → does NOT clear image
     canvas.style.backgroundSize = "contain";
     canvas.style.backgroundRepeat = "no-repeat";
 

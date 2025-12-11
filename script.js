@@ -1,34 +1,40 @@
 console.log("🔥 script.js IS RUNNING v2007");
-// -------------------------------------------------------
 // FREE IN-BROWSER AI — WebLLM (Llama 3.1 8B)
-// -------------------------------------------------------
 let webllmModel = null;
 
 async function loadWebLLM() {
-  if (webllmModel) return webllmModel;
+  console.log("🔥 loadWebLLM CALLED");
 
-  console.log("⏳ Loading WebLLM…");
+  if (webllmModel) {
+    console.log("🔥 Already loaded →", webllmModel);
+    return webllmModel;
+  }
 
   if (!window.webllm) {
-    console.error("❌ WebLLM library not loaded");
+    console.error("❌ WebLLM not found on window");
     return null;
   }
 
   try {
+    console.log("⏳ Creating MLC Engine…");
+
     webllmModel = await window.webllm.CreateMLCEngine(
       "Llama-3.1-8B-Instruct-q4f16_1-MLC-1k",
       {
+        model_id: "Llama-3.1-8B-Instruct-q4f16_1-MLC-1k",
         useIndexedDBCache: false
       }
     );
 
-    console.log("✅ WebLLM ready:", webllmModel);
+    console.log("🚀 WebLLM LOADED:", webllmModel);
+    return webllmModel;
 
   } catch (err) {
-    console.error("❌ Failed to load WebLLM:", err);
+    console.error("❌ WebLLM init FAILED:", err);
+    return null;
   }
-  return webllmModel;
 }
+
 
 async function aiClassify(query) {
   const model = await loadWebLLM();
