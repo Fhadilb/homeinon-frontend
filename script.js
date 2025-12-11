@@ -758,8 +758,12 @@ function renderRoomsetCanvas(){
     item.className = "roomset-item";
     const x = it.x ?? 60 + (idx*60) % (stageRect.width - 150);
     const y = it.y ?? 60 + Math.floor(idx/4)*160;
-    const w = it.w ?? 140;
-    const h = it.h ?? 140;
+    // --- SCALE LOGIC ---
+    const scalePxPerM = 60; // matches floorplan
+    const widthCm = parseFloat(it.width_cm) || 0;
+    const heightCm = parseFloat(it.height_cm) || 0;
+    const w = widthCm ? (widthCm / 100) * scalePxPerM : (it.w ?? 140);
+    const h = heightCm ? (heightCm / 100) * scalePxPerM : (it.h ?? 140);
     const rot = it.rot ?? 0;
     item.style.left = `${x}px`;
     item.style.top = `${y}px`;
