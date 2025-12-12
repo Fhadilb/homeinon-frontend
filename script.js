@@ -596,6 +596,27 @@ document.getElementById("searchBox").addEventListener("input", async () => {
   applyFilters();
 });
 
+document.getElementById("searchBox").addEventListener("keydown", async (e) => {
+  if (e.key !== "Enter") return;
+
+  e.preventDefault();
+
+  const q = e.target.value.trim();
+  if (!q) return;
+
+  console.log("⌨️ Enter pressed → calling aiClassify:", q);
+
+  const ai = await aiClassify(q);
+
+  console.log("🧠 AI RESULT (Enter):", ai);
+
+  if (ai?.categories?.length > 0) {
+    document.getElementById("category").value = ai.categories[0];
+  }
+
+  updateFilterOptions();
+  applyFilters();
+});
 
 // --------- ROOMSET BACKGROUND SELECTOR ----------
 const ROOMSET_BACKGROUNDS = Array.from({ length: 13 }, (_, i) => `assets/roomset-canvas-image-${i + 1}.jpg`);
@@ -991,6 +1012,48 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
+
+// --------- AI SUGGEST BUTTON ----------
+const suggestBtn = document.getElementById("roomsetSuggestBtn");
+const suggestStatus = document.getElementById("roomsetSuggestStatus");
+const suggestOutput = document.getElementById("roomsetSuggestOutput");
+
+if (suggestBtn) {
+  suggestBtn.addEventListener("click", async () => {
+    const q = document.getElementById("searchBox")?.value.trim();
+
+    if (!q) {
+      suggestStatus.textContent = "Type something to get AI suggestions.";
+      return;
+    }
+
+    suggestStatus.style.display = "block";
+    suggestStatus.textContent = "AI loading…";
+    suggestOutput.textContent = "";
+
+    console.log("✨ Suggest button clicked with query:", q);
+
+    const ai = await aiClassify(q);
+
+    console.log("✨ AI SUGGEST RESULT:", ai);
+
+    if (ai?.categories?.length > 0) {
+      document.getElementById("category").value = ai.categories[0];
+    }
+
+    if (ai?.room) {
+      selectedRoom = ai.room;
+    }
+
+    updateFilterOptions();
+    applyFilters();
+
+    suggestStatus.textContent = "Suggestions applied ✓";
+    setTimeout(() => {
+      suggestStatus.style.display = "none";
+    }, 1500);
+  });
+}
 
 // Load products
 loadProducts();
