@@ -195,21 +195,58 @@ function expandCategories(categories = [], room) {
 
   return Array.from(set).slice(0, 6);
 }
-// --------- AI KEYWORD OVERRIDES (REQUIRED) ----------
+// --------- AI KEYWORD OVERRIDES ----------
 function keywordOverrideCategories(query = "") {
   const q = query.toLowerCase();
-
   if (q.includes("mirror")) return ["mirror"];
   if (q.includes("rug") || q.includes("carpet")) return ["rug"];
   if (q.includes("lamp") || q.includes("light")) return ["lighting"];
   if (q.includes("wardrobe")) return ["wardrobe"];
   if (q.includes("bed")) return ["bed"];
   if (q.includes("desk")) return ["desk"];
+  return null;
+}
+// --------- EXPLICIT ROOM OVERRIDES ----------
+function extractExplicitRoom(query = "") {
+  const q = query.toLowerCase();
 
-  return null; // no override
+  if (q.includes("office")) return "office";
+  if (q.includes("bedroom")) return "bedroom";
+  if (q.includes("living")) return "living";
+  if (q.includes("dining")) return "dining";
+
+  return null;
 }
 
-// --------- STEP 9 — STRONG RELEVANCE SCORING ----------
+// --------- STEP 3A — EXTRACT PRICE INTENT ----------
+function extractMaxPrice(query = "") {
+  const q = query.toLowerCase();
+
+  let m = q.match(/(under|below|less than)\s*£?\s*(\d+)/);
+  if (m) return parseFloat(m[2]);
+
+  m = q.match(/(max|up to)\s*£?\s*(\d+)/);
+  if (m) return parseFloat(m[2]);
+
+  m = q.match(/£\s*(\d+)/);
+  if (m) return parseFloat(m[1]);
+
+  return null;
+}
+
+
+function extractExplicitRoom(query = "") {
+  const q = query.toLowerCase();
+
+  if (q.includes("office")) return "office";
+  if (q.includes("bedroom")) return "bedroom";
+  if (q.includes("living")) return "living";
+  if (q.includes("dining")) return "dining";
+
+  return null;
+}
+
+// --------- STEP 9 — NORMALISED RELEVANCE SCORING ----------
 function scoreProduct(product, query, categories, room) {
   let score = 0;
 
@@ -221,27 +258,34 @@ function scoreProduct(product, query, categories, room) {
   const cat   = (product.category || "").toLowerCase();
   const prodRoom = (product.room || "").toLowerCase();
 
-  if (categories.includes(product.category)) score += 100;
+  // 1️⃣ HARD CATEGORY MATCH (dominant)
+  if (categories.includes(product.category)) score += 120;
 
+  // 2️⃣ WORD-LEVEL MATCHING (very important)
   words.forEach(w => {
-    if (cat.includes(w)) score += 60;
+    if (cat.includes(w))   score += 50;
     if (title.includes(w)) score += 40;
-    if (desc.includes(w)) score += 20;
+    if (desc.includes(w))  score += 20;
   });
 
-  if (room && prodRoom === room) score += 30;
-  if (room && prodRoom && prodRoom !== room) score -= 40;
+  // 3️⃣ ROOM RELEVANCE (strong)
+  if (room && prodRoom === room) score += 35;
+  if (room && prodRoom && prodRoom !== room) score -= 80;
 
-  if (
-    words.includes("mirror") &&
-    ["sofa", "bed", "table", "desk"].includes(product.category)
-  ) {
-    score -= 200;
+  // 4️⃣ HARD INTENT GUARDS (stop bad matches)
+  if (words.includes("mirror") && ["sofa", "bed", "desk", "table"].includes(product.category)) {
+    score -= 300;
   }
+
+  if (words.includes("office") && ["bed", "wardrobe"].includes(product.category)) {
+    score -= 300;
+  }
+
+  // 5️⃣ NOISE FLOOR — kill weak matches
+  if (score < 40) return 0;
 
   return score;
 }
-
 
 // --------- STATE ---------
 let allProducts = [];
@@ -1130,8 +1174,12 @@ async function runAISuggestion(q) {
   suggestStatus.style.display = "block";
   suggestStatus.textContent = "AI loading…";
 
-  const ai = await aiClassify(q);
-  console.log("✨ AI RAW RESULT:", ai);
+const ai = await aiClassify(q);
+console.log("✨ AI RAW RESULT:", ai);
+
+const maxPrice = extractMaxPrice(q);
+console.log("💰 MAX PRICE INTENT:", maxPrice);
+
 
   if (!ai) {
     suggestStatus.textContent = "AI failed to respond";
@@ -1152,42 +1200,69 @@ async function runAISuggestion(q) {
       "AI used: " + expandedCategories.join(", ");
   }
 
-  // Apply filters
-  selectedRoom = ai.room || "";
-  const catEl = document.getElementById("category");
-  if (catEl) catEl.value = "";
-  updateFilterOptions();
+// --------- APPLY ROOM INTENT (explicit > AI > none) ----------
+const explicitRoom = extractExplicitRoom(q);
+selectedRoom = explicitRoom ?? ai.room ?? "";
 
-  // STEP 8 — rank + guarantee 6
-  let rankedMatches = allProducts
-    .map(p => ({
-      product: p,
-      score: scoreProduct(p, q, expandedCategories, ai.room)
-    }))
-    .filter(x => x.score > 0)
-    .sort((a, b) => b.score - a.score)
-    .map(x => x.product);
+console.log("🏠 ROOM USED:", selectedRoom);
 
-  if (rankedMatches.length < 6) {
-    const needed = 6 - rankedMatches.length;
-    const fallbackPool = allProducts.filter(p =>
-      !rankedMatches.includes(p) &&
-      (
-        expandedCategories.includes(p.category) ||
-        (ai.room && p.room === ai.room)
-      )
-    );
-    rankedMatches = rankedMatches.concat(fallbackPool.slice(0, needed));
-  }
+// Clear manual category so AI controls it
+const catEl = document.getElementById("category");
+if (catEl) catEl.value = "";
 
-  rankedMatches = rankedMatches.slice(0, 6);
+// Rebuild filters AFTER room change
+updateFilterOptions();
 
-  console.log("🏆 FINAL PRODUCTS (MIN 6):", rankedMatches);
 
-  rankedMatches.forEach(p => addToRoomset(p));
 
-  renderRoomset();
-  renderRoomsetCanvas();
+// --------- STEP 8 — PRICE-AWARE RANKING + MIN 6 ----------
+let rankedMatches = allProducts
+  .map(p => {
+    let score = scoreProduct(p, q, expandedCategories, ai.room);
+
+    const price = parseFloat(p.price) || Infinity;
+
+    // 💰 Apply max price intent
+    if (maxPrice !== null) {
+      if (price <= maxPrice) {
+        score += 25;      // reward under budget
+      } else {
+        score -= 60;      // strongly penalise over budget
+      }
+    }
+
+    return { product: p, score };
+  })
+  .filter(x => x.score > 0)
+  .sort((a, b) => b.score - a.score)
+  .map(x => x.product);
+
+// 🧠 Backfill if fewer than 6
+if (rankedMatches.length < 6) {
+  const needed = 6 - rankedMatches.length;
+
+  const fallbackPool = allProducts.filter(p =>
+    !rankedMatches.includes(p) &&
+    (
+      expandedCategories.includes(p.category) ||
+      (ai.room && p.room === ai.room)
+    )
+  );
+
+  rankedMatches = rankedMatches.concat(fallbackPool.slice(0, needed));
+}
+
+// 🔒 Hard cap
+rankedMatches = rankedMatches.slice(0, 6);
+
+console.log("🏆 FINAL PRODUCTS (PRICE-AWARE):", rankedMatches);
+
+// ➕ Add to roomset
+rankedMatches.forEach(p => addToRoomset(p));
+
+renderRoomset();
+renderRoomsetCanvas();
+
 
   // “Added X items” message
   suggestStatus.textContent = `Added ${rankedMatches.length} items`;
