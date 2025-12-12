@@ -195,6 +195,20 @@ function expandCategories(categories = [], room) {
 
   return Array.from(set).slice(0, 6);
 }
+// --------- AI KEYWORD OVERRIDES (REQUIRED) ----------
+function keywordOverrideCategories(query = "") {
+  const q = query.toLowerCase();
+
+  if (q.includes("mirror")) return ["mirror"];
+  if (q.includes("rug") || q.includes("carpet")) return ["rug"];
+  if (q.includes("lamp") || q.includes("light")) return ["lighting"];
+  if (q.includes("wardrobe")) return ["wardrobe"];
+  if (q.includes("bed")) return ["bed"];
+  if (q.includes("desk")) return ["desk"];
+
+  return null; // no override
+}
+
 // --------- STEP 9 — STRONG RELEVANCE SCORING ----------
 function scoreProduct(product, query, categories, room) {
   let score = 0;
