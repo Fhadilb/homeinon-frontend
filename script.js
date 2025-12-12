@@ -47,7 +47,6 @@ async function aiClassify(query) {
     console.error("Model not loaded - cannot classify");
     return { categories: [], room: null };
   }
-}
 
   const prompt = `
 Extract furniture categories and room from the user query.
@@ -70,12 +69,16 @@ Return ONLY valid JSON:
     const response = await model.chat.completions.create({
       messages: [{ role: "user", content: prompt }]
     });
+
     const text = response?.choices?.[0]?.message?.content?.trim() || "";
     return JSON.parse(text);
+
   } catch (err) {
     console.error("AI classify error:", err);
     return { categories: [], room: null };
   }
+}
+
 
 
 const API_URL = "https://homeinon-backend.onrender.com/products";
