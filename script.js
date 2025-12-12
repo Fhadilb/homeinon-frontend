@@ -15,16 +15,22 @@ async function loadWebLLM() {
     return null;
   }
 
+  // 🔒 ADD THIS BLOCK RIGHT HERE
+  if (!window.webllm?.prebuiltAppConfig) {
+    console.warn("⏳ WebLLM config not ready yet");
+    return null;
+  }
+
   try {
     console.log("⏳ Creating MLC Engine…");
 
-webllmModel = await window.webllm.CreateMLCEngine(
-  "Llama-3.2-1B-Instruct-q4f16_1-MLC",
-  {
-    model_id: "Llama-3.2-1B-Instruct-q4f16_1-MLC",
-    useIndexedDBCache: false
-  }
-);
+    webllmModel = await window.webllm.CreateMLCEngine(
+      "Llama-3.2-1B-Instruct-q4f16_1-MLC",
+      {
+        model_id: "Llama-3.2-1B-Instruct-q4f16_1-MLC",
+        useIndexedDBCache: false
+      }
+    );
 
     console.log("🚀 WebLLM LOADED:", webllmModel);
     return webllmModel;
@@ -35,13 +41,13 @@ webllmModel = await window.webllm.CreateMLCEngine(
   }
 }
 
-
 async function aiClassify(query) {
   const model = await loadWebLLM();
   if (!model) {
     console.error("Model not loaded - cannot classify");
     return { categories: [], room: null };
   }
+}
 
   const prompt = `
 Extract furniture categories and room from the user query.
@@ -70,7 +76,7 @@ Return ONLY valid JSON:
     console.error("AI classify error:", err);
     return { categories: [], room: null };
   }
-}
+
 
 const API_URL = "https://homeinon-backend.onrender.com/products";
 const STYLE_IMAGES = {

@@ -1570,22 +1570,20 @@
 <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 <script>console.log("Axios loaded?", typeof axios);</script>
 
-<!-- WebLLM (Non-module) -->
-<script src="https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm/dist/index.min.js"></script>
-<script>
+<!-- WebLLM (official ES module) -->
+<script type="module">
+  import * as webllm from "https://esm.run/@mlc-ai/web-llm@0.2.74";
+  window.webllm = webllm;
+
   console.log("WebLLM loaded?", window.webllm);
+  console.log("WEBLLM CONFIG:", webllm.prebuiltAppConfig);
+  console.log("AVAILABLE MODELS:", webllm.prebuiltAppConfig?.model_list);
 </script>
+
 
 <!-- Your app JS -->
-<script src="script.js?v=2007"></script>
+<script src="script.js?v=2007" defer></script>
 
-
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-  console.log("WEBLLM CONFIG:", window.webllm?.prebuiltAppConfig);
-  console.log("AVAILABLE MODELS:", window.webllm?.prebuiltAppConfig?.model_list);
-});
-</script>
 
 <!-- Load THREE.js (as module) -->
 <script type="module">
@@ -1599,10 +1597,6 @@ document.addEventListener("DOMContentLoaded", () => {
   window.GLTFLoader = GLTFLoader;
   window.DRACOLoader = DRACOLoader;
 </script>
-
-<!-- Your main app -->
-<script src="script.js?v=1001" defer></script>
-
 
 <script>
 // OPEN DIMENSION POPUP WHEN CLICKING THE BIG ORANGE BOX
