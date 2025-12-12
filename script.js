@@ -1016,11 +1016,10 @@ document.addEventListener("DOMContentLoaded", () => {
 // --------- AI SUGGEST BUTTON ----------
 const suggestBtn = document.getElementById("roomsetSuggestBtn");
 const suggestStatus = document.getElementById("roomsetSuggestStatus");
-const suggestOutput = document.getElementById("roomsetSuggestOutput");
 
 if (suggestBtn) {
   suggestBtn.addEventListener("click", async () => {
-    const q = document.getElementById("roomsetPrompt")?.value.trim();
+    const q = document.getElementById("searchBox")?.value.trim();
 
     console.log("🔎 Suggest query value:", q);
 
@@ -1031,24 +1030,42 @@ if (suggestBtn) {
 
     suggestStatus.style.display = "block";
     suggestStatus.textContent = "AI loading…";
-    suggestOutput.textContent = "";
 
     const ai = await aiClassify(q);
 
     console.log("✨ AI SUGGEST RESULT:", ai);
 
-    if (ai?.categories?.length > 0) {
-      document.getElementById("category").value = ai.categories[0];
+    if (!ai || (!ai.categories?.length && !ai.room)) {
+      suggestStatus.textContent = "No suggestions found.";
+      return;
     }
 
-    if (ai?.room) {
+    // ✅ Apply AI filters
+    if (ai.categories?.length > 0) {
+      document.getElementById("category").value = ai.categories[0];
+    }
+    if (ai.room) {
       selectedRoom = ai.room;
     }
 
     updateFilterOptions();
     applyFilters();
 
-    suggestStatus.textContent = "Suggestions applied ✓";
+    // ✅ AUTO-ADD PRODUCTS TO ROOMSET
+    const filtered = filterProducts(getState());
+
+    if (filtered.length === 0) {
+      suggestStatus.textContent = "No matching products found.";
+      return;
+    }
+
+    // Add top 3 products
+    filtered.slice(0, 3).forEach(p => addToRoomset(p));
+
+    renderRoomset();
+    renderRoomsetCanvas();
+
+    suggestStatus.textContent = "Items added to roomset ✓";
     setTimeout(() => {
       suggestStatus.style.display = "none";
     }, 1500);
