@@ -1019,7 +1019,10 @@ const suggestStatus = document.getElementById("roomsetSuggestStatus");
 
 if (suggestBtn) {
   suggestBtn.addEventListener("click", async () => {
-    const q = document.getElementById("searchBox")?.value.trim();
+    const q =
+  document.getElementById("roomsetPrompt")?.value.trim() ||
+  document.getElementById("searchBox")?.value.trim();
+
 
     console.log("🔎 Suggest query value:", q);
 
