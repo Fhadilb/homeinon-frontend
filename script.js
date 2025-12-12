@@ -1020,7 +1020,9 @@ const suggestOutput = document.getElementById("roomsetSuggestOutput");
 
 if (suggestBtn) {
   suggestBtn.addEventListener("click", async () => {
-    const q = document.getElementById("searchBox")?.value.trim();
+    const q = document.getElementById("roomsetPrompt")?.value.trim();
+
+    console.log("🔎 Suggest query value:", q);
 
     if (!q) {
       suggestStatus.textContent = "Type something to get AI suggestions.";
@@ -1030,8 +1032,6 @@ if (suggestBtn) {
     suggestStatus.style.display = "block";
     suggestStatus.textContent = "AI loading…";
     suggestOutput.textContent = "";
-
-    console.log("✨ Suggest button clicked with query:", q);
 
     const ai = await aiClassify(q);
 
@@ -1054,6 +1054,7 @@ if (suggestBtn) {
     }, 1500);
   });
 }
+
 
 // Load products
 loadProducts();
