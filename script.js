@@ -195,24 +195,11 @@ function expandCategories(categories = [], room) {
 
   return Array.from(set).slice(0, 6);
 }
-// --------- AI KEYWORD OVERRIDES (STEP 4A) ----------
-function keywordOverrideCategories(query = "") {
-  const q = query.toLowerCase();
-
-  if (q.includes("mirror")) return ["mirror"];
-  if (q.includes("rug") || q.includes("carpet")) return ["rug"];
-  if (q.includes("lamp") || q.includes("light")) return ["lighting"];
-  if (q.includes("wardrobe")) return ["wardrobe"];
-  if (q.includes("bed")) return ["bed"];
-  if (q.includes("desk")) return ["desk"];
-
-  return null; // no override
-}
-// --------- STEP 7 — RELEVANCE-BASED PRODUCT SCORING ----------
+// --------- STEP 9 — STRONG RELEVANCE SCORING ----------
 function scoreProduct(product, query, categories, room) {
   let score = 0;
 
-  const q = query.toLowerCase();
+  const q = (query || "").toLowerCase();
   const words = q.split(/\s+/).filter(w => w.length > 2);
 
   const title = (product.title || "").toLowerCase();
@@ -220,31 +207,27 @@ function scoreProduct(product, query, categories, room) {
   const cat   = (product.category || "").toLowerCase();
   const prodRoom = (product.room || "").toLowerCase();
 
-  // 1️⃣ Strong keyword relevance (most important)
-  words.forEach(word => {
-    if (title.includes(word)) score += 12;
-    if (cat.includes(word))   score += 10;
-    if (desc.includes(word))  score += 5;
+  if (categories.includes(product.category)) score += 100;
+
+  words.forEach(w => {
+    if (cat.includes(w)) score += 60;
+    if (title.includes(w)) score += 40;
+    if (desc.includes(w)) score += 20;
   });
 
-  // 2️⃣ Category match (secondary)
-  categories.forEach(c => {
-    if (cat === c) score += 8;
-    if (title.includes(c)) score += 4;
-  });
+  if (room && prodRoom === room) score += 30;
+  if (room && prodRoom && prodRoom !== room) score -= 40;
 
-  // 3️⃣ Room relevance (soft, never dominant)
-  if (room && prodRoom === room) {
-    score += 4;
-  }
-
-  // 4️⃣ Penalise irrelevant items
-  if (score < 8) {
-    score -= 10;
+  if (
+    words.includes("mirror") &&
+    ["sofa", "bed", "table", "desk"].includes(product.category)
+  ) {
+    score -= 200;
   }
 
   return score;
 }
+
 
 // --------- STATE ---------
 let allProducts = [];
@@ -1113,105 +1096,110 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
-
-// --------- AI SUGGEST BUTTON ----------
+// --------- AI SUGGEST ELEMENTS ----------
 const suggestBtn = document.getElementById("roomsetSuggestBtn");
 const suggestStatus = document.getElementById("roomsetSuggestStatus");
 const suggestOutput = document.getElementById("roomsetSuggestOutput");
 
-if (suggestBtn) {
-  suggestBtn.addEventListener("click", async () => {
-    const q = document.getElementById("searchBox")?.value.trim();
+// --------- AI SUGGEST LOGIC ----------
+async function runAISuggestion(q) {
+  if (!suggestStatus) return;
 
-    console.log("🔎 Suggest query value:", q);
+  console.log("🔎 AI Suggest query value:", q);
 
-    if (!q) {
-      suggestStatus.textContent = "Type something to get AI suggestions.";
-      suggestStatus.style.display = "block";
-      return;
-    }
-
+  if (!q) {
+    suggestStatus.textContent = "Type something to get AI suggestions.";
     suggestStatus.style.display = "block";
-    suggestStatus.textContent = "AI loading…";
+    return;
+  }
 
-    // 🔹 Call AI
-    const ai = await aiClassify(q);
+  suggestStatus.style.display = "block";
+  suggestStatus.textContent = "AI loading…";
 
-    console.log("✨ AI RAW RESULT:", ai);
+  const ai = await aiClassify(q);
+  console.log("✨ AI RAW RESULT:", ai);
 
-    if (!ai) {
-      suggestStatus.textContent = "AI failed to respond";
-      return;
-    }
+  if (!ai) {
+    suggestStatus.textContent = "AI failed to respond";
+    return;
+  }
 
-    // --------- STEP 5 — APPLY KEYWORD OVERRIDE ----------
-    const overrideCategories = keywordOverrideCategories(q);
+  // STEP 5 — keyword override
+  const overrideCategories = keywordOverrideCategories(q);
+  const baseCategories = overrideCategories ?? (ai.categories || []);
+  const expandedCategories = expandCategories(baseCategories, ai.room);
 
-    const baseCategories = overrideCategories
-      ? overrideCategories
-      : (ai.categories || []);
+  console.log("🧠 FINAL CATEGORIES USED:", expandedCategories);
 
-    const expandedCategories = expandCategories(
-      baseCategories,
-      ai.room
+  // Grey “AI used” box
+  if (suggestOutput) {
+    suggestOutput.style.display = "block";
+    suggestOutput.textContent =
+      "AI used: " + expandedCategories.join(", ");
+  }
+
+  // Apply filters
+  selectedRoom = ai.room || "";
+  const catEl = document.getElementById("category");
+  if (catEl) catEl.value = "";
+  updateFilterOptions();
+
+  // STEP 8 — rank + guarantee 6
+  let rankedMatches = allProducts
+    .map(p => ({
+      product: p,
+      score: scoreProduct(p, q, expandedCategories, ai.room)
+    }))
+    .filter(x => x.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .map(x => x.product);
+
+  if (rankedMatches.length < 6) {
+    const needed = 6 - rankedMatches.length;
+    const fallbackPool = allProducts.filter(p =>
+      !rankedMatches.includes(p) &&
+      (
+        expandedCategories.includes(p.category) ||
+        (ai.room && p.room === ai.room)
+      )
     );
+    rankedMatches = rankedMatches.concat(fallbackPool.slice(0, needed));
+  }
 
-    console.log("🧠 FINAL CATEGORIES USED:", expandedCategories);
+  rankedMatches = rankedMatches.slice(0, 6);
 
-    // STEP 3C — show what AI actually used
-    if (suggestOutput) {
-      suggestOutput.textContent =
-        "AI used: " + expandedCategories.join(", ");
-    }
+  console.log("🏆 FINAL PRODUCTS (MIN 6):", rankedMatches);
 
-    // 🔹 Apply filters
-    selectedRoom = ai.room || "";
-    document.getElementById("category").value = "";
-    updateFilterOptions();
+  rankedMatches.forEach(p => addToRoomset(p));
 
-// --------- STEP 8 — GUARANTEE MINIMUM 6 ITEMS ----------
-let rankedMatches = allProducts
-  .map(p => ({
-    product: p,
-    score: scoreProduct(p, q, expandedCategories, ai.room)
-  }))
-  .filter(x => x.score > 0)
-  .sort((a, b) => b.score - a.score)
-  .map(x => x.product);
+  renderRoomset();
+  renderRoomsetCanvas();
 
-// 🧠 If fewer than 6, intelligently backfill
-if (rankedMatches.length < 6) {
-  const needed = 6 - rankedMatches.length;
-
-  const fallbackPool = allProducts.filter(p =>
-    !rankedMatches.includes(p) &&
-    (
-      expandedCategories.includes(p.category) ||
-      (ai.room && p.room === ai.room)
-    )
-  );
-
-  rankedMatches = rankedMatches.concat(
-    fallbackPool.slice(0, needed)
-  );
+  // “Added X items” message
+  suggestStatus.textContent = `Added ${rankedMatches.length} items`;
+  setTimeout(() => {
+    suggestStatus.style.display = "none";
+  }, 1500);
 }
 
-// 🔒 Hard cap safety
-rankedMatches = rankedMatches.slice(0, 6);
+// --------- AI SUGGEST BUTTON ----------
+if (suggestBtn) {
+  suggestBtn.addEventListener("click", () => {
+    const q = document.getElementById("searchBox").value.trim();
+    runAISuggestion(q);
+  });
+}
+// --------- ENTER KEY = AI SUGGEST ----------
+const searchBox = document.getElementById("searchBox");
 
-console.log("🏆 FINAL PRODUCTS (MIN 6):", rankedMatches);
+if (searchBox) {
+  searchBox.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter") return;
 
+    e.preventDefault();
 
-    // 🔹 Add products to roomset
-    rankedMatches.forEach(p => addToRoomset(p));
-
-    renderRoomset();
-    renderRoomsetCanvas();
-
-    suggestStatus.textContent = `Added ${rankedMatches.length} items`;
-    setTimeout(() => {
-      suggestStatus.style.display = "none";
-    }, 1500);
+    const q = searchBox.value.trim();
+    runAISuggestion(q);
   });
 }
 
