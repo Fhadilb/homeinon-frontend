@@ -573,11 +573,29 @@ document.getElementById("filterToggle").addEventListener("click", ()=>{
 
 document.getElementById("searchBox").addEventListener("input", async () => {
   const q = document.getElementById("searchBox").value.trim();
-  if (!q) { updateFilterOptions(); applyFilters(); return; }
+
+  if (!q) {
+    updateFilterOptions();
+    applyFilters();
+    return;
+  }
+
+  // 🔍 DEBUG: confirm input fires
+  console.log("🧠 Calling aiClassify with query:", q);
+
   const ai = await aiClassify(q);
-  if (ai.categories?.length > 0) document.getElementById("category").value = ai.categories[0];
-  updateFilterOptions(); applyFilters();
+
+  // 🔍 DEBUG: confirm AI returns
+  console.log("🧠 AI RESULT RECEIVED:", ai);
+
+  if (ai?.categories?.length > 0) {
+    document.getElementById("category").value = ai.categories[0];
+  }
+
+  updateFilterOptions();
+  applyFilters();
 });
+
 
 // --------- ROOMSET BACKGROUND SELECTOR ----------
 const ROOMSET_BACKGROUNDS = Array.from({ length: 13 }, (_, i) => `assets/roomset-canvas-image-${i + 1}.jpg`);
