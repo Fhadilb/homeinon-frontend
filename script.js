@@ -313,6 +313,8 @@ let floorplanFeatures = JSON.parse(localStorage.getItem("floorplanFeatures") || 
 let addFeatureMode = null;
 let currentScalePxPerM = 60;
 let isFloorplanMode = false;  // Track floorplan mode
+let canvasMode = false;
+
 
 function productKey(p){
   return (p && (p.sku || p.SKU || p.id || p.ID || p.title || "")).toString();
@@ -851,6 +853,46 @@ function renderRoomsetBackgrounds() {
 
 renderRoomsetBackgrounds();
 
+// --------- VIEW SWITCH CONTROLS ----------
+function showViewSwitchControl() {
+  let switcher = document.getElementById("viewSwitcher");
+
+  if (!switcher) {
+    switcher = document.createElement("div");
+    switcher.id = "viewSwitcher";
+    switcher.style.position = "absolute";
+    switcher.style.top = "16px";
+    switcher.style.right = "16px";
+    switcher.style.zIndex = "200";
+    switcher.style.background = "#fff";
+    switcher.style.borderRadius = "8px";
+    switcher.style.boxShadow = "var(--shadow-md)";
+    switcher.style.padding = "8px 12px";
+    document.body.appendChild(switcher);
+  }
+
+  switcher.innerHTML = `
+    <button id="switchToRoomset">Roomset</button>
+    <button id="switchTo3D">Floorplan</button>
+  `;
+
+  document.getElementById("switchToRoomset").onclick = () => {
+    isFloorplanMode = false;
+    canvasMode = true;
+    roomsetList.style.display = "none";
+    roomsetCanvas.style.display = "block";
+    renderRoomsetCanvas();
+  };
+
+  document.getElementById("switchTo3D").onclick = () => {
+    isFloorplanMode = true;
+    canvasMode = true;
+    roomsetList.style.display = "none";
+    roomsetCanvas.style.display = "block";
+    const fpControls = document.getElementById("fpControls");
+    if (fpControls) fpControls.style.display = "block";
+  };
+}
 
 function renderRoomset(){
   if (roomset.length === 0) {
