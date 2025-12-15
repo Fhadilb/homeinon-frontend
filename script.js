@@ -832,11 +832,12 @@ function renderRoomsetBackgrounds() {
       roomsetList.style.display = "none";
       roomsetCanvas.style.display = "block";
 
-      roomsetCanvas.style.backgroundImage = `url('${src}')`;
-      roomsetCanvas.style.backgroundSize = "cover";
-      roomsetCanvas.style.backgroundPosition = "center";
-      roomsetCanvas.style.backgroundRepeat = "no-repeat";
 roomsetCanvas.style.backgroundImage = `url('${src}')`;
+roomsetCanvas.style.backgroundSize = "cover";
+roomsetCanvas.style.backgroundPosition = "center";
+roomsetCanvas.style.backgroundRepeat = "no-repeat";
+roomsetCanvas.style.backgroundColor = "transparent";
+
 
       // 🔍 DEBUG — DO NOT MOVE
       console.log("🖼️ Background src:", src);
@@ -1122,62 +1123,6 @@ function renderRoomsetCanvas() {
     document.addEventListener("touchend", endDrag);
   });
 }
-
-
-    // --------- DRAG LOGIC (UNCHANGED) ----------
-    let dragging = false;
-    let offsetX = 0;
-    let offsetY = 0;
-
-    function startDrag(e) {
-      dragging = true;
-      const point = e.touches ? e.touches[0] : e;
-      const rect = item.getBoundingClientRect();
-      offsetX = point.clientX - rect.left;
-      offsetY = point.clientY - rect.top;
-      item.style.zIndex = "20";
-      e.preventDefault();
-    }
-
-    function moveDrag(e) {
-      if (!dragging) return;
-      const point = e.touches ? e.touches[0] : e;
-      const rect = roomsetCanvas.getBoundingClientRect();
-
-      let nx = point.clientX - rect.left - offsetX;
-      let ny = point.clientY - rect.top - offsetY;
-
-      const maxX = rect.width - item.offsetWidth;
-      const maxY = rect.height - item.offsetHeight;
-
-      nx = Math.max(0, Math.min(maxX, nx));
-      ny = Math.max(0, Math.min(maxY, ny));
-
-      item.style.left = nx + "px";
-      item.style.top = ny + "px";
-    }
-
-    function endDrag() {
-      if (!dragging) return;
-      dragging = false;
-
-      const rect = item.getBoundingClientRect();
-      const parent = roomsetCanvas.getBoundingClientRect();
-
-      it.x = rect.left - parent.left;
-      it.y = rect.top - parent.top;
-      saveRoomset();
-
-      item.style.zIndex = "10";
-    }
-
-    item.addEventListener("mousedown", startDrag);
-    item.addEventListener("touchstart", startDrag, { passive: false });
-    document.addEventListener("mousemove", moveDrag);
-    document.addEventListener("touchmove", moveDrag, { passive: false });
-    document.addEventListener("mouseup", endDrag);
-    document.addEventListener("touchend", endDrag);
-
 
 toggleRoomsetBtn.addEventListener("click", () => {
   roomsetModal.style.display = "flex";
