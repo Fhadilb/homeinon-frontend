@@ -782,7 +782,11 @@ const roomsetList   = document.getElementById("roomsetList");
 
 if (!roomsetCanvas || !roomsetList) {
   console.error("❌ Roomset elements not found in DOM");
+} else {
+  roomsetCanvas.style.position = "relative";
+  roomsetCanvas.style.overflow = "hidden";
 }
+
 // --------- ROOMSET MODAL & CONTROLS ----------
 const roomsetModal     = document.getElementById("roomsetModal");
 const toggleRoomsetBtn = document.getElementById("toggleRoomset");
@@ -832,6 +836,7 @@ function renderRoomsetBackgrounds() {
       roomsetCanvas.style.backgroundSize = "cover";
       roomsetCanvas.style.backgroundPosition = "center";
       roomsetCanvas.style.backgroundRepeat = "no-repeat";
+roomsetCanvas.style.zIndex = "0";
 
       const svg = roomsetCanvas.querySelector("svg.floorplan-bg");
       if (svg) svg.remove();
@@ -917,7 +922,7 @@ function createFloorplanSvg(width, depth) {
   svg.classList.add("floorplan-bg");
   svg.setAttribute("width", "100%"); svg.setAttribute("height", "100%");
   svg.setAttribute("viewBox", "0 0 800 500");
-  svg.style.position = "absolute"; svg.style.inset = "0"; svg.style.zIndex = "0"; svg.style.pointerEvents = "auto";
+  svg.style.position = "absolute"; svg.style.inset = "0"; svg.style.zIndex = "5"; svg.style.pointerEvents = "auto";
 
   const svgFloorMargin = 20;
   const svgAreaWidthPx = 700 - svgFloorMargin * 2;
@@ -1002,7 +1007,8 @@ function renderRoomsetCanvas(){
     item.style.left = `${x}px`; item.style.top = `${y}px`;
     item.style.width = `${w}px`; item.style.height = `${h}px`;
     item.style.transform = `rotate(${it.rot ?? 0}deg)`;
-    item.style.zIndex = "1";
+    item.style.position = "absolute";
+item.style.zIndex = "10";
     const imgSrc = it.cutout_local_path?.trim() ? it.cutout_local_path : getImage(it);
     item.innerHTML = `<img src="${imgSrc}" alt="${it.title || ''}" title="${it.title || ''}">`;
     roomsetCanvas.appendChild(item);
