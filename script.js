@@ -1215,7 +1215,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Append directly to the canvas so it's inside the modal
   const canvas = document.getElementById("roomsetCanvas");
   if (canvas) {
-    canvas.appendChild(fpControls);
+  document.body.appendChild(fpControls);
   } else {
     console.error("roomsetCanvas not found - cannot append controls");
   }
