@@ -832,7 +832,12 @@ function renderRoomsetBackgrounds() {
       roomsetList.style.display = "none";
       roomsetCanvas.style.display = "block";
 
-roomsetCanvas.style.backgroundImage = `url('${src}')`;
+roomsetCanvas.style.setProperty(
+  "background-image",
+  `url('${src}')`,
+  "important"
+);
+
 roomsetCanvas.style.backgroundSize = "cover";
 roomsetCanvas.style.backgroundPosition = "center";
 roomsetCanvas.style.backgroundRepeat = "no-repeat";
