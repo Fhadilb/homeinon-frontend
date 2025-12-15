@@ -836,6 +836,7 @@ function renderRoomsetBackgrounds() {
       roomsetCanvas.style.backgroundSize = "cover";
       roomsetCanvas.style.backgroundPosition = "center";
       roomsetCanvas.style.backgroundRepeat = "no-repeat";
+roomsetCanvas.style.backgroundImage = `url('${src}')`;
 
       // 🔍 DEBUG — DO NOT MOVE
       console.log("🖼️ Background src:", src);
@@ -1201,7 +1202,7 @@ document.addEventListener("DOMContentLoaded", () => {
   fpControls.style.position = "absolute";     // ← absolute, not fixed
   fpControls.style.top = "16px";
   fpControls.style.right = "16px";
-  fpControls.style.zIndex = "100";
+  fpControls.style.zIndex = "20";
   fpControls.style.background = "rgba(255,255,255,0.9)";
   fpControls.style.padding = "12px";
   fpControls.style.borderRadius = "12px";
@@ -1215,7 +1216,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Append directly to the canvas so it's inside the modal
   const canvas = document.getElementById("roomsetCanvas");
   if (canvas) {
-  document.body.appendChild(fpControls);
+  roomsetCanvas.appendChild(fpControls);
   } else {
     console.error("roomsetCanvas not found - cannot append controls");
   }
