@@ -1002,10 +1002,12 @@ function createFloorplanSvg(width, depth) {
 function renderRoomsetCanvas() {
   if (!roomsetCanvas) return;
 
+  // Clear previous items
   roomsetCanvas
     .querySelectorAll(".roomset-item, .roomset-empty-msg")
     .forEach(el => el.remove());
 
+  // Empty state
   if (roomset.length === 0) {
     const empty = document.createElement("div");
     empty.className = "roomset-empty-msg";
@@ -1029,44 +1031,98 @@ function renderRoomsetCanvas() {
     item.style.position = "absolute";
     item.style.zIndex = "10";
 
-    const x = it.x ?? 60 + (idx * 60) % Math.max(1, stageRect.width - 150);
-    const y = it.y ?? 60 + Math.floor(idx / 4) * 160;
+    // Position
+    const x = it.x ?? (60 + (idx * 60) % Math.max(1, stageRect.width - 150));
+    const y = it.y ?? (60 + Math.floor(idx / 4) * 160);
 
+    // Size
     const widthCm = parseFloat(it.width_cm);
     const heightCm = parseFloat(it.height_cm);
 
-    // ✅ FALLBACK SIZES (CRITICAL FIX)
-    const fallbackW = 120;
-    const fallbackH = 120;
-
     const w = Number.isFinite(widthCm)
       ? (widthCm / 100) * currentScalePxPerM
-      : fallbackW;
+      : 120;
 
     const h = Number.isFinite(heightCm)
       ? (heightCm / 100) * currentScalePxPerM
-      : fallbackH;
+      : 120;
 
     item.style.left = `${x}px`;
     item.style.top = `${y}px`;
-    item.style.width = `${Math.max(60, w)}px`;
-    item.style.height = `${Math.max(60, h)}px`;
+    item.style.width = `${Math.max(80, w)}px`;
+    item.style.height = `${Math.max(80, h)}px`;
     item.style.transform = `rotate(${it.rot ?? 0}deg)`;
 
+    // Image
     const imgSrc = it.cutout_local_path?.trim()
       ? it.cutout_local_path
       : getImage(it);
 
-    item.innerHTML = `
-      <img
-        src="${imgSrc}"
-        alt="${it.title || ""}"
-        title="${it.title || ""}"
-        style="width:100%;height:100%;object-fit:contain;pointer-events:none;"
-      >
-    `;
+    const img = document.createElement("img");
+    img.src = imgSrc;
+    img.alt = it.title || "";
+    img.title = it.title || "";
+    img.style.width = "100%";
+    img.style.height = "100%";
+    img.style.objectFit = "contain";
+    img.style.pointerEvents = "none";
 
+    item.appendChild(img);
     roomsetCanvas.appendChild(item);
+
+    // --- Drag logic ---
+    let dragging = false;
+    let offsetX = 0;
+    let offsetY = 0;
+
+    function startDrag(e) {
+      dragging = true;
+      const point = e.touches ? e.touches[0] : e;
+      const rect = item.getBoundingClientRect();
+      offsetX = point.clientX - rect.left;
+      offsetY = point.clientY - rect.top;
+      item.style.zIndex = "20";
+      e.preventDefault();
+    }
+
+    function moveDrag(e) {
+      if (!dragging) return;
+      const point = e.touches ? e.touches[0] : e;
+      const rect = roomsetCanvas.getBoundingClientRect();
+
+      let nx = point.clientX - rect.left - offsetX;
+      let ny = point.clientY - rect.top - offsetY;
+
+      nx = Math.max(0, Math.min(rect.width - item.offsetWidth, nx));
+      ny = Math.max(0, Math.min(rect.height - item.offsetHeight, ny));
+
+      item.style.left = nx + "px";
+      item.style.top = ny + "px";
+    }
+
+    function endDrag() {
+      if (!dragging) return;
+      dragging = false;
+
+      const rect = item.getBoundingClientRect();
+      const parent = roomsetCanvas.getBoundingClientRect();
+
+      it.x = rect.left - parent.left;
+      it.y = rect.top - parent.top;
+      saveRoomset();
+
+      item.style.zIndex = "10";
+    }
+
+    item.addEventListener("mousedown", startDrag);
+    item.addEventListener("touchstart", startDrag, { passive: false });
+    document.addEventListener("mousemove", moveDrag);
+    document.addEventListener("touchmove", moveDrag, { passive: false });
+    document.addEventListener("mouseup", endDrag);
+    document.addEventListener("touchend", endDrag);
+  });
+}
+
 
     // --------- DRAG LOGIC (UNCHANGED) ----------
     let dragging = false;
@@ -1121,8 +1177,6 @@ function renderRoomsetCanvas() {
     document.addEventListener("touchmove", moveDrag, { passive: false });
     document.addEventListener("mouseup", endDrag);
     document.addEventListener("touchend", endDrag);
-  });
-}
 
 
 toggleRoomsetBtn.addEventListener("click", () => {
