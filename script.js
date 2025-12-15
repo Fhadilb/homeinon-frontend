@@ -982,38 +982,80 @@ function createFloorplanSvg(width, depth) {
   roomsetCanvas.appendChild(svg);
 }
 
-function renderRoomsetCanvas(){
-  roomsetCanvas.querySelectorAll(".roomset-item, .roomset-empty-msg").forEach(el => el.remove());
+function renderRoomsetCanvas() {
+  if (!roomsetCanvas) return;
+
+  roomsetCanvas
+    .querySelectorAll(".roomset-item, .roomset-empty-msg")
+    .forEach(el => el.remove());
+
   if (roomset.length === 0) {
     const empty = document.createElement("div");
     empty.className = "roomset-empty-msg";
-    empty.style.position = "absolute"; empty.style.inset = "0";
-    empty.style.display = "flex"; empty.style.alignItems = "center"; empty.style.justifyContent = "center";
-    empty.style.color = "var(--muted)"; empty.style.pointerEvents = "none";
+    empty.style.position = "absolute";
+    empty.style.inset = "0";
+    empty.style.display = "flex";
+    empty.style.alignItems = "center";
+    empty.style.justifyContent = "center";
+    empty.style.color = "var(--muted)";
+    empty.style.pointerEvents = "none";
     empty.innerHTML = 'No items yet. Use "Add to Roomset".';
     roomsetCanvas.appendChild(empty);
     return;
   }
+
   const stageRect = roomsetCanvas.getBoundingClientRect();
-  roomset.forEach((it, idx)=>{
+
+  roomset.forEach((it, idx) => {
     const item = document.createElement("div");
     item.className = "roomset-item";
-    const x = it.x ?? 60 + (idx*60) % (stageRect.width - 150);
-    const y = it.y ?? 60 + Math.floor(idx/4)*160;
-    const widthCm = parseFloat(it.width_cm) || 0;
-    const heightCm = parseFloat(it.height_cm) || 0;
-    const w = (widthCm / 100) * currentScalePxPerM;
-    const h = (heightCm / 100) * currentScalePxPerM;
-    item.style.left = `${x}px`; item.style.top = `${y}px`;
-    item.style.width = `${w}px`; item.style.height = `${h}px`;
-    item.style.transform = `rotate(${it.rot ?? 0}deg)`;
     item.style.position = "absolute";
-item.style.zIndex = "10";
-    const imgSrc = it.cutout_local_path?.trim() ? it.cutout_local_path : getImage(it);
-    item.innerHTML = `<img src="${imgSrc}" alt="${it.title || ''}" title="${it.title || ''}">`;
+    item.style.zIndex = "10";
+
+    const x = it.x ?? 60 + (idx * 60) % Math.max(1, stageRect.width - 150);
+    const y = it.y ?? 60 + Math.floor(idx / 4) * 160;
+
+    const widthCm = parseFloat(it.width_cm);
+    const heightCm = parseFloat(it.height_cm);
+
+    // ✅ FALLBACK SIZES (CRITICAL FIX)
+    const fallbackW = 120;
+    const fallbackH = 120;
+
+    const w = Number.isFinite(widthCm)
+      ? (widthCm / 100) * currentScalePxPerM
+      : fallbackW;
+
+    const h = Number.isFinite(heightCm)
+      ? (heightCm / 100) * currentScalePxPerM
+      : fallbackH;
+
+    item.style.left = `${x}px`;
+    item.style.top = `${y}px`;
+    item.style.width = `${Math.max(60, w)}px`;
+    item.style.height = `${Math.max(60, h)}px`;
+    item.style.transform = `rotate(${it.rot ?? 0}deg)`;
+
+    const imgSrc = it.cutout_local_path?.trim()
+      ? it.cutout_local_path
+      : getImage(it);
+
+    item.innerHTML = `
+      <img
+        src="${imgSrc}"
+        alt="${it.title || ""}"
+        title="${it.title || ""}"
+        style="width:100%;height:100%;object-fit:contain;pointer-events:none;"
+      >
+    `;
+
     roomsetCanvas.appendChild(item);
 
-    let dragging = false, offsetX = 0, offsetY = 0;
+    // --------- DRAG LOGIC (UNCHANGED) ----------
+    let dragging = false;
+    let offsetX = 0;
+    let offsetY = 0;
+
     function startDrag(e) {
       dragging = true;
       const point = e.touches ? e.touches[0] : e;
@@ -1023,31 +1065,39 @@ item.style.zIndex = "10";
       item.style.zIndex = "20";
       e.preventDefault();
     }
+
     function moveDrag(e) {
       if (!dragging) return;
       const point = e.touches ? e.touches[0] : e;
       const rect = roomsetCanvas.getBoundingClientRect();
-      let x = point.clientX - rect.left - offsetX;
-      let y = point.clientY - rect.top - offsetY;
+
+      let nx = point.clientX - rect.left - offsetX;
+      let ny = point.clientY - rect.top - offsetY;
+
       const maxX = rect.width - item.offsetWidth;
       const maxY = rect.height - item.offsetHeight;
-      x = Math.max(0, Math.min(maxX, x));
-      y = Math.max(0, Math.min(maxY, y));
-      const floorY = rect.height - item.offsetHeight - 10;
-      if (Math.abs(y - floorY) < 25) y = floorY;
-      item.style.left = x + "px"; item.style.top = y + "px";
+
+      nx = Math.max(0, Math.min(maxX, nx));
+      ny = Math.max(0, Math.min(maxY, ny));
+
+      item.style.left = nx + "px";
+      item.style.top = ny + "px";
     }
+
     function endDrag() {
-      if (dragging) {
-        dragging = false;
-        const rect = item.getBoundingClientRect();
-        const parent = roomsetCanvas.getBoundingClientRect();
-        it.x = rect.left - parent.left;
-        it.y = rect.top - parent.top;
-        saveRoomset();
-        item.style.zIndex = "1";
-      }
+      if (!dragging) return;
+      dragging = false;
+
+      const rect = item.getBoundingClientRect();
+      const parent = roomsetCanvas.getBoundingClientRect();
+
+      it.x = rect.left - parent.left;
+      it.y = rect.top - parent.top;
+      saveRoomset();
+
+      item.style.zIndex = "10";
     }
+
     item.addEventListener("mousedown", startDrag);
     item.addEventListener("touchstart", startDrag, { passive: false });
     document.addEventListener("mousemove", moveDrag);
@@ -1056,6 +1106,7 @@ item.style.zIndex = "10";
     document.addEventListener("touchend", endDrag);
   });
 }
+
 
 toggleRoomsetBtn.addEventListener("click", () => {
   roomsetModal.style.display = "flex";
