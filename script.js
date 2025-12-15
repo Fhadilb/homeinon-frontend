@@ -825,63 +825,113 @@ function renderRoomsetBackgrounds() {
     div.style.border = "3px solid transparent";
     div.style.marginBottom = "8px";
 
-    div.addEventListener("click", () => {
-      canvasMode = true;
-      isFloorplanMode = false;
+div.addEventListener("click", () => {
+  canvasMode = true;
+  isFloorplanMode = false;
 
-      roomsetList.style.display = "none";
-      roomsetCanvas.style.display = "block";
+  roomsetList.style.display = "none";
+  roomsetCanvas.style.display = "block";
 
-roomsetCanvas.style.setProperty(
-  "background-image",
-  `url('${src}')`,
-  "important"
-);
+  const bgLayer = getRoomsetBgLayer();
+  if (bgLayer) {
+    bgLayer.style.display = "block";
+    bgLayer.style.backgroundImage = `url('${src}')`;
+    bgLayer.style.backgroundSize = "contain"; // ✅ fits inside canvas area
+    bgLayer.style.backgroundPosition = "center";
+    bgLayer.style.backgroundRepeat = "no-repeat";
+  }
 
-roomsetCanvas.style.backgroundSize = "cover";
-roomsetCanvas.style.backgroundPosition = "center";
-roomsetCanvas.style.backgroundRepeat = "no-repeat";
-roomsetCanvas.style.backgroundColor = "transparent";
+  // ✅ room photo mode should NOT have blueprint background
+  setBlueprintBackground(false);
 
+  // remove floorplan SVG if any
+  const svg = roomsetCanvas.querySelector("svg.floorplan-bg");
+  if (svg) svg.remove();
 
-      // 🔍 DEBUG — DO NOT MOVE
-      console.log("🖼️ Background src:", src);
-      console.log("🖼️ Canvas background:", roomsetCanvas.style.backgroundImage);
-      console.log("🖼️ Canvas display:", roomsetCanvas.style.display);
-      console.log(
-        "🖼️ Canvas dimensions:",
-        roomsetCanvas.offsetWidth,
-        roomsetCanvas.offsetHeight
-      );
+  const fpControls = document.getElementById("fpControls");
+  if (fpControls) fpControls.style.display = "none";
 
-      const svg = roomsetCanvas.querySelector("svg.floorplan-bg");
-      if (svg) svg.remove();
+  renderRoomsetCanvas();
+  showViewSwitchControl();
 
-const fpControls = document.getElementById("fpControls");
-if (fpControls) {
-  fpControls.style.display = "none";
-  fpControls.style.background = "transparent";
-  fpControls.style.pointerEvents = "none";
-}
+  document.querySelectorAll(".roomset-bg-thumb")
+    .forEach(el => el.style.border = "3px solid transparent");
+  div.style.border = "3px solid var(--accent)";
+});
 
-renderRoomsetCanvas();
-showViewSwitchControl();
-
-
-      document
-        .querySelectorAll(".roomset-bg-thumb")
-        .forEach(el => el.style.border = "3px solid transparent");
-      div.style.border = "3px solid var(--accent)";
-    });
 
     roomsetBackgrounds.appendChild(div);
   });
+}
+function getRoomsetBgLayer() {
+  if (!roomsetCanvas) return null;
+
+  let layer = roomsetCanvas.querySelector(".roomset-bg-layer");
+  if (!layer) {
+    layer = document.createElement("div");
+    layer.className = "roomset-bg-layer";
+    layer.style.position = "absolute";
+    layer.style.inset = "0";
+    layer.style.zIndex = "0";
+    layer.style.pointerEvents = "none";
+    layer.style.borderRadius = "16px";
+    layer.style.backgroundRepeat = "no-repeat";
+    layer.style.backgroundPosition = "center";
+    layer.style.backgroundSize = "contain"; // ✅ FITS the area (not cropped)
+    layer.style.backgroundColor = "transparent";
+    roomsetCanvas.prepend(layer);
+  }
+  return layer;
+}
+
+function setBlueprintBackground(on) {
+  if (!roomsetCanvas) return;
+  if (!on) {
+    roomsetCanvas.style.background = "transparent";
+    return;
+  }
+
+  // ✅ floorplan has its own “blueprint” style background
+  roomsetCanvas.style.background =
+    "repeating-linear-gradient(0deg, rgba(0,0,0,0.06) 0, rgba(0,0,0,0.06) 1px, transparent 1px, transparent 20px)," +
+    "repeating-linear-gradient(90deg, rgba(0,0,0,0.06) 0, rgba(0,0,0,0.06) 1px, transparent 1px, transparent 20px)," +
+    "#ffffff";
 }
 
 
 renderRoomsetBackgrounds();
 
 // --------- VIEW SWITCH CONTROLS ----------
+function getRoomsetBgLayer() {
+  if (!roomsetCanvas) return null;
+
+  let layer = document.getElementById("roomsetBgLayer");
+  if (!layer) {
+    layer = document.createElement("div");
+    layer.id = "roomsetBgLayer";
+    layer.style.position = "absolute";
+    layer.style.inset = "0";
+    layer.style.zIndex = "0";
+    layer.style.pointerEvents = "none";
+    layer.style.backgroundSize = "cover";
+    layer.style.backgroundPosition = "center";
+    layer.style.backgroundRepeat = "no-repeat";
+    roomsetCanvas.prepend(layer); // IMPORTANT: behind items
+  }
+  return layer;
+}
+
+function setBlueprintBackground(on) {
+  if (!roomsetCanvas) return;
+  if (on) {
+    // floorplan gets its own clean canvas background
+    roomsetCanvas.style.backgroundColor = "#ffffff";
+  } else {
+    // allow room photo backgrounds to show via bgLayer
+    roomsetCanvas.style.backgroundColor = "";
+  }
+}
+
 function showViewSwitchControl() {
   let switcher = document.getElementById("viewSwitcher");
 
@@ -896,31 +946,63 @@ function showViewSwitchControl() {
     switcher.style.borderRadius = "8px";
     switcher.style.boxShadow = "var(--shadow-md)";
     switcher.style.padding = "8px 12px";
-    document.body.appendChild(switcher);
+
+    // keep it inside the modal/canvas area, not floating on the page
+    if (roomsetCanvas) {
+      roomsetCanvas.appendChild(switcher);
+    } else {
+      document.body.appendChild(switcher);
+    }
   }
 
   switcher.innerHTML = `
-    <button id="switchToRoomset">Roomset</button>
-    <button id="switchTo3D">Floorplan</button>
+    <button id="switchToRoomset" type="button">Roomset</button>
+    <button id="switchTo3D" type="button">Floorplan</button>
   `;
 
-  document.getElementById("switchToRoomset").onclick = () => {
-    isFloorplanMode = false;
-    canvasMode = true;
-    roomsetList.style.display = "none";
-    roomsetCanvas.style.display = "block";
-    renderRoomsetCanvas();
-  };
+  const btnRoomset = document.getElementById("switchToRoomset");
+  const btn3D = document.getElementById("switchTo3D");
 
-  document.getElementById("switchTo3D").onclick = () => {
-    isFloorplanMode = true;
-    canvasMode = true;
-    roomsetList.style.display = "none";
-    roomsetCanvas.style.display = "block";
-    const fpControls = document.getElementById("fpControls");
-    if (fpControls) fpControls.style.display = "block";
-  };
+  if (btnRoomset) {
+    btnRoomset.onclick = () => {
+      isFloorplanMode = false;
+      canvasMode = true;
+
+      const bgLayer = getRoomsetBgLayer();
+      if (bgLayer) bgLayer.style.display = "block";
+
+      setBlueprintBackground(false);
+
+      roomsetList.style.display = "none";
+      roomsetCanvas.style.display = "block";
+
+      const fpControls = document.getElementById("fpControls");
+      if (fpControls) fpControls.style.display = "none";
+
+      renderRoomsetCanvas();
+    };
+  }
+
+  if (btn3D) {
+    btn3D.onclick = () => {
+      isFloorplanMode = true;
+      canvasMode = true;
+
+      const bgLayer = getRoomsetBgLayer();
+      if (bgLayer) bgLayer.style.display = "none"; // hide room photo in floorplan mode
+
+      setBlueprintBackground(true);
+
+      roomsetList.style.display = "none";
+      roomsetCanvas.style.display = "block";
+
+      const fpControls = document.getElementById("fpControls");
+      if (fpControls) fpControls.style.display = "block";
+    };
+  }
 }
+
+
 
 function renderRoomset(){
   if (roomset.length === 0) {
@@ -1008,12 +1090,10 @@ function createFloorplanSvg(width, depth) {
 function renderRoomsetCanvas() {
   if (!roomsetCanvas) return;
 
-  // Clear previous items
   roomsetCanvas
     .querySelectorAll(".roomset-item, .roomset-empty-msg")
     .forEach(el => el.remove());
 
-  // Empty state
   if (roomset.length === 0) {
     const empty = document.createElement("div");
     empty.className = "roomset-empty-msg";
@@ -1031,55 +1111,47 @@ function renderRoomsetCanvas() {
 
   const stageRect = roomsetCanvas.getBoundingClientRect();
 
+  // ✅ sensible fallback size based on canvas size (prevents tiny items)
+  const base = Math.min(stageRect.width, stageRect.height);
+  const fallbackW = Math.max(140, Math.round(base * 0.22));
+  const fallbackH = Math.max(140, Math.round(base * 0.22));
+
   roomset.forEach((it, idx) => {
     const item = document.createElement("div");
     item.className = "roomset-item";
     item.style.position = "absolute";
     item.style.zIndex = "10";
 
-    // Position
-    const x = it.x ?? (60 + (idx * 60) % Math.max(1, stageRect.width - 150));
-    const y = it.y ?? (60 + Math.floor(idx / 4) * 160);
+    const x = it.x ?? (60 + (idx * 60) % Math.max(1, stageRect.width - fallbackW));
+    const y = it.y ?? (60 + Math.floor(idx / 4) * (fallbackH + 20));
 
-    // Size
     const widthCm = parseFloat(it.width_cm);
     const heightCm = parseFloat(it.height_cm);
 
-    const w = Number.isFinite(widthCm)
-      ? (widthCm / 100) * currentScalePxPerM
-      : 120;
+    // If we have dimensions, scale them, otherwise use fallback
+    const w = Number.isFinite(widthCm) && widthCm > 0
+      ? Math.max(120, (widthCm / 100) * currentScalePxPerM)
+      : fallbackW;
 
-    const h = Number.isFinite(heightCm)
-      ? (heightCm / 100) * currentScalePxPerM
-      : 120;
+    const h = Number.isFinite(heightCm) && heightCm > 0
+      ? Math.max(120, (heightCm / 100) * currentScalePxPerM)
+      : fallbackH;
 
     item.style.left = `${x}px`;
     item.style.top = `${y}px`;
-    item.style.width = `${Math.max(80, w)}px`;
-    item.style.height = `${Math.max(80, h)}px`;
+    item.style.width = `${w}px`;
+    item.style.height = `${h}px`;
     item.style.transform = `rotate(${it.rot ?? 0}deg)`;
 
-    // Image
     const imgSrc = it.cutout_local_path?.trim()
       ? it.cutout_local_path
       : getImage(it);
 
-    const img = document.createElement("img");
-    img.src = imgSrc;
-    img.alt = it.title || "";
-    img.title = it.title || "";
-    img.style.width = "100%";
-    img.style.height = "100%";
-    img.style.objectFit = "contain";
-    img.style.pointerEvents = "none";
-
-    item.appendChild(img);
+    item.innerHTML = `<img src="${imgSrc}" alt="${it.title || ""}" title="${it.title || ""}">`;
     roomsetCanvas.appendChild(item);
 
-    // --- Drag logic ---
-    let dragging = false;
-    let offsetX = 0;
-    let offsetY = 0;
+    // --- Drag logic (kept) ---
+    let dragging = false, offsetX = 0, offsetY = 0;
 
     function startDrag(e) {
       dragging = true;
@@ -1128,6 +1200,7 @@ function renderRoomsetCanvas() {
     document.addEventListener("touchend", endDrag);
   });
 }
+
 
 toggleRoomsetBtn.addEventListener("click", () => {
   roomsetModal.style.display = "flex";
@@ -1183,18 +1256,32 @@ if (createFloorplanBtn && fpPopup) {
     const width = parseFloat(document.getElementById("fpWidth").value);
     const depth = parseFloat(document.getElementById("fpDepth").value);
     const height = parseFloat(document.getElementById("fpHeight").value);
-    if (!width || !depth || !height) { alert("Please enter all dimensions."); return; }
+
+    if (!width || !depth || !height) {
+      alert("Please enter all dimensions.");
+      return;
+    }
+
     isFloorplanMode = true;
     createFloorplanSvg(width, depth);
-    roomsetCanvas.style.backgroundImage = "none";
-    roomsetCanvas.style.backgroundSize = ""; roomsetCanvas.style.backgroundPosition = ""; roomsetCanvas.style.backgroundRepeat = "";
-    canvasMode = true; roomsetList.style.display = "none"; roomsetCanvas.style.display = "block";
+
+    // ✅ floorplan mode: hide room photo + show blueprint bg
+    const bgLayer = getRoomsetBgLayer();
+    if (bgLayer) bgLayer.style.display = "none";
+    setBlueprintBackground(true);
+
+    canvasMode = true;
+    roomsetList.style.display = "none";
+    roomsetCanvas.style.display = "block";
+
     renderRoomsetCanvas();
     fpPopup.style.display = "none";
+
     const fpControls = document.getElementById("fpControls");
     if (fpControls) fpControls.style.display = "block";
   });
 }
+
 
 // Global fixed floorplan controls (created once)
 document.addEventListener("DOMContentLoaded", () => {
