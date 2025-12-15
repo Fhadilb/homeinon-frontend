@@ -850,11 +850,16 @@ function renderRoomsetBackgrounds() {
       const svg = roomsetCanvas.querySelector("svg.floorplan-bg");
       if (svg) svg.remove();
 
-      const fpControls = document.getElementById("fpControls");
-      if (fpControls) fpControls.style.display = "none";
+const fpControls = document.getElementById("fpControls");
+if (fpControls) {
+  fpControls.style.display = "none";
+  fpControls.style.background = "transparent";
+  fpControls.style.pointerEvents = "none";
+}
 
-      renderRoomsetCanvas();
-      showViewSwitchControl();
+renderRoomsetCanvas();
+showViewSwitchControl();
+
 
       document
         .querySelectorAll(".roomset-bg-thumb")
