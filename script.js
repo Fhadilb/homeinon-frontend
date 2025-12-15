@@ -836,7 +836,6 @@ function renderRoomsetBackgrounds() {
       roomsetCanvas.style.backgroundSize = "cover";
       roomsetCanvas.style.backgroundPosition = "center";
       roomsetCanvas.style.backgroundRepeat = "no-repeat";
-roomsetCanvas.style.zIndex = "0";
 
       const svg = roomsetCanvas.querySelector("svg.floorplan-bg");
       if (svg) svg.remove();
