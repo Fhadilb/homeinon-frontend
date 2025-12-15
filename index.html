@@ -1347,6 +1347,19 @@
   }
 }
 
+/* --- FIX ROOMSET CANVAS BACKGROUND VISIBILITY --- */
+#roomsetCanvas {
+  background-color: transparent;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+}
+
+/* Ensure no child div paints white over background */
+#roomsetCanvas > div {
+  background: transparent;
+}
+
   </style>
 </head>
 <body>
