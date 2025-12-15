@@ -774,18 +774,21 @@ document.getElementById("searchBox").addEventListener("keydown", async (e) => {
   applyFilters();
 });
 
-// --------- ROOMSET BACKGROUND SELECTOR ----------
+// --------- ROOMSET CORE ELEMENTS ----------
+const roomsetCanvas = document.getElementById("roomsetCanvas");
+const roomsetList   = document.getElementById("roomsetList");
 
-// Predefined background images
+if (!roomsetCanvas || !roomsetList) {
+  console.error("❌ Roomset elements not found in DOM");
+}
+
+// --------- ROOMSET BACKGROUND SELECTOR ----------
 const ROOMSET_BACKGROUNDS = Array.from(
   { length: 13 },
   (_, i) => `assets/roomset-canvas-image-${i + 1}.jpg`
 );
 
 const roomsetBackgrounds = document.getElementById("roomsetBackgrounds");
-
-// Ensure canvas can show backgrounds
-roomsetCanvas.style.backgroundColor = "transparent";
 
 function renderRoomsetBackgrounds() {
   if (!roomsetBackgrounds) return;
@@ -807,36 +810,28 @@ function renderRoomsetBackgrounds() {
     div.style.marginBottom = "8px";
 
     div.addEventListener("click", () => {
-      console.log("🖼️ Roomset background selected:", src);
-
       canvasMode = true;
       isFloorplanMode = false;
 
       roomsetList.style.display = "none";
       roomsetCanvas.style.display = "block";
 
-      // ✅ Apply background image
       roomsetCanvas.style.backgroundImage = `url('${src}')`;
       roomsetCanvas.style.backgroundSize = "cover";
       roomsetCanvas.style.backgroundPosition = "center";
       roomsetCanvas.style.backgroundRepeat = "no-repeat";
 
-      // ✅ Remove floorplan SVG if present
       const svg = roomsetCanvas.querySelector("svg.floorplan-bg");
       if (svg) svg.remove();
 
-      // ✅ Hide floorplan controls
       const fpControls = document.getElementById("fpControls");
       if (fpControls) fpControls.style.display = "none";
 
-      // ✅ IMPORTANT: render items WITHOUT touching background
       renderRoomsetCanvas();
-
-      // UI polish
       showViewSwitchControl();
-      document
-        .querySelectorAll(".roomset-bg-thumb")
-        .forEach(el => (el.style.border = "3px solid transparent"));
+
+      document.querySelectorAll(".roomset-bg-thumb")
+        .forEach(el => el.style.border = "3px solid transparent");
       div.style.border = "3px solid var(--accent)";
     });
 
