@@ -1346,6 +1346,37 @@
     overflow-x: auto !important;
   }
 }
+    /* ---------- ROOMSET CANVAS MODES ---------- */
+    #roomsetCanvas {
+      background-repeat: no-repeat;
+      background-position: center;
+      background-size: cover;
+    }
+
+    /* Photo room background mode */
+    #roomsetCanvas.roomset-mode {
+      background-color: transparent;
+    }
+
+    /* Floorplan mode = its own clean canvas */
+    #roomsetCanvas.floorplan-mode {
+      background-image: none !important;
+      background-color: #ffffff;
+
+      /* blueprint-style grid */
+      background-image:
+        linear-gradient(rgba(0, 120, 255, 0.12) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 120, 255, 0.12) 1px, transparent 1px);
+      background-size: 28px 28px;
+    }
+
+    /* Cutout images must fill their item box */
+    .roomset-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+    }
 
 /* --- FIX ROOMSET CANVAS BACKGROUND VISIBILITY --- */
 #roomsetCanvas {
