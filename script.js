@@ -775,99 +775,77 @@ document.getElementById("searchBox").addEventListener("keydown", async (e) => {
 });
 
 // --------- ROOMSET BACKGROUND SELECTOR ----------
-const ROOMSET_BACKGROUNDS = Array.from({ length: 13 }, (_, i) => `assets/roomset-canvas-image-${i + 1}.jpg`);
+
+// Predefined background images
+const ROOMSET_BACKGROUNDS = Array.from(
+  { length: 13 },
+  (_, i) => `assets/roomset-canvas-image-${i + 1}.jpg`
+);
+
 const roomsetBackgrounds = document.getElementById("roomsetBackgrounds");
+
+// Ensure canvas can show backgrounds
+roomsetCanvas.style.backgroundColor = "transparent";
 
 function renderRoomsetBackgrounds() {
   if (!roomsetBackgrounds) return;
+
   roomsetBackgrounds.innerHTML = "";
-  ROOMSET_BACKGROUNDS.forEach((src, idx) => {
+
+  ROOMSET_BACKGROUNDS.forEach((src) => {
     const div = document.createElement("div");
     div.className = "roomset-bg-thumb";
     div.style.backgroundImage = `url('${src}')`;
     div.style.backgroundSize = "cover";
     div.style.backgroundPosition = "center";
     div.style.cursor = "pointer";
-    div.style.width = "120px"; div.style.height = "80px";
-    div.style.borderRadius = "8px"; div.style.boxShadow = "var(--shadow-sm)";
-    div.style.border = "3px solid transparent"; div.style.marginBottom = "8px";
+    div.style.width = "120px";
+    div.style.height = "80px";
+    div.style.borderRadius = "8px";
+    div.style.boxShadow = "var(--shadow-sm)";
+    div.style.border = "3px solid transparent";
+    div.style.marginBottom = "8px";
 
     div.addEventListener("click", () => {
-      canvasMode = true; isFloorplanMode = false;
-      roomsetList.style.display = "none"; roomsetCanvas.style.display = "block";
+      console.log("🖼️ Roomset background selected:", src);
+
+      canvasMode = true;
+      isFloorplanMode = false;
+
+      roomsetList.style.display = "none";
+      roomsetCanvas.style.display = "block";
+
+      // ✅ Apply background image
       roomsetCanvas.style.backgroundImage = `url('${src}')`;
       roomsetCanvas.style.backgroundSize = "cover";
       roomsetCanvas.style.backgroundPosition = "center";
       roomsetCanvas.style.backgroundRepeat = "no-repeat";
+
+      // ✅ Remove floorplan SVG if present
       const svg = roomsetCanvas.querySelector("svg.floorplan-bg");
       if (svg) svg.remove();
+
+      // ✅ Hide floorplan controls
       const fpControls = document.getElementById("fpControls");
       if (fpControls) fpControls.style.display = "none";
-      setTimeout(() => renderRoomsetCanvas(), 10);
+
+      // ✅ IMPORTANT: render items WITHOUT touching background
+      renderRoomsetCanvas();
+
+      // UI polish
       showViewSwitchControl();
-      document.querySelectorAll(".roomset-bg-thumb").forEach(el => el.style.border = "3px solid transparent");
+      document
+        .querySelectorAll(".roomset-bg-thumb")
+        .forEach(el => (el.style.border = "3px solid transparent"));
       div.style.border = "3px solid var(--accent)";
     });
+
     roomsetBackgrounds.appendChild(div);
   });
 }
 
-function showViewSwitchControl() {
-  let switcher = document.getElementById("viewSwitcher");
-  if (!switcher) {
-    switcher = document.createElement("div");
-    switcher.id = "viewSwitcher";
-    switcher.style.position = "fixed";
-    switcher.style.top = "24px";
-    switcher.style.right = "120px";
-    switcher.style.zIndex = "101";
-    switcher.style.background = "#fff";
-    switcher.style.borderRadius = "8px";
-    switcher.style.boxShadow = "var(--shadow-md)";
-    switcher.style.padding = "8px 16px";
-    switcher.style.fontWeight = "bold";
-    document.body.appendChild(switcher);
-  }
-  switcher.innerHTML = `<button id="switchTo3D">3D Floorplan</button> <button id="switchToRoomset">Roomset Images</button>`;
-  document.getElementById("switchTo3D").onclick = () => {
-    isFloorplanMode = true;
-    canvasMode = true;
-    roomsetList.style.display = "none";
-    roomsetCanvas.style.display = "block";
-    roomsetCanvas.style.backgroundImage = "none";
-    roomsetCanvas.style.backgroundSize = "";
-    roomsetCanvas.style.backgroundPosition = "";
-    roomsetCanvas.style.backgroundRepeat = "";
-    const oldSvg = roomsetCanvas.querySelector("svg.floorplan-bg");
-    if (oldSvg) oldSvg.remove();
-    const width = parseFloat(document.getElementById("fpWidth")?.value) || 8;
-    const depth = parseFloat(document.getElementById("fpDepth")?.value) || 4;
-    createFloorplanSvg(width, depth);
-    renderRoomsetCanvas();
-    const fpControls = document.getElementById("fpControls");
-    if (fpControls) fpControls.style.display = "block";
-  };
-  document.getElementById("switchToRoomset").onclick = () => {
-    isFloorplanMode = false;
-    canvasMode = true;
-    roomsetList.style.display = "none";
-    roomsetCanvas.style.display = "block";
-    const fpControls = document.getElementById("fpControls");
-    if (fpControls) fpControls.style.display = "none";
-  };
-}
-
-// Elements defined after DOM
-const roomsetModal = document.getElementById("roomsetModal");
-const roomsetList = document.getElementById("roomsetList");
-const closeRoomset = document.getElementById("roomsetClose");
-const toggleRoomsetBtn = document.getElementById("toggleRoomset");
-const roomsetCanvas = document.getElementById("roomsetCanvas");
-const viewListBtn = document.getElementById("viewListBtn");
-const viewCanvasBtn = document.getElementById("viewCanvasBtn");
-let canvasMode = false;
-
 renderRoomsetBackgrounds();
+
 
 function renderRoomset(){
   if (roomset.length === 0) {
