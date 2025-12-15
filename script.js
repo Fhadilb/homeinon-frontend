@@ -837,6 +837,16 @@ function renderRoomsetBackgrounds() {
       roomsetCanvas.style.backgroundPosition = "center";
       roomsetCanvas.style.backgroundRepeat = "no-repeat";
 
+      // 🔍 DEBUG — DO NOT MOVE
+      console.log("🖼️ Background src:", src);
+      console.log("🖼️ Canvas background:", roomsetCanvas.style.backgroundImage);
+      console.log("🖼️ Canvas display:", roomsetCanvas.style.display);
+      console.log(
+        "🖼️ Canvas dimensions:",
+        roomsetCanvas.offsetWidth,
+        roomsetCanvas.offsetHeight
+      );
+
       const svg = roomsetCanvas.querySelector("svg.floorplan-bg");
       if (svg) svg.remove();
 
@@ -846,7 +856,8 @@ function renderRoomsetBackgrounds() {
       renderRoomsetCanvas();
       showViewSwitchControl();
 
-      document.querySelectorAll(".roomset-bg-thumb")
+      document
+        .querySelectorAll(".roomset-bg-thumb")
         .forEach(el => el.style.border = "3px solid transparent");
       div.style.border = "3px solid var(--accent)";
     });
@@ -854,6 +865,7 @@ function renderRoomsetBackgrounds() {
     roomsetBackgrounds.appendChild(div);
   });
 }
+
 
 renderRoomsetBackgrounds();
 
