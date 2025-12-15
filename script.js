@@ -781,6 +781,16 @@ const roomsetList   = document.getElementById("roomsetList");
 if (!roomsetCanvas || !roomsetList) {
   console.error("❌ Roomset elements not found in DOM");
 }
+// --------- ROOMSET MODAL & CONTROLS ----------
+const roomsetModal     = document.getElementById("roomsetModal");
+const toggleRoomsetBtn = document.getElementById("toggleRoomset");
+const closeRoomset     = document.getElementById("roomsetClose");
+const viewListBtn      = document.getElementById("viewListBtn");
+const viewCanvasBtn    = document.getElementById("viewCanvasBtn");
+
+if (!roomsetModal || !toggleRoomsetBtn) {
+  console.error("❌ Roomset modal or toggle button missing from DOM");
+}
 
 // --------- ROOMSET BACKGROUND SELECTOR ----------
 const ROOMSET_BACKGROUNDS = Array.from(
