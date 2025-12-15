@@ -198,14 +198,22 @@ function expandCategories(categories = [], room) {
 // --------- AI KEYWORD OVERRIDES ----------
 function keywordOverrideCategories(query = "") {
   const q = query.toLowerCase();
+
+  // Office intent should strongly force office categories
+  if (q.includes("office")) return ["desk", "office chair", "bookcase"];
+
+  // Desk intent should strongly force desk categories
+  if (q.includes("desk")) return ["desk", "office chair"];
+
   if (q.includes("mirror")) return ["mirror"];
   if (q.includes("rug") || q.includes("carpet")) return ["rug"];
   if (q.includes("lamp") || q.includes("light")) return ["lighting"];
   if (q.includes("wardrobe")) return ["wardrobe"];
   if (q.includes("bed")) return ["bed"];
-  if (q.includes("desk")) return ["desk"];
+
   return null;
 }
+
 // --------- EXPLICIT ROOM OVERRIDES ----------
 function extractExplicitRoom(query = "") {
   const q = query.toLowerCase();
@@ -272,20 +280,26 @@ function scoreProduct(product, query, categories, room) {
   if (room && prodRoom === room) score += 35;
   if (room && prodRoom && prodRoom !== room) score -= 80;
 
-  // 4️⃣ HARD INTENT GUARDS (stop bad matches)
+  // 4️⃣ HARD INTENT GUARDS (kill bad matches EARLY)
   if (words.includes("mirror") && ["sofa", "bed", "desk", "table"].includes(product.category)) {
     score -= 300;
   }
 
-  if (words.includes("office") && ["bed", "wardrobe"].includes(product.category)) {
+  if (words.includes("office") && ["bed", "wardrobe", "bedside table", "drawers"].includes(product.category)) {
     score -= 300;
   }
 
-  // 5️⃣ NOISE FLOOR — kill weak matches
+  if (words.includes("desk") || words.includes("office")) {
+    const allowed = ["desk", "office chair", "bookcase", "cabinet"];
+    if (!allowed.includes(product.category)) score -= 200;
+  }
+
+  // 5️⃣ NOISE FLOOR — kill weak matches LAST
   if (score < 40) return 0;
 
   return score;
 }
+
 
 // --------- STATE ---------
 let allProducts = [];
@@ -1189,7 +1203,9 @@ console.log("💰 MAX PRICE INTENT:", maxPrice);
   // STEP 5 — keyword override
   const overrideCategories = keywordOverrideCategories(q);
   const baseCategories = overrideCategories ?? (ai.categories || []);
-  const expandedCategories = expandCategories(baseCategories, ai.room);
+ const roomUsed = selectedRoom || ai.room || "";
+ const expandedCategories = expandCategories(baseCategories, roomUsed);
+
 
   console.log("🧠 FINAL CATEGORIES USED:", expandedCategories);
 
