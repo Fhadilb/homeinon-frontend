@@ -386,20 +386,22 @@ function redrawWalls() {
     ctx.stroke();
   });
 
-  // preview wall
-  if (drawing && startPoint && currentMouse) {
-    ctx.save();
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = "#64748b"; // preview grey
-    ctx.setLineDash([6, 6]);
+// preview wall
+if (drawing && startPoint) {
+  const end = currentMouse || startPoint;
 
-    ctx.beginPath();
-    ctx.moveTo(startPoint.x, startPoint.y);
-    ctx.lineTo(currentMouse.x, currentMouse.y);
-    ctx.stroke();
+  ctx.save();
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = "#64748b";
+  ctx.setLineDash([6, 6]);
 
-    ctx.restore();
-  }
+  ctx.beginPath();
+  ctx.moveTo(startPoint.x, startPoint.y);
+  ctx.lineTo(end.x, end.y);
+  ctx.stroke();
+
+  ctx.restore();
+}
 }
 
 
@@ -416,6 +418,7 @@ if (builderCanvas) {
       y: snapToGrid(e.clientY - rect.top)
     };
       currentMouse = { ...startPoint }; // initialize preview point
+      redrawWalls(); // 👈 ADD THIS LINE
   });
 
 builderCanvas.addEventListener("mouseup", (e) => {
