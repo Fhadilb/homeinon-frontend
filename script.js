@@ -315,6 +315,91 @@ let currentScalePxPerM = 60;
 let isFloorplanMode = false;  // Track floorplan mode
 let canvasMode = false;
 
+// =======================================================
+// 🧱 FLOORPLAN BUILDER — WALL DRAWING (A2)
+// =======================================================
+
+const builderCanvas = document.getElementById("floorplanBuilder");
+const builderWrap = document.getElementById("floorplanBuilderWrap");
+
+let walls = [];
+let drawing = false;
+let startPoint = null;
+
+if (builderCanvas) {
+  const ctx = builderCanvas.getContext("2d");
+  
+// Ensure canvas drawing resolution matches its size
+builderCanvas.width = builderCanvas.offsetWidth;
+builderCanvas.height = builderCanvas.offsetHeight;
+
+  function redrawWalls() {
+    ctx.clearRect(0, 0, builderCanvas.width, builderCanvas.height);
+
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = "#1e40af"; // blueprint blue
+
+    walls.forEach(w => {
+      ctx.beginPath();
+      ctx.moveTo(w.x1, w.y1);
+      ctx.lineTo(w.x2, w.y2);
+      ctx.stroke();
+    });
+
+    // preview line while drawing
+    if (drawing && startPoint) {
+      ctx.setLineDash([6, 6]);
+      ctx.beginPath();
+      ctx.moveTo(startPoint.x, startPoint.y);
+      ctx.lineTo(currentMouse.x, currentMouse.y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  }
+
+  let currentMouse = { x: 0, y: 0 };
+
+  builderCanvas.addEventListener("mousedown", (e) => {
+    const rect = builderCanvas.getBoundingClientRect();
+    drawing = true;
+    startPoint = {
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    };
+  });
+
+  builderCanvas.addEventListener("mousemove", (e) => {
+    if (!drawing) return;
+    const rect = builderCanvas.getBoundingClientRect();
+    currentMouse = {
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    };
+    redrawWalls();
+  });
+
+  builderCanvas.addEventListener("mouseup", (e) => {
+    if (!drawing) return;
+    drawing = false;
+
+    const rect = builderCanvas.getBoundingClientRect();
+    const endPoint = {
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    };
+
+    walls.push({
+      x1: startPoint.x,
+      y1: startPoint.y,
+      x2: endPoint.x,
+      y2: endPoint.y
+    });
+
+    startPoint = null;
+    redrawWalls();
+  });
+}
+
 // --------- FLOORPLAN / ROOMSET BACKGROUND ----------
 function setBlueprintBackground(on) {
   if (!roomsetCanvas) return;
