@@ -315,6 +315,22 @@ let currentScalePxPerM = 60;
 let isFloorplanMode = false;  // Track floorplan mode
 let canvasMode = false;
 
+// --------- FLOORPLAN / ROOMSET BACKGROUND ----------
+function setBlueprintBackground(on) {
+  if (!roomsetCanvas) return;
+
+  if (on) {
+    // Blueprint-style background for floorplan
+    roomsetCanvas.style.backgroundImage =
+      "repeating-linear-gradient(0deg, rgba(0,0,0,0.08) 0, rgba(0,0,0,0.08) 1px, transparent 1px, transparent 20px)," +
+      "repeating-linear-gradient(90deg, rgba(0,0,0,0.08) 0, rgba(0,0,0,0.08) 1px, transparent 1px, transparent 20px)";
+    roomsetCanvas.style.backgroundColor = "#ffffff";
+  } else {
+    // Clear background so room photo layer shows
+    roomsetCanvas.style.backgroundImage = "";
+    roomsetCanvas.style.backgroundColor = "";
+  }
+}
 
 function productKey(p){
   return (p && (p.sku || p.SKU || p.id || p.ID || p.title || "")).toString();
@@ -828,6 +844,7 @@ function renderRoomsetBackgrounds() {
 div.addEventListener("click", () => {
   canvasMode = true;
   isFloorplanMode = false;
+setBlueprintBackground(false);
 
   roomsetList.style.display = "none";
   roomsetCanvas.style.display = "block";
@@ -884,20 +901,6 @@ function getRoomsetBgLayer() {
   return layer;
 }
 
-function setBlueprintBackground(on) {
-  if (!roomsetCanvas) return;
-  if (!on) {
-    roomsetCanvas.style.background = "transparent";
-    return;
-  }
-
-  // ✅ floorplan has its own “blueprint” style background
-  roomsetCanvas.style.background =
-    "repeating-linear-gradient(0deg, rgba(0,0,0,0.06) 0, rgba(0,0,0,0.06) 1px, transparent 1px, transparent 20px)," +
-    "repeating-linear-gradient(90deg, rgba(0,0,0,0.06) 0, rgba(0,0,0,0.06) 1px, transparent 1px, transparent 20px)," +
-    "#ffffff";
-}
-
 
 renderRoomsetBackgrounds();
 
@@ -921,16 +924,6 @@ function getRoomsetBgLayer() {
   return layer;
 }
 
-function setBlueprintBackground(on) {
-  if (!roomsetCanvas) return;
-  if (on) {
-    // floorplan gets its own clean canvas background
-    roomsetCanvas.style.backgroundColor = "#ffffff";
-  } else {
-    // allow room photo backgrounds to show via bgLayer
-    roomsetCanvas.style.backgroundColor = "";
-  }
-}
 
 function showViewSwitchControl() {
   let switcher = document.getElementById("viewSwitcher");
@@ -1125,17 +1118,32 @@ function renderRoomsetCanvas() {
     const x = it.x ?? (60 + (idx * 60) % Math.max(1, stageRect.width - fallbackW));
     const y = it.y ?? (60 + Math.floor(idx / 4) * (fallbackH + 20));
 
-    const widthCm = parseFloat(it.width_cm);
-    const heightCm = parseFloat(it.height_cm);
+const wCm = parseFloat(it.width_cm);
+const dCm = parseFloat(it.depth_cm);
+const hCm = parseFloat(it.height_cm);
 
-    // If we have dimensions, scale them, otherwise use fallback
-    const w = Number.isFinite(widthCm) && widthCm > 0
-      ? Math.max(120, (widthCm / 100) * currentScalePxPerM)
-      : fallbackW;
+// Use the dominant real-world dimension
+const dominantCm = Math.max(
+  Number.isFinite(wCm) ? wCm : 0,
+  Number.isFinite(dCm) ? dCm : 0,
+  Number.isFinite(hCm) ? hCm : 0
+);
 
-    const h = Number.isFinite(heightCm) && heightCm > 0
-      ? Math.max(120, (heightCm / 100) * currentScalePxPerM)
-      : fallbackH;
+// Convert to pixels
+const scaledPx = dominantCm > 0
+  ? (dominantCm / 100) * currentScalePxPerM
+  : Math.min(fallbackW, fallbackH);
+
+// Category-aware visual sanity
+const isBed = it.category === "bed";
+
+const sizePx = isBed
+  ? Math.max(200, scaledPx)          // beds must always read as large
+  : Math.min(150, Math.max(90, scaledPx));
+
+const w = sizePx;
+const h = sizePx;
+
 
     item.style.left = `${x}px`;
     item.style.top = `${y}px`;
