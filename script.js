@@ -415,6 +415,7 @@ if (builderCanvas) {
       x: snapToGrid(e.clientX - rect.left),
       y: snapToGrid(e.clientY - rect.top)
     };
+      currentMouse = { ...startPoint }; // initialize preview point
   });
 
 builderCanvas.addEventListener("mouseup", (e) => {
