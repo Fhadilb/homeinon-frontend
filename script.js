@@ -410,22 +410,32 @@ if (builderCanvas) {
     };
   });
 
-builderCanvas.addEventListener("mousemove", (e) => {
+builderCanvas.addEventListener("mouseup", (e) => {
   if (!drawing) return;
+  drawing = false;
 
   const rect = builderCanvas.getBoundingClientRect();
   const rawX = e.clientX - rect.left;
   const rawY = e.clientY - rect.top;
 
-  currentMouse = getSnappedEndPoint(
+  const endPoint = getSnappedEndPoint(
     rawX,
     rawY,
     startPoint,
     e.shiftKey
   );
 
+  walls.push({
+    x1: startPoint.x,
+    y1: startPoint.y,
+    x2: endPoint.x,
+    y2: endPoint.y
+  });
+
+  startPoint = null;
   redrawWalls();
 });
+
 
 
   builderCanvas.addEventListener("mouseup", (e) => {
