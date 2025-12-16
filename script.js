@@ -420,6 +420,22 @@ if (builderCanvas) {
       currentMouse = { ...startPoint }; // initialize preview point
       redrawWalls(); // 👈 ADD THIS LINE
   });
+builderCanvas.addEventListener("mousemove", (e) => {
+  if (!drawing) return;
+
+  const rect = builderCanvas.getBoundingClientRect();
+  const rawX = e.clientX - rect.left;
+  const rawY = e.clientY - rect.top;
+
+  currentMouse = getSnappedEndPoint(
+    rawX,
+    rawY,
+    startPoint,
+    e.shiftKey
+  );
+
+  redrawWalls();
+});
 
 builderCanvas.addEventListener("mouseup", (e) => {
   if (!drawing) return;
@@ -446,25 +462,6 @@ builderCanvas.addEventListener("mouseup", (e) => {
   startPoint = null;
   redrawWalls();
 });
-
-
-
-  builderCanvas.addEventListener("mouseup", (e) => {
-    if (!drawing) return;
-    drawing = false;
-
-    const rect = builderCanvas.getBoundingClientRect();
-
-    walls.push({
-      x1: startPoint.x,
-      y1: startPoint.y,
-      x2: snapToGrid(e.clientX - rect.left),
-      y2: snapToGrid(e.clientY - rect.top)
-    });
-
-    startPoint = null;
-    redrawWalls();
-  });
 }
 
 
