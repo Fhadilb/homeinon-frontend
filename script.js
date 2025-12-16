@@ -1020,7 +1020,17 @@ function createFloorplanSvg(width, depth) {
   svg.classList.add("floorplan-bg");
   svg.setAttribute("width", "100%"); svg.setAttribute("height", "100%");
   svg.setAttribute("viewBox", "0 0 800 500");
-  svg.style.position = "absolute"; svg.style.inset = "0"; svg.style.zIndex = "5"; svg.style.pointerEvents = "auto";
+  svg.style.position = "absolute";
+svg.style.inset = "0";
+svg.style.zIndex = "5";
+svg.style.pointerEvents = "auto";
+
+/* ✅ BLUEPRINT BACKGROUND LIVES ON SVG */
+svg.style.backgroundImage =
+  "repeating-linear-gradient(0deg, rgba(0,0,0,0.08) 0, rgba(0,0,0,0.08) 1px, transparent 1px, transparent 20px)," +
+  "repeating-linear-gradient(90deg, rgba(0,0,0,0.08) 0, rgba(0,0,0,0.08) 1px, transparent 1px, transparent 20px)";
+svg.style.backgroundColor = "#ffffff";
+
 
   const svgFloorMargin = 20;
   const svgAreaWidthPx = 700 - svgFloorMargin * 2;
