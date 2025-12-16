@@ -320,44 +320,54 @@ let canvasMode = false;
 // =======================================================
 
 const builderCanvas = document.getElementById("floorplanBuilder");
-const builderWrap = document.getElementById("floorplanBuilderWrap");
+const builderWrap   = document.getElementById("floorplanBuilderWrap");
 
 let walls = [];
 let drawing = false;
 let startPoint = null;
+let currentMouse = { x: 0, y: 0 };
+
+let ctx = null;
+
+// 🔹 resize canvas ONLY when visible
+function resizeBuilderCanvas() {
+  if (!builderCanvas) return;
+
+  const rect = builderCanvas.getBoundingClientRect();
+  builderCanvas.width  = rect.width;
+  builderCanvas.height = rect.height;
+
+  redrawWalls();
+}
+
+// 🔹 draw all walls
+function redrawWalls() {
+  if (!ctx) return;
+
+  ctx.clearRect(0, 0, builderCanvas.width, builderCanvas.height);
+
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = "#1e40af";
+
+  walls.forEach(w => {
+    ctx.beginPath();
+    ctx.moveTo(w.x1, w.y1);
+    ctx.lineTo(w.x2, w.y2);
+    ctx.stroke();
+  });
+
+  if (drawing && startPoint) {
+    ctx.setLineDash([6, 6]);
+    ctx.beginPath();
+    ctx.moveTo(startPoint.x, startPoint.y);
+    ctx.lineTo(currentMouse.x, currentMouse.y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+}
 
 if (builderCanvas) {
-  const ctx = builderCanvas.getContext("2d");
-  
-// Ensure canvas drawing resolution matches its size
-builderCanvas.width = builderCanvas.offsetWidth;
-builderCanvas.height = builderCanvas.offsetHeight;
-
-  function redrawWalls() {
-    ctx.clearRect(0, 0, builderCanvas.width, builderCanvas.height);
-
-    ctx.lineWidth = 4;
-    ctx.strokeStyle = "#1e40af"; // blueprint blue
-
-    walls.forEach(w => {
-      ctx.beginPath();
-      ctx.moveTo(w.x1, w.y1);
-      ctx.lineTo(w.x2, w.y2);
-      ctx.stroke();
-    });
-
-    // preview line while drawing
-    if (drawing && startPoint) {
-      ctx.setLineDash([6, 6]);
-      ctx.beginPath();
-      ctx.moveTo(startPoint.x, startPoint.y);
-      ctx.lineTo(currentMouse.x, currentMouse.y);
-      ctx.stroke();
-      ctx.setLineDash([]);
-    }
-  }
-
-  let currentMouse = { x: 0, y: 0 };
+  ctx = builderCanvas.getContext("2d");
 
   builderCanvas.addEventListener("mousedown", (e) => {
     const rect = builderCanvas.getBoundingClientRect();
@@ -383,6 +393,23 @@ builderCanvas.height = builderCanvas.offsetHeight;
     drawing = false;
 
     const rect = builderCanvas.getBoundingClientRect();
+    walls.push({
+      x1: startPoint.x,
+      y1: startPoint.y,
+      x2: e.clientX - rect.left,
+      y2: e.clientY - rect.top
+    });
+
+    startPoint = null;
+    redrawWalls();
+  });
+}
+
+  builderCanvas.addEventListener("mouseup", (e) => {
+    if (!drawing) return;
+    drawing = false;
+
+    const rect = builderCanvas.getBoundingClientRect();
     const endPoint = {
       x: e.clientX - rect.left,
       y: e.clientY - rect.top
@@ -398,7 +425,6 @@ builderCanvas.height = builderCanvas.offsetHeight;
     startPoint = null;
     redrawWalls();
   });
-}
 
 // --------- FLOORPLAN / ROOMSET BACKGROUND ----------
 function setBlueprintBackground(on) {
@@ -1309,24 +1335,69 @@ toggleRoomsetBtn.addEventListener("click", () => {
   roomsetModal.style.display = "flex";
   roomsetModal.setAttribute("aria-hidden","false");
   document.body.style.overflow = "hidden";
+
+  // hide builder when opening modal
+  if (builderWrap) builderWrap.style.display = "none";
+
   setTimeout(() => {
-    if (canvasMode) { roomsetList.style.display = "none"; roomsetCanvas.style.display = "block"; renderRoomsetCanvas(); }
-    else { roomsetList.style.display = "block"; roomsetCanvas.style.display = "none"; renderRoomset(); }
+    if (canvasMode) {
+      roomsetList.style.display = "none";
+      roomsetCanvas.style.display = "block";
+      renderRoomsetCanvas();
+    } else {
+      roomsetList.style.display = "block";
+      roomsetCanvas.style.display = "none";
+      renderRoomset();
+    }
   }, 20);
 });
 
-closeRoomset.addEventListener("click", ()=>{ roomsetModal.style.display = "none"; roomsetModal.setAttribute("aria-hidden","true"); document.body.style.overflow = ""; });
+closeRoomset.addEventListener("click", ()=>{ 
+  roomsetModal.style.display = "none"; 
+  roomsetModal.setAttribute("aria-hidden","true"); 
+  document.body.style.overflow = ""; 
+});
 
-viewListBtn.addEventListener("click", ()=>{ canvasMode = false; roomsetList.style.display = "block"; roomsetCanvas.style.display = "none"; renderRoomset(); });
+viewListBtn.addEventListener("click", ()=>{ 
+  canvasMode = false;
+  roomsetList.style.display = "block";
+  roomsetCanvas.style.display = "none";
+  if (builderWrap) builderWrap.style.display = "none";
+  renderRoomset(); 
+});
 
 viewCanvasBtn.addEventListener("click", ()=>{
-  canvasMode = true; roomsetList.style.display = "none"; roomsetCanvas.style.display = "block";
+  canvasMode = true;
+  roomsetList.style.display = "none";
+  roomsetCanvas.style.display = "block";
+  if (builderWrap) builderWrap.style.display = "none";
+
   setTimeout(() => {
     renderRoomsetCanvas();
     const fpControls = document.getElementById("fpControls");
     if (fpControls) fpControls.style.display = isFloorplanMode ? "block" : "none";
   }, 20);
 });
+
+// 🧱 FLOOR PLAN BUILDER BUTTON
+const viewBuilderBtn = document.getElementById("viewBuilderBtn");
+
+if (viewBuilderBtn && builderWrap) {
+  viewBuilderBtn.addEventListener("click", () => {
+    canvasMode = false;
+    isFloorplanMode = false;
+
+    // hide other views
+    roomsetCanvas.style.display = "none";
+    roomsetList.style.display = "none";
+
+    // show builder
+    builderWrap.style.display = "block";
+
+    // 🔴 CRITICAL: fix canvas 0×0 bug
+    resizeBuilderCanvas();
+  });
+}
 
 let wasDesktop = window.innerWidth > 768;
 window.addEventListener("resize", () => {
