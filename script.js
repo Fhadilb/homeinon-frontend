@@ -320,10 +320,31 @@ let canvasMode = false;
 // =======================================================
 
 // --------- GRID CONFIG ----------
-const GRID_SIZE_PX = 40; // one grid square
+const GRID_SIZE_PX = 20; // one grid square
 
 function snapToGrid(value) {
   return Math.round(value / GRID_SIZE_PX) * GRID_SIZE_PX;
+}
+function getSnappedEndPoint(rawX, rawY, start, shiftKey) {
+  let x = snapToGrid(rawX);
+  let y = snapToGrid(rawY);
+
+  // Shift = free angle (still grid snapped)
+  if (shiftKey || !start) {
+    return { x, y };
+  }
+
+  const dx = Math.abs(x - start.x);
+  const dy = Math.abs(y - start.y);
+
+  // lock to closest axis
+  if (dx < dy) {
+    x = start.x; // vertical line
+  } else {
+    y = start.y; // horizontal line
+  }
+
+  return { x, y };
 }
 
 // --------- CANVAS STATE ----------
@@ -389,17 +410,23 @@ if (builderCanvas) {
     };
   });
 
-  builderCanvas.addEventListener("mousemove", (e) => {
-    if (!drawing) return;
+builderCanvas.addEventListener("mousemove", (e) => {
+  if (!drawing) return;
 
-    const rect = builderCanvas.getBoundingClientRect();
-    currentMouse = {
-      x: snapToGrid(e.clientX - rect.left),
-      y: snapToGrid(e.clientY - rect.top)
-    };
+  const rect = builderCanvas.getBoundingClientRect();
+  const rawX = e.clientX - rect.left;
+  const rawY = e.clientY - rect.top;
 
-    redrawWalls();
-  });
+  currentMouse = getSnappedEndPoint(
+    rawX,
+    rawY,
+    startPoint,
+    e.shiftKey
+  );
+
+  redrawWalls();
+});
+
 
   builderCanvas.addEventListener("mouseup", (e) => {
     if (!drawing) return;
@@ -419,28 +446,6 @@ if (builderCanvas) {
   });
 }
 
-
-  builderCanvas.addEventListener("mouseup", (e) => {
-    if (!drawing) return;
-    drawing = false;
-
-    const rect = builderCanvas.getBoundingClientRect();
-   const endPoint = {
-  x: snapToGrid(e.clientX - rect.left),
-  y: snapToGrid(e.clientY - rect.top)
-};
-
-
-    walls.push({
-      x1: startPoint.x,
-      y1: startPoint.y,
-      x2: endPoint.x,
-      y2: endPoint.y
-    });
-
-    startPoint = null;
-    redrawWalls();
-  });
 
 // --------- FLOORPLAN / ROOMSET BACKGROUND ----------
 function setBlueprintBackground(on) {
