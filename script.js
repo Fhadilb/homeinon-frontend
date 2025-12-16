@@ -316,20 +316,27 @@ let isFloorplanMode = false;  // Track floorplan mode
 let canvasMode = false;
 
 // =======================================================
-// 🧱 FLOORPLAN BUILDER — WALL DRAWING (A2)
+// 🧱 FLOORPLAN BUILDER — WALL DRAWING (A2 + A3 GRID SNAP)
 // =======================================================
 
+// --------- GRID CONFIG ----------
+const GRID_SIZE_PX = 40; // one grid square
+
+function snapToGrid(value) {
+  return Math.round(value / GRID_SIZE_PX) * GRID_SIZE_PX;
+}
+
+// --------- CANVAS STATE ----------
 const builderCanvas = document.getElementById("floorplanBuilder");
 const builderWrap   = document.getElementById("floorplanBuilderWrap");
 
+let ctx = null;
 let walls = [];
 let drawing = false;
 let startPoint = null;
 let currentMouse = { x: 0, y: 0 };
 
-let ctx = null;
-
-// 🔹 resize canvas ONLY when visible
+// --------- RESIZE ----------
 function resizeBuilderCanvas() {
   if (!builderCanvas) return;
 
@@ -340,7 +347,7 @@ function resizeBuilderCanvas() {
   redrawWalls();
 }
 
-// 🔹 draw all walls
+// --------- DRAW ----------
 function redrawWalls() {
   if (!ctx) return;
 
@@ -349,6 +356,7 @@ function redrawWalls() {
   ctx.lineWidth = 4;
   ctx.strokeStyle = "#1e40af";
 
+  // existing walls
   walls.forEach(w => {
     ctx.beginPath();
     ctx.moveTo(w.x1, w.y1);
@@ -356,6 +364,7 @@ function redrawWalls() {
     ctx.stroke();
   });
 
+  // preview wall
   if (drawing && startPoint) {
     ctx.setLineDash([6, 6]);
     ctx.beginPath();
@@ -366,25 +375,29 @@ function redrawWalls() {
   }
 }
 
+// --------- EVENTS ----------
 if (builderCanvas) {
   ctx = builderCanvas.getContext("2d");
 
   builderCanvas.addEventListener("mousedown", (e) => {
     const rect = builderCanvas.getBoundingClientRect();
     drawing = true;
+
     startPoint = {
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top
+      x: snapToGrid(e.clientX - rect.left),
+      y: snapToGrid(e.clientY - rect.top)
     };
   });
 
   builderCanvas.addEventListener("mousemove", (e) => {
     if (!drawing) return;
+
     const rect = builderCanvas.getBoundingClientRect();
     currentMouse = {
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top
+      x: snapToGrid(e.clientX - rect.left),
+      y: snapToGrid(e.clientY - rect.top)
     };
+
     redrawWalls();
   });
 
@@ -393,11 +406,12 @@ if (builderCanvas) {
     drawing = false;
 
     const rect = builderCanvas.getBoundingClientRect();
+
     walls.push({
       x1: startPoint.x,
       y1: startPoint.y,
-      x2: e.clientX - rect.left,
-      y2: e.clientY - rect.top
+      x2: snapToGrid(e.clientX - rect.left),
+      y2: snapToGrid(e.clientY - rect.top)
     });
 
     startPoint = null;
@@ -405,15 +419,17 @@ if (builderCanvas) {
   });
 }
 
+
   builderCanvas.addEventListener("mouseup", (e) => {
     if (!drawing) return;
     drawing = false;
 
     const rect = builderCanvas.getBoundingClientRect();
-    const endPoint = {
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top
-    };
+   const endPoint = {
+  x: snapToGrid(e.clientX - rect.left),
+  y: snapToGrid(e.clientY - rect.top)
+};
+
 
     walls.push({
       x1: startPoint.x,
