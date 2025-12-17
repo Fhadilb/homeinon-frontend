@@ -452,25 +452,38 @@ const builderCanvas = document.getElementById("floorplanBuilder");
 const builderWrap   = document.getElementById("floorplanBuilderWrap");
 // --------- BUILDER CONTROLS ----------
 let builderControls = document.getElementById("builderControls");
+let builderFooter = document.getElementById("builderFooter");
 
-if (!builderControls && builderWrap) {
+if (builderWrap && !builderFooter) {
+  builderFooter = document.createElement("div");
+  builderFooter.id = "builderFooter";
+  builderFooter.style.display = "flex";
+  builderFooter.style.justifyContent = "flex-end"; // buttons on right for now
+  builderFooter.style.padding = "12px";
+  builderFooter.style.gap = "10px";
+  builderWrap.appendChild(builderFooter);
+}
+
+if (!builderControls && builderFooter) {
   builderControls = document.createElement("div");
   builderControls.id = "builderControls";
-  builderControls.style.position = "absolute";
-  builderControls.style.top = "16px";
-  builderControls.style.left = "16px";
-  builderControls.style.zIndex = "50";
-  builderControls.style.background = "rgba(255,255,255,0.95)";
-  builderControls.style.padding = "8px";
-  builderControls.style.borderRadius = "8px";
-  builderControls.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)";
+
+  // IMPORTANT: no absolute positioning anymore
+  builderControls.style.display = "flex";
+  builderControls.style.gap = "8px";
+  builderControls.style.background = "transparent";
+  builderControls.style.padding = "0";
+  builderControls.style.boxShadow = "none";
+
   builderControls.innerHTML = `
     <button id="drawWallBtn" class="builder-btn active">Wall</button>
     <button id="placeDoorBtn" class="builder-btn">Door</button>
     <button id="placeWindowBtn" class="builder-btn">Window</button>
   `;
-  builderWrap.appendChild(builderControls);
+
+  builderFooter.appendChild(builderControls);
 }
+
 // --------- BUILDER MODE BUTTONS ----------
 const drawWallBtn   = document.getElementById("drawWallBtn");
 const placeDoorBtn  = document.getElementById("placeDoorBtn");
