@@ -323,6 +323,8 @@ let canvasMode = false;
 const GRID_SIZE_PX = 20;        // one grid square
 const SNAP_DISTANCE_PX = 40;    // endpoint snap radius
 const METERS_PER_GRID = 0.5; // 20px grid = 0.5m (so 40px = 1m)
+const DOOR_WIDTH_PX = GRID_SIZE_PX * 2;    // 1m
+const WINDOW_WIDTH_PX = GRID_SIZE_PX * 1.5; // 0.75m
 
 function snapToGrid(value) {
   return Math.round(value / GRID_SIZE_PX) * GRID_SIZE_PX;
@@ -435,6 +437,21 @@ function distancePointToSegment(px, py, x1, y1, x2, y2) {
   return Math.hypot(px - closestX, py - closestY);
 }
 
+function getWallMidpointAndNormal(wall) {
+  const mx = (wall.x1 + wall.x2) / 2;
+  const my = (wall.y1 + wall.y2) / 2;
+
+  const dx = wall.x2 - wall.x1;
+  const dy = wall.y2 - wall.y1;
+  const length = Math.hypot(dx, dy) || 1;
+
+  return {
+    mx,
+    my,
+    ux: dx / length,
+    uy: dy / length
+  };
+}
 
 // --------- BACKGROUND GRID ----------
 function drawBackgroundGrid() {
@@ -642,8 +659,31 @@ if (drawing && startPoint) {
     ctx.restore();
   }
 
-}
+  // ---- door / window preview ----
+  if (
+    hoveredWallIndex !== null &&
+    (mode === "place-door" || mode === "place-window")
+  ) {
+    const wall = walls[hoveredWallIndex];
+    const { mx, my, ux, uy } = getWallMidpointAndNormal(wall);
 
+    const halfWidth =
+      mode === "place-door"
+        ? DOOR_WIDTH_PX / 2
+        : WINDOW_WIDTH_PX / 2;
+
+    ctx.save();
+    ctx.strokeStyle = mode === "place-door" ? "#16a34a" : "#0284c7";
+    ctx.lineWidth = 4;
+
+    ctx.beginPath();
+    ctx.moveTo(mx - ux * halfWidth, my - uy * halfWidth);
+    ctx.lineTo(mx + ux * halfWidth, my + uy * halfWidth);
+    ctx.stroke();
+
+    ctx.restore();
+  }
+}
 
 // --------- EVENTS ----------
 if (builderCanvas) {
