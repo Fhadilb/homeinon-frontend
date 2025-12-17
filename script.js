@@ -417,6 +417,35 @@ function getDistanceMeters(p1, p2) {
   // 40px = 1 meter
   return distancePx / (GRID_SIZE_PX * 2);
 }
+// --------- BACKGROUND GRID ----------
+function drawBackgroundGrid() {
+  if (!ctx) return;
+
+  const width = builderCanvas.width;
+  const height = builderCanvas.height;
+
+  ctx.save();
+  ctx.strokeStyle = "#e5e7eb"; // light gray grid
+  ctx.lineWidth = 1;
+
+  // vertical grid lines
+  for (let x = 0; x <= width; x += GRID_SIZE_PX) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, height);
+    ctx.stroke();
+  }
+
+  // horizontal grid lines
+  for (let y = 0; y <= height; y += GRID_SIZE_PX) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(width, y);
+    ctx.stroke();
+  }
+
+  ctx.restore();
+}
 
 // --------- CANVAS STATE ----------
 const builderCanvas = document.getElementById("floorplanBuilder");
@@ -444,8 +473,10 @@ function resizeBuilderCanvas() {
 function redrawWalls() {
   if (!ctx) return;
 
-  ctx.clearRect(0, 0, builderCanvas.width, builderCanvas.height);
- drawGridLabels();
+ctx.clearRect(0, 0, builderCanvas.width, builderCanvas.height);
+drawBackgroundGrid();
+drawGridLabels();
+
 
   // solid walls
   ctx.lineWidth = 4;
