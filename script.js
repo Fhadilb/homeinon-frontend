@@ -679,6 +679,15 @@ builderCanvas.addEventListener("mousemove", (e) => {
       y: snapToGrid(rawY)
     };
   }
+// ---- ENDPOINT SNAP DETECTION (restore) ----
+snapCandidate = null;
+
+if (drawing && startPoint) {
+  const snapped = snapToNearbyEndpoint(currentMouse);
+  if (snapped.x !== currentMouse.x || snapped.y !== currentMouse.y) {
+    snapCandidate = snapped;
+  }
+}
 
   // ---- WALL HOVER DETECTION ----
   hoveredWallIndex = null;
