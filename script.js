@@ -895,14 +895,13 @@ if (builderCanvas) {
   });
 
 // --------- CLICK (place door / window) ----------
+// --------- CLICK (place door / window) ----------
 builderCanvas.addEventListener("click", (e) => {
   if (mode === "draw-wall") return;
 
- const rect = builderCanvas.getBoundingClientRect();
-
-const clickX = snapToGrid(e.clientX - rect.left);
-const clickY = snapToGrid(e.clientY - rect.top);
-
+  const rect = builderCanvas.getBoundingClientRect();
+  const clickX = snapToGrid(e.clientX - rect.left);
+  const clickY = snapToGrid(e.clientY - rect.top);
 
   // ---- 1) TOGGLE EXISTING DOOR IF CLICKED ----
   for (let i = 0; i < openings.length; i++) {
@@ -912,26 +911,23 @@ const clickY = snapToGrid(e.clientY - rect.top);
     if (isPointNearDoor(clickX, clickY, o)) {
       o.swing = o.swing === "in" ? "out" : "in";
       redrawWalls();
-      return; // IMPORTANT: stop here
+      return;
     }
   }
 
-  // ---- 2) OTHERWISE PLACE NEW DOOR / WINDOW ----
+  // ---- 2) FIND NEAREST WALL ----
   let clickedWallIndex = null;
   let minDist = 8;
 
   walls.forEach((w, index) => {
-let p = closestPointOnSegment(
-  clickX,
-  clickY,
-  wall.x1,
-  wall.y1,
-  wall.x2,
-  wall.y2
-);
-
-p = clampOpeningToWall(p, wall, width);
-
+    const d = distancePointToSegment(
+      clickX,
+      clickY,
+      w.x1,
+      w.y1,
+      w.x2,
+      w.y2
+    );
 
     if (d < minDist) {
       minDist = d;
@@ -941,10 +937,14 @@ p = clampOpeningToWall(p, wall, width);
 
   if (clickedWallIndex === null) return;
 
+  // ---- 3) PLACE OPENING ON THAT WALL ----
   const wall = walls[clickedWallIndex];
   const { ux, uy } = getWallMidpointAndNormal(wall);
 
-  const p = closestPointOnSegment(
+  const width =
+    mode === "place-door" ? DOOR_WIDTH_PX : WINDOW_WIDTH_PX;
+
+  let p = closestPointOnSegment(
     clickX,
     clickY,
     wall.x1,
@@ -953,8 +953,7 @@ p = clampOpeningToWall(p, wall, width);
     wall.y2
   );
 
-  const width =
-    mode === "place-door" ? DOOR_WIDTH_PX : WINDOW_WIDTH_PX;
+  p = clampOpeningToWall(p, wall, width);
 
   openings.push({
     type: mode === "place-door" ? "door" : "window",
@@ -971,7 +970,6 @@ p = clampOpeningToWall(p, wall, width);
 
   redrawWalls();
 });
-
 
 }
 
