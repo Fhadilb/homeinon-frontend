@@ -757,6 +757,7 @@ if (drawing && startPoint) {
 
 
 
+// --------- WALL DRAW FINISH ----------
 builderCanvas.addEventListener("mouseup", (e) => {
   if (!drawing) return;
   drawing = false;
@@ -776,21 +777,43 @@ builderCanvas.addEventListener("mouseup", (e) => {
   endPoint = snapToNearbyEndpoint(endPoint);
   const snappedStart = snapToNearbyEndpoint(startPoint);
 
- const lengthMeters = getDistanceMeters(snappedStart, endPoint);
+  const lengthMeters = getDistanceMeters(snappedStart, endPoint);
 
-walls.push({
-  x1: snappedStart.x,
-  y1: snappedStart.y,
-  x2: endPoint.x,
-  y2: endPoint.y,
-  length: lengthMeters
-});
-
+  walls.push({
+    x1: snappedStart.x,
+    y1: snappedStart.y,
+    x2: endPoint.x,
+    y2: endPoint.y,
+    length: lengthMeters
+  });
 
   startPoint = null;
   redrawWalls();
 });
 
+
+// --------- DOOR / WINDOW PLACEMENT ----------
+builderCanvas.addEventListener("click", (e) => {
+  if (mode === "draw-wall") return;
+  if (hoveredWallIndex === null) return;
+
+  const wall = walls[hoveredWallIndex];
+  const { mx, my, ux, uy } = getWallMidpointAndNormal(wall);
+
+  const width =
+    mode === "place-door" ? DOOR_WIDTH_PX : WINDOW_WIDTH_PX;
+
+  openings.push({
+    type: mode === "place-door" ? "door" : "window",
+    wallIndex: hoveredWallIndex,
+    center: { x: mx, y: my },
+    ux,
+    uy,
+    width
+  });
+
+  redrawWalls();
+});
 }
 
 
