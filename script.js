@@ -814,44 +814,68 @@ if (builderCanvas) {
     redrawWalls();
   });
 
-  // --------- CLICK (place door / window) ----------
-  builderCanvas.addEventListener("click", (e) => {
-    if (mode === "draw-wall") return;
-    if (hoveredWallIndex === null) return;
+// --------- CLICK (place door / window) ----------
+builderCanvas.addEventListener("click", (e) => {
+  // ONLY respond to direct canvas clicks
+  if (e.target !== builderCanvas) return;
+  if (mode === "draw-wall") return;
 
-    const rect = builderCanvas.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    const clickY = e.clientY - rect.top;
+  const rect = builderCanvas.getBoundingClientRect();
+  const clickX = e.clientX - rect.left;
+  const clickY = e.clientY - rect.top;
 
-    const wall = walls[hoveredWallIndex];
-    const { ux, uy } = getWallMidpointAndNormal(wall);
+  // ---- recompute hovered wall on click (IMPORTANT) ----
+  let clickedWallIndex = null;
+  let minDist = 8;
 
-    const p = closestPointOnSegment(
+  walls.forEach((w, index) => {
+    const d = distancePointToSegment(
       clickX,
       clickY,
-      wall.x1,
-      wall.y1,
-      wall.x2,
-      wall.y2
+      w.x1,
+      w.y1,
+      w.x2,
+      w.y2
     );
 
-    const width =
-      mode === "place-door" ? DOOR_WIDTH_PX : WINDOW_WIDTH_PX;
-
-    openings.push({
-      type: mode === "place-door" ? "door" : "window",
-      wallIndex: hoveredWallIndex,
-      center: {
-        x: snapToGrid(p.x),
-        y: snapToGrid(p.y)
-      },
-      ux,
-      uy,
-      width
-    });
-
-    redrawWalls();
+    if (d < minDist) {
+      minDist = d;
+      clickedWallIndex = index;
+    }
   });
+
+  if (clickedWallIndex === null) return;
+
+  const wall = walls[clickedWallIndex];
+  const { ux, uy } = getWallMidpointAndNormal(wall);
+
+  const p = closestPointOnSegment(
+    clickX,
+    clickY,
+    wall.x1,
+    wall.y1,
+    wall.x2,
+    wall.y2
+  );
+
+  const width =
+    mode === "place-door" ? DOOR_WIDTH_PX : WINDOW_WIDTH_PX;
+
+  openings.push({
+    type: mode === "place-door" ? "door" : "window",
+    wallIndex: clickedWallIndex,
+    center: {
+      x: snapToGrid(p.x),
+      y: snapToGrid(p.y)
+    },
+    ux,
+    uy,
+    width
+  });
+
+  redrawWalls();
+});
+
 }
 
 
