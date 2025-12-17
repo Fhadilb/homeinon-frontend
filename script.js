@@ -483,12 +483,26 @@ drawGridLabels();
   ctx.strokeStyle = "#1e40af";
   ctx.setLineDash([]);
 
-  walls.forEach(w => {
-    ctx.beginPath();
-    ctx.moveTo(w.x1, w.y1);
-    ctx.lineTo(w.x2, w.y2);
-    ctx.stroke();
-  });
+walls.forEach(w => {
+  // draw wall
+  ctx.beginPath();
+  ctx.moveTo(w.x1, w.y1);
+  ctx.lineTo(w.x2, w.y2);
+  ctx.stroke();
+
+  // ---- persistent dimension label ----
+  if (w.length != null) {
+    const midX = (w.x1 + w.x2) / 2;
+    const midY = (w.y1 + w.y2) / 2;
+
+    ctx.save();
+    ctx.fillStyle = "#0f172a";
+    ctx.font = "12px sans-serif";
+    ctx.fillText(`${w.length.toFixed(2)} m`, midX + 6, midY - 6);
+    ctx.restore();
+  }
+});
+
   
 // preview wall
 if (drawing && startPoint) {
@@ -593,12 +607,16 @@ builderCanvas.addEventListener("mouseup", (e) => {
   endPoint = snapToNearbyEndpoint(endPoint);
   const snappedStart = snapToNearbyEndpoint(startPoint);
 
-  walls.push({
-    x1: snappedStart.x,
-    y1: snappedStart.y,
-    x2: endPoint.x,
-    y2: endPoint.y
-  });
+ const lengthMeters = getDistanceMeters(snappedStart, endPoint);
+
+walls.push({
+  x1: snappedStart.x,
+  y1: snappedStart.y,
+  x2: endPoint.x,
+  y2: endPoint.y,
+  length: lengthMeters
+});
+
 
   startPoint = null;
   redrawWalls();
