@@ -678,30 +678,6 @@ if (drawing && startPoint) {
     ctx.restore();
   }
 
-  // ---- door / window preview ----
-  if (
-    hoveredWallIndex !== null &&
-    (mode === "place-door" || mode === "place-window")
-  ) {
-    const wall = walls[hoveredWallIndex];
-    const { mx, my, ux, uy } = getWallMidpointAndNormal(wall);
-
-    const halfWidth =
-      mode === "place-door"
-        ? DOOR_WIDTH_PX / 2
-        : WINDOW_WIDTH_PX / 2;
-
-    ctx.save();
-    ctx.strokeStyle = mode === "place-door" ? "#16a34a" : "#0284c7";
-    ctx.lineWidth = 4;
-
-    ctx.beginPath();
-    ctx.moveTo(mx - ux * halfWidth, my - uy * halfWidth);
-    ctx.lineTo(mx + ux * halfWidth, my + uy * halfWidth);
-    ctx.stroke();
-
-    ctx.restore();
-  }
 }
 
 // --------- EVENTS ----------
