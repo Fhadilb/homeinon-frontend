@@ -631,27 +631,63 @@ function redrawWalls() {
     }
   });
 
-  // --------- DRAW PLACED DOORS / WINDOWS ----------
-  openings.forEach(o => {
-    const half = o.width / 2;
+// --------- DRAW PLACED DOORS / WINDOWS ----------
+openings.forEach(o => {
+  const half = o.width / 2;
+
+  // ---- draw opening gap ----
+  ctx.save();
+  ctx.strokeStyle = o.type === "door" ? "#16a34a" : "#0284c7";
+  ctx.lineWidth = 4;
+
+  ctx.beginPath();
+  ctx.moveTo(
+    o.center.x - o.ux * half,
+    o.center.y - o.uy * half
+  );
+  ctx.lineTo(
+    o.center.x + o.ux * half,
+    o.center.y + o.uy * half
+  );
+  ctx.stroke();
+  ctx.restore();
+
+  // ---- door swing arc ----
+  if (o.type === "door") {
+    const radius = o.width;
+    const hingeX = o.center.x - o.ux * half;
+    const hingeY = o.center.y - o.uy * half;
+
+    // perpendicular direction
+    const nx = -o.uy;
+    const ny = o.ux;
+
+    const swingDir = o.swing === "in" ? 1 : -1;
+
+    const startAngle = Math.atan2(
+      o.uy,
+      o.ux
+    );
 
     ctx.save();
-    ctx.strokeStyle = o.type === "door" ? "#16a34a" : "#0284c7";
-    ctx.lineWidth = 4;
+    ctx.strokeStyle = "#16a34a";
+    ctx.lineWidth = 2;
+    ctx.setLineDash([4, 4]);
 
     ctx.beginPath();
-    ctx.moveTo(
-      o.center.x - o.ux * half,
-      o.center.y - o.uy * half
-    );
-    ctx.lineTo(
-      o.center.x + o.ux * half,
-      o.center.y + o.uy * half
+    ctx.arc(
+      hingeX,
+      hingeY,
+      radius,
+      startAngle,
+      startAngle + swingDir * Math.PI / 2
     );
     ctx.stroke();
 
     ctx.restore();
-  });
+  }
+});
+
 
   // --------- PREVIEW WALL (while drawing) ----------
   if (drawing && startPoint) {
@@ -851,17 +887,19 @@ builderCanvas.addEventListener("click", (e) => {
   const width =
     mode === "place-door" ? DOOR_WIDTH_PX : WINDOW_WIDTH_PX;
 
-  openings.push({
-    type: mode === "place-door" ? "door" : "window",
-    wallIndex: clickedWallIndex,
-    center: {
-      x: snapToGrid(p.x),
-      y: snapToGrid(p.y)
-    },
-    ux,
-    uy,
-    width
-  });
+openings.push({
+  type: mode === "place-door" ? "door" : "window",
+  wallIndex: clickedWallIndex,
+  center: {
+    x: snapToGrid(p.x),
+    y: snapToGrid(p.y)
+  },
+  ux,
+  uy,
+  width,
+  swing: "in" // 👈 DEFAULT DOOR DIRECTION
+});
+
 
   redrawWalls();
 });
