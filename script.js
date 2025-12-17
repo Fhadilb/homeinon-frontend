@@ -666,41 +666,48 @@ openings.forEach(o => {
   );
   ctx.stroke();
   ctx.restore();
+  
+// ---- door swing arc ----
+if (o.type === "door") {
+  const half = o.width / 2;
 
-  // ---- door swing arc ----
-  if (o.type === "door") {
-    const radius = o.width;
-    const hingeX = o.center.x - o.ux * half;
-    const hingeY = o.center.y - o.uy * half;
+  // hinge at one end of the opening
+  const hingeX = o.center.x - o.ux * half;
+  const hingeY = o.center.y - o.uy * half;
 
-    // perpendicular direction
-    const nx = -o.uy;
-    const ny = o.ux;
+  // other end of the opening (closed door tip)
+  const tipX = o.center.x + o.ux * half;
+  const tipY = o.center.y + o.uy * half;
 
-    const swingDir = o.swing === "in" ? 1 : -1;
+  // angle of the closed door
+  const startAngle = Math.atan2(
+    tipY - hingeY,
+    tipX - hingeX
+  );
 
-    const startAngle = Math.atan2(
-      o.uy,
-      o.ux
-    );
+  // inward / outward toggle
+  const swingDir = o.swing === "in" ? 1 : -1;
+  const endAngle = startAngle + swingDir * (Math.PI / 2);
 
-    ctx.save();
-    ctx.strokeStyle = "#16a34a";
-    ctx.lineWidth = 2;
-    ctx.setLineDash([4, 4]);
+  ctx.save();
+  ctx.strokeStyle = "#16a34a";
+  ctx.lineWidth = 2;
+  ctx.setLineDash([4, 4]);
 
-    ctx.beginPath();
-    ctx.arc(
-      hingeX,
-      hingeY,
-      radius,
-      startAngle,
-      startAngle + swingDir * Math.PI / 2
-    );
-    ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(
+    hingeX,
+    hingeY,
+    o.width,
+    startAngle,
+    endAngle,
+    swingDir < 0
+  );
+  ctx.stroke();
 
-    ctx.restore();
-  }
+  ctx.restore();
+}
+
 });
 
 
