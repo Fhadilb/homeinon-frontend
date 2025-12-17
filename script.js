@@ -417,6 +417,25 @@ function getDistanceMeters(p1, p2) {
   // 40px = 1 meter
   return distancePx / (GRID_SIZE_PX * 2);
 }
+function distancePointToSegment(px, py, x1, y1, x2, y2) {
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+
+  // wall is a point
+  if (dx === 0 && dy === 0) {
+    return Math.hypot(px - x1, py - y1);
+  }
+
+  const t = ((px - x1) * dx + (py - y1) * dy) / (dx * dx + dy * dy);
+  const clampedT = Math.max(0, Math.min(1, t));
+
+  const closestX = x1 + clampedT * dx;
+  const closestY = y1 + clampedT * dy;
+
+  return Math.hypot(px - closestX, py - closestY);
+}
+
+
 // --------- BACKGROUND GRID ----------
 function drawBackgroundGrid() {
   if (!ctx) return;
@@ -524,6 +543,7 @@ let currentMouse = { x: 0, y: 0 };
 let snapCandidate = null;
 let mode = "draw-wall"; // "draw-wall" | "place-door" | "place-window"
 let openings = []; // doors & windows
+let hoveredWallIndex = null;
 
 // --------- RESIZE ----------
 function resizeBuilderCanvas() {
@@ -550,12 +570,21 @@ drawGridLabels();
   ctx.strokeStyle = "#1e40af";
   ctx.setLineDash([]);
 
-walls.forEach(w => {
+walls.forEach((w, index) => {
+  const isHovered =
+    hoveredWallIndex === index && mode !== "draw-wall";
+
   // draw wall
+  ctx.save();
   ctx.beginPath();
   ctx.moveTo(w.x1, w.y1);
   ctx.lineTo(w.x2, w.y2);
+
+  ctx.lineWidth = isHovered ? 6 : 4;
+  ctx.strokeStyle = isHovered ? "#22c55e" : "#1e40af";
+
   ctx.stroke();
+  ctx.restore();
 
   // ---- persistent dimension label ----
   if (w.length != null) {
@@ -569,6 +598,7 @@ walls.forEach(w => {
     ctx.restore();
   }
 });
+
 
   
 // preview wall
@@ -631,28 +661,51 @@ if (builderCanvas) {
       redrawWalls(); // 👈 ADD THIS LINE
   });
 builderCanvas.addEventListener("mousemove", (e) => {
-  if (!drawing) return;
-
   const rect = builderCanvas.getBoundingClientRect();
   const rawX = e.clientX - rect.left;
   const rawY = e.clientY - rect.top;
 
-  currentMouse = getSnappedEndPoint(
-    rawX,
-    rawY,
-    startPoint,
-    e.shiftKey
-  );
+  // update mouse position (always)
+  if (drawing && startPoint) {
+    currentMouse = getSnappedEndPoint(
+      rawX,
+      rawY,
+      startPoint,
+      e.shiftKey
+    );
+  } else {
+    currentMouse = {
+      x: snapToGrid(rawX),
+      y: snapToGrid(rawY)
+    };
+  }
 
-  // ---- snap candidate detection ----
-  snapCandidate = null;
-  const snapped = snapToNearbyEndpoint(currentMouse);
-  if (snapped.x !== currentMouse.x || snapped.y !== currentMouse.y) {
-    snapCandidate = snapped;
+  // ---- WALL HOVER DETECTION ----
+  hoveredWallIndex = null;
+
+  if (mode !== "draw-wall") {
+    let minDist = 8; // hover tolerance (px)
+
+    walls.forEach((w, index) => {
+      const d = distancePointToSegment(
+        currentMouse.x,
+        currentMouse.y,
+        w.x1,
+        w.y1,
+        w.x2,
+        w.y2
+      );
+
+      if (d < minDist) {
+        minDist = d;
+        hoveredWallIndex = index;
+      }
+    });
   }
 
   redrawWalls();
 });
+
 
 
 builderCanvas.addEventListener("mouseup", (e) => {
