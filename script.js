@@ -666,8 +666,8 @@ openings.forEach(o => {
   );
   ctx.stroke();
   ctx.restore();
-  
-// ---- door swing arc ----
+
+// ---- door swing arc (normal-based, correct) ----
 if (o.type === "door") {
   const half = o.width / 2;
 
@@ -675,19 +675,21 @@ if (o.type === "door") {
   const hingeX = o.center.x - o.ux * half;
   const hingeY = o.center.y - o.uy * half;
 
-  // other end of the opening (closed door tip)
-  const tipX = o.center.x + o.ux * half;
-  const tipY = o.center.y + o.uy * half;
+  // wall normal (perpendicular)
+  const nx = -o.uy;
+  const ny = o.ux;
 
-  // angle of the closed door
-  const startAngle = Math.atan2(
-    tipY - hingeY,
-    tipX - hingeX
+  // choose side based on swing
+  const dir = o.swing === "in" ? 1 : -1;
+
+  // closed door direction (along wall)
+  const closedAngle = Math.atan2(o.uy, o.ux);
+
+  // open door direction (off the wall, across it)
+  const openAngle = Math.atan2(
+    o.uy + dir * ny,
+    o.ux + dir * nx
   );
-
-  // inward / outward toggle
-  const swingDir = o.swing === "in" ? 1 : -1;
-  const endAngle = startAngle + swingDir * (Math.PI / 2);
 
   ctx.save();
   ctx.strokeStyle = "#16a34a";
@@ -699,14 +701,15 @@ if (o.type === "door") {
     hingeX,
     hingeY,
     o.width,
-    startAngle,
-    endAngle,
-    swingDir < 0
+    closedAngle,
+    openAngle,
+    dir < 0
   );
   ctx.stroke();
 
   ctx.restore();
 }
+
 
 });
 
