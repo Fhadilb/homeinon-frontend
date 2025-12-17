@@ -320,16 +320,19 @@ let canvasMode = false;
 // =======================================================
 
 // --------- GRID CONFIG ----------
-const GRID_SIZE_PX = 20; // one grid square
+const GRID_SIZE_PX = 20;        // one grid square
+const SNAP_DISTANCE_PX = 12;    // endpoint snap radius
 
 function snapToGrid(value) {
   return Math.round(value / GRID_SIZE_PX) * GRID_SIZE_PX;
 }
+
+// Axis + grid snapping (Shift = free angle)
 function getSnappedEndPoint(rawX, rawY, start, shiftKey) {
   let x = snapToGrid(rawX);
   let y = snapToGrid(rawY);
 
-  // Shift = free angle (still grid snapped)
+  // Shift = free angle
   if (shiftKey || !start) {
     return { x, y };
   }
@@ -339,13 +342,44 @@ function getSnappedEndPoint(rawX, rawY, start, shiftKey) {
 
   // lock to closest axis
   if (dx < dy) {
-    x = start.x; // vertical line
+    x = start.x;
   } else {
-    y = start.y; // horizontal line
+    y = start.y;
   }
 
   return { x, y };
 }
+
+// --------- ENDPOINT SNAP HELPERS ----------
+function getAllWallEndpoints() {
+  const points = [];
+  walls.forEach(w => {
+    points.push({ x: w.x1, y: w.y1 });
+    points.push({ x: w.x2, y: w.y2 });
+  });
+  return points;
+}
+
+function snapToNearbyEndpoint(point) {
+  const endpoints = getAllWallEndpoints();
+
+  let closest = null;
+  let minDist = SNAP_DISTANCE_PX;
+
+  endpoints.forEach(p => {
+    const dx = p.x - point.x;
+    const dy = p.y - point.y;
+    const dist = Math.hypot(dx, dy);
+
+    if (dist < minDist) {
+      minDist = dist;
+      closest = p;
+    }
+  });
+
+  return closest ? { x: closest.x, y: closest.y } : point;
+}
+
 
 // --------- CANVAS STATE ----------
 const builderCanvas = document.getElementById("floorplanBuilder");
@@ -445,19 +479,26 @@ builderCanvas.addEventListener("mouseup", (e) => {
   const rawX = e.clientX - rect.left;
   const rawY = e.clientY - rect.top;
 
-  const endPoint = getSnappedEndPoint(
-    rawX,
-    rawY,
-    startPoint,
-    e.shiftKey
-  );
+let endPoint = getSnappedEndPoint(
+  rawX,
+  rawY,
+  startPoint,
+  e.shiftKey
+);
 
-  walls.push({
-    x1: startPoint.x,
-    y1: startPoint.y,
-    x2: endPoint.x,
-    y2: endPoint.y
-  });
+// snap to nearby existing endpoints
+endPoint = snapToNearbyEndpoint(endPoint);
+
+// also snap start point if close (important)
+const snappedStart = snapToNearbyEndpoint(startPoint);
+
+walls.push({
+  x1: snappedStart.x,
+  y1: snappedStart.y,
+  x2: endPoint.x,
+  y2: endPoint.y
+});
+
 
   startPoint = null;
   redrawWalls();
