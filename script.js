@@ -454,6 +454,17 @@ function closestPointOnSegment(px, py, x1, y1, x2, y2) {
     t: clampedT
   };
 }
+function isPointNearDoor(px, py, door) {
+  const half = door.width / 2;
+
+  const x1 = door.center.x - door.ux * half;
+  const y1 = door.center.y - door.uy * half;
+  const x2 = door.center.x + door.ux * half;
+  const y2 = door.center.y + door.uy * half;
+
+  const dist = distancePointToSegment(px, py, x1, y1, x2, y2);
+  return dist < 8;
+}
 
 function getWallMidpointAndNormal(wall) {
   const mx = (wall.x1 + wall.x2) / 2;
@@ -843,14 +854,25 @@ if (builderCanvas) {
 
 // --------- CLICK (place door / window) ----------
 builderCanvas.addEventListener("click", (e) => {
-  // ONLY respond to direct canvas clicks
   if (mode === "draw-wall") return;
 
   const rect = builderCanvas.getBoundingClientRect();
   const clickX = e.clientX - rect.left;
   const clickY = e.clientY - rect.top;
 
-  // ---- recompute hovered wall on click (IMPORTANT) ----
+  // ---- 1) TOGGLE EXISTING DOOR IF CLICKED ----
+  for (let i = 0; i < openings.length; i++) {
+    const o = openings[i];
+    if (o.type !== "door") continue;
+
+    if (isPointNearDoor(clickX, clickY, o)) {
+      o.swing = o.swing === "in" ? "out" : "in";
+      redrawWalls();
+      return; // IMPORTANT: stop here
+    }
+  }
+
+  // ---- 2) OTHERWISE PLACE NEW DOOR / WINDOW ----
   let clickedWallIndex = null;
   let minDist = 8;
 
@@ -887,22 +909,22 @@ builderCanvas.addEventListener("click", (e) => {
   const width =
     mode === "place-door" ? DOOR_WIDTH_PX : WINDOW_WIDTH_PX;
 
-openings.push({
-  type: mode === "place-door" ? "door" : "window",
-  wallIndex: clickedWallIndex,
-  center: {
-    x: snapToGrid(p.x),
-    y: snapToGrid(p.y)
-  },
-  ux,
-  uy,
-  width,
-  swing: "in" // 👈 DEFAULT DOOR DIRECTION
-});
-
+  openings.push({
+    type: mode === "place-door" ? "door" : "window",
+    wallIndex: clickedWallIndex,
+    center: {
+      x: snapToGrid(p.x),
+      y: snapToGrid(p.y)
+    },
+    ux,
+    uy,
+    width,
+    swing: "in"
+  });
 
   redrawWalls();
 });
+
 
 }
 
