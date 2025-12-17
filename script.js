@@ -462,7 +462,7 @@ builderFooter.style.justifyContent = "space-between";
 builderFooter.style.alignItems = "center";
 builderFooter.style.padding = "12px 0";
 builderFooter.style.marginTop = "8px";
-  builderWrap.appendChild(builderFooter);
+builderWrap.parentElement.appendChild(builderFooter);
 }
 
 if (!builderControls && builderFooter) {
