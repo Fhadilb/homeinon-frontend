@@ -793,7 +793,6 @@ if (builderCanvas) {
 // --------- CLICK (place door / window) ----------
 builderCanvas.addEventListener("click", (e) => {
   // ONLY respond to direct canvas clicks
-  if (e.target !== builderCanvas) return;
   if (mode === "draw-wall") return;
 
   const rect = builderCanvas.getBoundingClientRect();
