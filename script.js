@@ -437,6 +437,24 @@ function distancePointToSegment(px, py, x1, y1, x2, y2) {
   return Math.hypot(px - closestX, py - closestY);
 }
 
+function closestPointOnSegment(px, py, x1, y1, x2, y2) {
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+
+  if (dx === 0 && dy === 0) {
+    return { x: x1, y: y1, t: 0 };
+  }
+
+  const t = ((px - x1) * dx + (py - y1) * dy) / (dx * dx + dy * dy);
+  const clampedT = Math.max(0, Math.min(1, t));
+
+  return {
+    x: x1 + clampedT * dx,
+    y: y1 + clampedT * dy,
+    t: clampedT
+  };
+}
+
 function getWallMidpointAndNormal(wall) {
   const mx = (wall.x1 + wall.x2) / 2;
   const my = (wall.y1 + wall.y2) / 2;
@@ -452,6 +470,7 @@ function getWallMidpointAndNormal(wall) {
     uy: dy / length
   };
 }
+
 
 // --------- BACKGROUND GRID ----------
 function drawBackgroundGrid() {
@@ -689,7 +708,10 @@ if (drawing && startPoint) {
 if (builderCanvas) {
   ctx = builderCanvas.getContext("2d");
 
+  // --------- MOUSE DOWN (start wall) ----------
   builderCanvas.addEventListener("mousedown", (e) => {
+    if (mode !== "draw-wall") return;
+
     const rect = builderCanvas.getBoundingClientRect();
     drawing = true;
 
@@ -697,63 +719,141 @@ if (builderCanvas) {
       x: snapToGrid(e.clientX - rect.left),
       y: snapToGrid(e.clientY - rect.top)
     };
-      currentMouse = { ...startPoint }; // initialize preview point
-      redrawWalls(); // 👈 ADD THIS LINE
-  });
-builderCanvas.addEventListener("mousemove", (e) => {
-  const rect = builderCanvas.getBoundingClientRect();
-  const rawX = e.clientX - rect.left;
-  const rawY = e.clientY - rect.top;
 
-  // update mouse position (always)
-  if (drawing && startPoint) {
-    currentMouse = getSnappedEndPoint(
+    currentMouse = { ...startPoint };
+    redrawWalls();
+  });
+
+  // --------- MOUSE MOVE ----------
+  builderCanvas.addEventListener("mousemove", (e) => {
+    const rect = builderCanvas.getBoundingClientRect();
+    const rawX = e.clientX - rect.left;
+    const rawY = e.clientY - rect.top;
+
+    // update mouse position
+    if (drawing && startPoint) {
+      currentMouse = getSnappedEndPoint(
+        rawX,
+        rawY,
+        startPoint,
+        e.shiftKey
+      );
+    } else {
+      currentMouse = {
+        x: snapToGrid(rawX),
+        y: snapToGrid(rawY)
+      };
+    }
+
+    // ---- ENDPOINT SNAP DETECTION ----
+    snapCandidate = null;
+
+    if (drawing && startPoint) {
+      const snapped = snapToNearbyEndpoint(currentMouse);
+      if (snapped.x !== currentMouse.x || snapped.y !== currentMouse.y) {
+        snapCandidate = snapped;
+      }
+    }
+
+    // ---- WALL HOVER DETECTION ----
+    hoveredWallIndex = null;
+
+    if (mode !== "draw-wall") {
+      let minDist = 8;
+
+      walls.forEach((w, index) => {
+        const d = distancePointToSegment(
+          currentMouse.x,
+          currentMouse.y,
+          w.x1,
+          w.y1,
+          w.x2,
+          w.y2
+        );
+
+        if (d < minDist) {
+          minDist = d;
+          hoveredWallIndex = index;
+        }
+      });
+    }
+
+    redrawWalls();
+  });
+
+  // --------- MOUSE UP (finish wall) ----------
+  builderCanvas.addEventListener("mouseup", (e) => {
+    if (!drawing || mode !== "draw-wall") return;
+    drawing = false;
+
+    const rect = builderCanvas.getBoundingClientRect();
+    const rawX = e.clientX - rect.left;
+    const rawY = e.clientY - rect.top;
+
+    let endPoint = getSnappedEndPoint(
       rawX,
       rawY,
       startPoint,
       e.shiftKey
     );
-  } else {
-    currentMouse = {
-      x: snapToGrid(rawX),
-      y: snapToGrid(rawY)
-    };
-  }
-// ---- ENDPOINT SNAP DETECTION (restore) ----
-snapCandidate = null;
 
-if (drawing && startPoint) {
-  const snapped = snapToNearbyEndpoint(currentMouse);
-  if (snapped.x !== currentMouse.x || snapped.y !== currentMouse.y) {
-    snapCandidate = snapped;
-  }
+    endPoint = snapToNearbyEndpoint(endPoint);
+    const snappedStart = snapToNearbyEndpoint(startPoint);
+
+    const lengthMeters = getDistanceMeters(snappedStart, endPoint);
+
+    walls.push({
+      x1: snappedStart.x,
+      y1: snappedStart.y,
+      x2: endPoint.x,
+      y2: endPoint.y,
+      length: lengthMeters
+    });
+
+    startPoint = null;
+    redrawWalls();
+  });
+
+  // --------- CLICK (place door / window) ----------
+  builderCanvas.addEventListener("click", (e) => {
+    if (mode === "draw-wall") return;
+    if (hoveredWallIndex === null) return;
+
+    const rect = builderCanvas.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const clickY = e.clientY - rect.top;
+
+    const wall = walls[hoveredWallIndex];
+    const { ux, uy } = getWallMidpointAndNormal(wall);
+
+    const p = closestPointOnSegment(
+      clickX,
+      clickY,
+      wall.x1,
+      wall.y1,
+      wall.x2,
+      wall.y2
+    );
+
+    const width =
+      mode === "place-door" ? DOOR_WIDTH_PX : WINDOW_WIDTH_PX;
+
+    openings.push({
+      type: mode === "place-door" ? "door" : "window",
+      wallIndex: hoveredWallIndex,
+      center: {
+        x: snapToGrid(p.x),
+        y: snapToGrid(p.y)
+      },
+      ux,
+      uy,
+      width
+    });
+
+    redrawWalls();
+  });
 }
 
-  // ---- WALL HOVER DETECTION ----
-  hoveredWallIndex = null;
-
-  if (mode !== "draw-wall") {
-    let minDist = 8; // hover tolerance (px)
-
-    walls.forEach((w, index) => {
-      const d = distancePointToSegment(
-        currentMouse.x,
-        currentMouse.y,
-        w.x1,
-        w.y1,
-        w.x2,
-        w.y2
-      );
-
-      if (d < minDist) {
-        minDist = d;
-        hoveredWallIndex = index;
-      }
-    });
-  }
-
-  redrawWalls();
-});
 
 
 
@@ -814,8 +914,6 @@ builderCanvas.addEventListener("click", (e) => {
 
   redrawWalls();
 });
-}
-
 
 // --------- FLOORPLAN / ROOMSET BACKGROUND ----------
 function setBlueprintBackground(on) {
