@@ -462,9 +462,13 @@ function isPointNearDoor(px, py, door) {
   const x2 = door.center.x + door.ux * half;
   const y2 = door.center.y + door.uy * half;
 
+  // Increased tolerance for reliable clicking
+  const HIT_TOLERANCE_PX = 14;
+
   const dist = distancePointToSegment(px, py, x1, y1, x2, y2);
-  return dist < 8;
+  return dist <= HIT_TOLERANCE_PX;
 }
+
 
 function getWallMidpointAndNormal(wall) {
   const mx = (wall.x1 + wall.x2) / 2;
@@ -856,9 +860,11 @@ if (builderCanvas) {
 builderCanvas.addEventListener("click", (e) => {
   if (mode === "draw-wall") return;
 
-  const rect = builderCanvas.getBoundingClientRect();
-  const clickX = e.clientX - rect.left;
-  const clickY = e.clientY - rect.top;
+ const rect = builderCanvas.getBoundingClientRect();
+
+const clickX = snapToGrid(e.clientX - rect.left);
+const clickY = snapToGrid(e.clientY - rect.top);
+
 
   // ---- 1) TOGGLE EXISTING DOOR IF CLICKED ----
   for (let i = 0; i < openings.length; i++) {
@@ -962,30 +968,6 @@ builderCanvas.addEventListener("mouseup", (e) => {
   });
 
   startPoint = null;
-  redrawWalls();
-});
-
-
-// --------- DOOR / WINDOW PLACEMENT ----------
-builderCanvas.addEventListener("click", (e) => {
-  if (mode === "draw-wall") return;
-  if (hoveredWallIndex === null) return;
-
-  const wall = walls[hoveredWallIndex];
-  const { mx, my, ux, uy } = getWallMidpointAndNormal(wall);
-
-  const width =
-    mode === "place-door" ? DOOR_WIDTH_PX : WINDOW_WIDTH_PX;
-
-  openings.push({
-    type: mode === "place-door" ? "door" : "window",
-    wallIndex: hoveredWallIndex,
-    center: { x: mx, y: my },
-    ux,
-    uy,
-    width
-  });
-
   redrawWalls();
 });
 
