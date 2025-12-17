@@ -322,6 +322,7 @@ let canvasMode = false;
 // --------- GRID CONFIG ----------
 const GRID_SIZE_PX = 20;        // one grid square
 const SNAP_DISTANCE_PX = 40;    // endpoint snap radius
+const METERS_PER_GRID = 0.5; // 20px grid = 0.5m (so 40px = 1m)
 
 function snapToGrid(value) {
   return Math.round(value / GRID_SIZE_PX) * GRID_SIZE_PX;
@@ -380,6 +381,42 @@ function snapToNearbyEndpoint(point) {
   return closest ? { x: closest.x, y: closest.y } : point;
 }
 
+// --------- GRID LABELS ----------
+function drawGridLabels() {
+  if (!ctx) return;
+
+  ctx.save();
+  ctx.fillStyle = "#64748b";
+  ctx.font = "12px sans-serif";
+
+  const width = builderCanvas.width;
+  const height = builderCanvas.height;
+
+  const meterStepPx = GRID_SIZE_PX * 2; // 40px = 1m
+
+  // X axis labels (top)
+  for (let x = 0; x <= width; x += meterStepPx) {
+    const meters = (x / meterStepPx).toFixed(0);
+    ctx.fillText(`${meters} m`, x + 4, 14);
+  }
+
+  // Y axis labels (left)
+  for (let y = 0; y <= height; y += meterStepPx) {
+    const meters = (y / meterStepPx).toFixed(0);
+    ctx.fillText(`${meters} m`, 4, y - 4);
+  }
+
+  ctx.restore();
+}
+function getDistanceMeters(p1, p2) {
+  const dx = p2.x - p1.x;
+  const dy = p2.y - p1.y;
+
+  const distancePx = Math.hypot(dx, dy);
+
+  // 40px = 1 meter
+  return distancePx / (GRID_SIZE_PX * 2);
+}
 
 // --------- CANVAS STATE ----------
 const builderCanvas = document.getElementById("floorplanBuilder");
@@ -408,6 +445,7 @@ function redrawWalls() {
   if (!ctx) return;
 
   ctx.clearRect(0, 0, builderCanvas.width, builderCanvas.height);
+ drawGridLabels();
 
   // solid walls
   ctx.lineWidth = 4;
@@ -420,11 +458,12 @@ function redrawWalls() {
     ctx.lineTo(w.x2, w.y2);
     ctx.stroke();
   });
-
+  
 // preview wall
 if (drawing && startPoint) {
   const end = currentMouse || startPoint;
 
+  // dashed preview line
   ctx.save();
   ctx.lineWidth = 2;
   ctx.strokeStyle = "#64748b";
@@ -436,7 +475,21 @@ if (drawing && startPoint) {
   ctx.stroke();
 
   ctx.restore();
+
+  // ---- live dimension label ----
+  const meters = getDistanceMeters(startPoint, end);
+  const label = `${meters.toFixed(2)} m`;
+
+  const midX = (startPoint.x + end.x) / 2;
+  const midY = (startPoint.y + end.y) / 2;
+
+  ctx.save();
+  ctx.fillStyle = "#0f172a";
+  ctx.font = "12px sans-serif";
+  ctx.fillText(label, midX + 6, midY - 6);
+  ctx.restore();
 }
+
   // ---- snap indicator ----
   if (drawing && snapCandidate) {
     ctx.save();
