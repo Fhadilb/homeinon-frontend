@@ -454,6 +454,34 @@ function closestPointOnSegment(px, py, x1, y1, x2, y2) {
     t: clampedT
   };
 }
+function clampOpeningToWall(point, wall, openingWidth) {
+  const half = openingWidth / 2;
+
+  const dx = wall.x2 - wall.x1;
+  const dy = wall.y2 - wall.y1;
+  const wallLenSq = dx * dx + dy * dy;
+
+  if (wallLenSq === 0) return point;
+
+  // projection parameter (0–1)
+  let t =
+    ((point.x - wall.x1) * dx + (point.y - wall.y1) * dy) /
+    wallLenSq;
+
+  const wallLen = Math.sqrt(wallLenSq);
+
+  // keep opening fully inside wall
+  const minT = half / wallLen;
+  const maxT = 1 - minT;
+
+  t = Math.max(minT, Math.min(maxT, t));
+
+  return {
+    x: wall.x1 + t * dx,
+    y: wall.y1 + t * dy
+  };
+}
+
 function isPointNearDoor(px, py, door) {
   const half = door.width / 2;
 
@@ -893,14 +921,17 @@ const clickY = snapToGrid(e.clientY - rect.top);
   let minDist = 8;
 
   walls.forEach((w, index) => {
-    const d = distancePointToSegment(
-      clickX,
-      clickY,
-      w.x1,
-      w.y1,
-      w.x2,
-      w.y2
-    );
+let p = closestPointOnSegment(
+  clickX,
+  clickY,
+  wall.x1,
+  wall.y1,
+  wall.x2,
+  wall.y2
+);
+
+p = clampOpeningToWall(p, wall, width);
+
 
     if (d < minDist) {
       minDist = d;
