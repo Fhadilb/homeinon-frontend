@@ -321,7 +321,7 @@ let canvasMode = false;
 
 // --------- GRID CONFIG ----------
 const GRID_SIZE_PX = 20;        // one grid square
-const SNAP_DISTANCE_PX = 30;    // endpoint snap radius
+const SNAP_DISTANCE_PX = 40;    // endpoint snap radius
 
 function snapToGrid(value) {
   return Math.round(value / GRID_SIZE_PX) * GRID_SIZE_PX;
@@ -390,6 +390,7 @@ let walls = [];
 let drawing = false;
 let startPoint = null;
 let currentMouse = { x: 0, y: 0 };
+let snapCandidate = null;
 
 // --------- RESIZE ----------
 function resizeBuilderCanvas() {
@@ -436,6 +437,16 @@ if (drawing && startPoint) {
 
   ctx.restore();
 }
+  // ---- snap indicator ----
+  if (drawing && snapCandidate) {
+    ctx.save();
+    ctx.fillStyle = "#22c55e"; // green snap indicator
+    ctx.beginPath();
+    ctx.arc(snapCandidate.x, snapCandidate.y, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
 }
 
 
@@ -468,8 +479,16 @@ builderCanvas.addEventListener("mousemove", (e) => {
     e.shiftKey
   );
 
+  // ---- snap candidate detection ----
+  snapCandidate = null;
+  const snapped = snapToNearbyEndpoint(currentMouse);
+  if (snapped.x !== currentMouse.x || snapped.y !== currentMouse.y) {
+    snapCandidate = snapped;
+  }
+
   redrawWalls();
 });
+
 
 builderCanvas.addEventListener("mouseup", (e) => {
   if (!drawing) return;
