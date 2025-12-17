@@ -596,89 +596,104 @@ function resizeBuilderCanvas() {
 function redrawWalls() {
   if (!ctx) return;
 
-ctx.clearRect(0, 0, builderCanvas.width, builderCanvas.height);
-drawBackgroundGrid();
-drawGridLabels();
+  ctx.clearRect(0, 0, builderCanvas.width, builderCanvas.height);
 
+  drawBackgroundGrid();
+  drawGridLabels();
 
-  // solid walls
-  ctx.lineWidth = 4;
-  ctx.strokeStyle = "#1e40af";
+  // --------- SOLID WALLS ----------
   ctx.setLineDash([]);
 
-walls.forEach((w, index) => {
-  const isHovered =
-    hoveredWallIndex === index && mode !== "draw-wall";
+  walls.forEach((w, index) => {
+    const isHovered =
+      hoveredWallIndex === index && mode !== "draw-wall";
 
-  // draw wall
-  ctx.save();
-  ctx.beginPath();
-  ctx.moveTo(w.x1, w.y1);
-  ctx.lineTo(w.x2, w.y2);
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(w.x1, w.y1);
+    ctx.lineTo(w.x2, w.y2);
 
-  ctx.lineWidth = isHovered ? 6 : 4;
-  ctx.strokeStyle = isHovered ? "#22c55e" : "#1e40af";
+    ctx.lineWidth = isHovered ? 6 : 4;
+    ctx.strokeStyle = isHovered ? "#22c55e" : "#1e40af";
+    ctx.stroke();
+    ctx.restore();
 
-  ctx.stroke();
-  ctx.restore();
+    // ---- persistent dimension label ----
+    if (w.length != null) {
+      const midX = (w.x1 + w.x2) / 2;
+      const midY = (w.y1 + w.y2) / 2;
 
-  // ---- persistent dimension label ----
-  if (w.length != null) {
-    const midX = (w.x1 + w.x2) / 2;
-    const midY = (w.y1 + w.y2) / 2;
+      ctx.save();
+      ctx.fillStyle = "#0f172a";
+      ctx.font = "12px sans-serif";
+      ctx.fillText(`${w.length.toFixed(2)} m`, midX + 6, midY - 6);
+      ctx.restore();
+    }
+  });
+
+  // --------- DRAW PLACED DOORS / WINDOWS ----------
+  openings.forEach(o => {
+    const half = o.width / 2;
+
+    ctx.save();
+    ctx.strokeStyle = o.type === "door" ? "#16a34a" : "#0284c7";
+    ctx.lineWidth = 4;
+
+    ctx.beginPath();
+    ctx.moveTo(
+      o.center.x - o.ux * half,
+      o.center.y - o.uy * half
+    );
+    ctx.lineTo(
+      o.center.x + o.ux * half,
+      o.center.y + o.uy * half
+    );
+    ctx.stroke();
+
+    ctx.restore();
+  });
+
+  // --------- PREVIEW WALL (while drawing) ----------
+  if (drawing && startPoint) {
+    const end = currentMouse || startPoint;
+
+    ctx.save();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = "#64748b";
+    ctx.setLineDash([6, 6]);
+
+    ctx.beginPath();
+    ctx.moveTo(startPoint.x, startPoint.y);
+    ctx.lineTo(end.x, end.y);
+    ctx.stroke();
+
+    ctx.restore();
+
+    // ---- live dimension label ----
+    const meters = getDistanceMeters(startPoint, end);
+    const label = `${meters.toFixed(2)} m`;
+
+    const midX = (startPoint.x + end.x) / 2;
+    const midY = (startPoint.y + end.y) / 2;
 
     ctx.save();
     ctx.fillStyle = "#0f172a";
     ctx.font = "12px sans-serif";
-    ctx.fillText(`${w.length.toFixed(2)} m`, midX + 6, midY - 6);
+    ctx.fillText(label, midX + 6, midY - 6);
     ctx.restore();
   }
-});
 
-
-  
-// preview wall
-if (drawing && startPoint) {
-  const end = currentMouse || startPoint;
-
-  // dashed preview line
-  ctx.save();
-  ctx.lineWidth = 2;
-  ctx.strokeStyle = "#64748b";
-  ctx.setLineDash([6, 6]);
-
-  ctx.beginPath();
-  ctx.moveTo(startPoint.x, startPoint.y);
-  ctx.lineTo(end.x, end.y);
-  ctx.stroke();
-
-  ctx.restore();
-
-  // ---- live dimension label ----
-  const meters = getDistanceMeters(startPoint, end);
-  const label = `${meters.toFixed(2)} m`;
-
-  const midX = (startPoint.x + end.x) / 2;
-  const midY = (startPoint.y + end.y) / 2;
-
-  ctx.save();
-  ctx.fillStyle = "#0f172a";
-  ctx.font = "12px sans-serif";
-  ctx.fillText(label, midX + 6, midY - 6);
-  ctx.restore();
-}
-
-  // ---- snap indicator ----
+  // --------- SNAP INDICATOR ----------
   if (drawing && snapCandidate) {
     ctx.save();
-    ctx.fillStyle = "#22c55e"; // green snap indicator
+    ctx.fillStyle = "#22c55e";
     ctx.beginPath();
     ctx.arc(snapCandidate.x, snapCandidate.y, 6, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
   }
-
 }
+
 
 // --------- EVENTS ----------
 if (builderCanvas) {
