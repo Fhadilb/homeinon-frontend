@@ -458,9 +458,10 @@ if (builderWrap && !builderFooter) {
   builderFooter = document.createElement("div");
   builderFooter.id = "builderFooter";
   builderFooter.style.display = "flex";
-  builderFooter.style.justifyContent = "flex-end"; // buttons on right for now
-  builderFooter.style.padding = "12px";
-  builderFooter.style.gap = "10px";
+builderFooter.style.justifyContent = "space-between";
+builderFooter.style.alignItems = "center";
+builderFooter.style.padding = "12px 0";
+builderFooter.style.marginTop = "8px";
   builderWrap.appendChild(builderFooter);
 }
 
@@ -1771,6 +1772,10 @@ document.addEventListener("DOMContentLoaded", () => {
 // Clear Roomset button
 document.addEventListener("DOMContentLoaded", () => {
   const clearBtn = document.getElementById("roomsetClear");
+  // move Clear Roomset into builder footer (left side)
+if (clearBtn && builderFooter) {
+  builderFooter.prepend(clearBtn);
+}
   if (clearBtn) {
     clearBtn.addEventListener("click", () => {
       if (!confirm("Clear your entire roomset?")) return;
