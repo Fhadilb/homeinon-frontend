@@ -479,30 +479,28 @@ builderCanvas.addEventListener("mouseup", (e) => {
   const rawX = e.clientX - rect.left;
   const rawY = e.clientY - rect.top;
 
-let endPoint = getSnappedEndPoint(
-  rawX,
-  rawY,
-  startPoint,
-  e.shiftKey
-);
+  let endPoint = getSnappedEndPoint(
+    rawX,
+    rawY,
+    startPoint,
+    e.shiftKey
+  );
 
-// snap to nearby existing endpoints
-endPoint = snapToNearbyEndpoint(endPoint);
+  // snap both ends to nearby existing endpoints
+  endPoint = snapToNearbyEndpoint(endPoint);
+  const snappedStart = snapToNearbyEndpoint(startPoint);
 
-// also snap start point if close (important)
-const snappedStart = snapToNearbyEndpoint(startPoint);
-
-walls.push({
-  x1: snappedStart.x,
-  y1: snappedStart.y,
-  x2: endPoint.x,
-  y2: endPoint.y
-});
-
+  walls.push({
+    x1: snappedStart.x,
+    y1: snappedStart.y,
+    x2: endPoint.x,
+    y2: endPoint.y
+  });
 
   startPoint = null;
   redrawWalls();
 });
+
 }
 
 
