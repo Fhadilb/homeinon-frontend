@@ -450,6 +450,57 @@ function drawBackgroundGrid() {
 // --------- CANVAS STATE ----------
 const builderCanvas = document.getElementById("floorplanBuilder");
 const builderWrap   = document.getElementById("floorplanBuilderWrap");
+// --------- BUILDER CONTROLS ----------
+let builderControls = document.getElementById("builderControls");
+
+if (!builderControls && builderWrap) {
+  builderControls = document.createElement("div");
+  builderControls.id = "builderControls";
+  builderControls.style.position = "absolute";
+  builderControls.style.top = "16px";
+  builderControls.style.left = "16px";
+  builderControls.style.zIndex = "50";
+  builderControls.style.background = "rgba(255,255,255,0.95)";
+  builderControls.style.padding = "8px";
+  builderControls.style.borderRadius = "8px";
+  builderControls.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)";
+  builderControls.innerHTML = `
+    <button id="drawWallBtn" class="builder-btn active">Wall</button>
+    <button id="placeDoorBtn" class="builder-btn">Door</button>
+    <button id="placeWindowBtn" class="builder-btn">Window</button>
+  `;
+  builderWrap.appendChild(builderControls);
+}
+// --------- BUILDER MODE BUTTONS ----------
+const drawWallBtn   = document.getElementById("drawWallBtn");
+const placeDoorBtn  = document.getElementById("placeDoorBtn");
+const placeWindowBtn = document.getElementById("placeWindowBtn");
+
+function setBuilderMode(newMode) {
+  mode = newMode;
+
+  // reset active states
+  drawWallBtn.classList.remove("active");
+  placeDoorBtn.classList.remove("active");
+  placeWindowBtn.classList.remove("active");
+
+  // activate correct button
+  if (mode === "draw-wall") drawWallBtn.classList.add("active");
+  if (mode === "place-door") placeDoorBtn.classList.add("active");
+  if (mode === "place-window") placeWindowBtn.classList.add("active");
+}
+
+drawWallBtn.addEventListener("click", () => {
+  setBuilderMode("draw-wall");
+});
+
+placeDoorBtn.addEventListener("click", () => {
+  setBuilderMode("place-door");
+});
+
+placeWindowBtn.addEventListener("click", () => {
+  setBuilderMode("place-window");
+});
 
 let ctx = null;
 let walls = [];
@@ -457,6 +508,8 @@ let drawing = false;
 let startPoint = null;
 let currentMouse = { x: 0, y: 0 };
 let snapCandidate = null;
+let mode = "draw-wall"; // "draw-wall" | "place-door" | "place-window"
+let openings = []; // doors & windows
 
 // --------- RESIZE ----------
 function resizeBuilderCanvas() {
