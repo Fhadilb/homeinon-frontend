@@ -321,7 +321,7 @@ let canvasMode = false;
 
 // --------- GRID CONFIG ----------
 const GRID_SIZE_PX = 20;        // one grid square
-const SNAP_DISTANCE_PX = 12;    // endpoint snap radius
+const SNAP_DISTANCE_PX = 30;    // endpoint snap radius
 
 function snapToGrid(value) {
   return Math.round(value / GRID_SIZE_PX) * GRID_SIZE_PX;
